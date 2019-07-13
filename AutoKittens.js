@@ -1,3 +1,83 @@
+let defaultOptions = {
+	warnOnLeave: true,
+	autoStar: true,
+	autoCraft: false,
+	autoHunt: false,
+	autoPray: false,
+	autoTrade: false,
+	autoFestival: false,
+	craftOptions: {
+		craftLimit: 0.99,
+		craftWood: false,
+		woodAmount: 10,
+		craftBeam: false,
+		beamAmount: 1,
+		craftSlab: false,
+		slabAmount: 1,
+		craftSteel: false,
+		steelAmount: 1,
+		craftPlate: false,
+		plateAmount: 1,
+		craftAlloy: false,
+		alloyAmount: 1,
+		festivalBuffer: false,
+		craftParchment: false,
+		parchmentAmount: 1,
+		craftManuscript: false,
+		manuscriptAmount: 1,
+		craftCompendium: false,
+		compediumAmount: 1,
+		craftBlueprint: false,
+		blueprintAmount: 1,
+		blueprintPriority: false
+	},
+	furOptions: {
+		parchmentMode: 0,
+		manuscriptMode: 0,
+		compendiumMode: 0,
+		blueprintMode: 0
+	},
+	huntOptions: {
+		huntLimit: 0.99,
+		suppressHuntLog: false,
+		huntEarly: true,
+		singleHunts: false,
+		craftParchment: false,
+		craftManuscript: false,
+		craftCompendium: false,
+		craftBlueprint: false
+	},
+	prayLimit: 0.99,
+	widenUI: false,
+	displayOptions: {
+	},
+	displayOrder: "standard",
+	timeDisplay: "standard",
+	tradeOptions: {
+		tradeCount: 1,
+		tradeLimit: 0.99,
+		suppressTradeLog: false,
+		tradePartner: "",
+		tradeSpring: false,
+		tradePartnerSpring: "",
+		tradeSummer: false,
+		tradePartnerSummer: "",
+		tradeAutumn: false,
+		tradePartnerAutumn: "",
+		tradeWinter: false,
+		tradePartnerWinter: ""
+	},
+	showTimerDisplays: true,
+};
+window.autoOptions = defaultOptions;
+if (LCstorage["kittensgame.autoOptions"]) {
+	copyObject(JSON.parse(LCstorage["kittensgame.autoOptions"]), autoOptions);
+}
+let defaultTimeFormat = game.toDisplaySeconds;
+let calculators=[];
+let gameTickFunc = game.tick;
+let checkInterval = 200;
+
 const NOP = function() {};
 
 function setArbitrarilyDeepObject(location, value, initialTarget) {
@@ -311,7 +391,6 @@ function changeTimeFormat() {
 	};
 	game.toDisplaySeconds = formats[autoOptions.timeDisplay];
 }
-let defaultTimeFormat = game.toDisplaySeconds;
 function shortTimeFormat(secondsRaw) {
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
 	let parts = [];
@@ -344,81 +423,7 @@ function shortTimeFormat(secondsRaw) {
 function rawSecondsFormat(secondsRaw) {
 	return parseInt(secondsRaw, 10) + "s";
 }
-let defaultOptions = {
-	warnOnLeave: true,
-	autoStar: true,
-	autoCraft: false,
-	autoHunt: false,
-	autoPray: false,
-	autoTrade: false,
-	autoFestival: false,
-	craftOptions: {
-		craftLimit: 0.99,
-		craftWood: false,
-		woodAmount: 10,
-		craftBeam: false,
-		beamAmount: 1,
-		craftSlab: false,
-		slabAmount: 1,
-		craftSteel: false,
-		steelAmount: 1,
-		craftPlate: false,
-		plateAmount: 1,
-		craftAlloy: false,
-		alloyAmount: 1,
-		festivalBuffer: false,
-		craftParchment: false,
-		parchmentAmount: 1,
-		craftManuscript: false,
-		manuscriptAmount: 1,
-		craftCompendium: false,
-		compediumAmount: 1,
-		craftBlueprint: false,
-		blueprintAmount: 1,
-		blueprintPriority: false
-	},
-	furOptions: {
-		parchmentMode: 0,
-		manuscriptMode: 0,
-		compendiumMode: 0,
-		blueprintMode: 0
-	},
-	huntOptions: {
-		huntLimit: 0.99,
-		suppressHuntLog: false,
-		huntEarly: true,
-		singleHunts: false,
-		craftParchment: false,
-		craftManuscript: false,
-		craftCompendium: false,
-		craftBlueprint: false
-	},
-	prayLimit: 0.99,
-	widenUI: false,
-	displayOptions: {
-	},
-	displayOrder: "standard",
-	timeDisplay: "standard",
-	tradeOptions: {
-		tradeCount: 1,
-		tradeLimit: 0.99,
-		suppressTradeLog: false,
-		tradePartner: "",
-		tradeSpring: false,
-		tradePartnerSpring: "",
-		tradeSummer: false,
-		tradePartnerSummer: "",
-		tradeAutumn: false,
-		tradePartnerAutumn: "",
-		tradeWinter: false,
-		tradePartnerWinter: ""
-	},
-	showTimerDisplays: true,
-};
-autoOptions = defaultOptions;
-if (LCstorage["kittensgame.autoOptions"]) {
-	copyObject(JSON.parse(LCstorage["kittensgame.autoOptions"]), autoOptions);
-}
+
 function copyObject(source, target) {
 	for (let attrname in source) {
 		if (typeof source[attrname] === "object") {
@@ -442,7 +447,7 @@ function updateOptionsUI() {
 		["blueprintMode", "craftBlueprint"],
 	];
 	for (let i = 0; i < crafts.length; i++) {
-		autoOptions.furOptions[crafts[i][0]] = 1 * autoOptions.huntOptions[crafts[i][1]]  + 2 * autoOptions.craftOptions[crafts[i][1]];
+		autoOptions.furOptions[crafts[i][0]] = 1 * autoOptions.huntOptions[crafts[i][1]] + 2 * autoOptions.craftOptions[crafts[i][1]];
 	}
 	traverseObject(autoOptions);
 	changeTimeFormat();
@@ -560,20 +565,6 @@ function processAutoKittens() {
 	fillTable();
 	updateCalculators();
 }
-let gameTickFunc = game.tick;
-let checkInterval = 200;
-if (game.worker) {
-	game.tick = function() {
-		dojo.hitch(game, gameTickFunc)();
-		processAutoKittens();
-	}
-}
-else {
-	autoKittensTimer = setInterval(processAutoKittens, checkInterval);
-}
-if (!document.getElementById('timerTable')) {
-	buildUI();
-}
 // Based on http://www.reddit.com/r/kittensgame/comments/2eqlt5/a_few_kittens_game_scripts_ive_put_together/
 function starClick() {
 	if (autoOptions.autoStar) {
@@ -652,9 +643,6 @@ function autoCraft() {
 		}
 	}
 }
-window.onbeforeunload = function(){
-	if (autoOptions.warnOnLeave) return 'Are you sure you want to leave?';
-};
 function autoPray() {
 	if (!autoOptions.autoPray) return;
 	let faith = game.resPool.get('faith');
@@ -711,7 +699,6 @@ function autoFestival() { // FIXME this is not a good implementation
 		game.activeTabId = origTab; game.render();
 	}
 }
-let calculators=[];
 // Calculator UI
 //
 function addCalculator(container, id, title, contents, calc_func, sub_id, sub_title) {
@@ -1075,4 +1062,21 @@ function mintCalculator() {
 	result += "<br />Furs per second: " + game.getDisplayValue((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
 	result += "<br />Ivory per second: " + game.getDisplayValue((ipsFromMint + ipsHuntsWithMint) - ipsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
 	return result;
+}
+
+window.onbeforeunload = function(){
+	if (autoOptions.warnOnLeave) return 'Are you sure you want to leave?';
+};
+if (game.worker) {
+	game.tick = function() {
+		dojo.hitch(game, gameTickFunc)();
+		processAutoKittens();
+	}
+}
+else {
+	window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
+}
+if (!document.getElementById('timerTable')) {
+	buildUI();
+	rebuildOptionsUI();
 }
