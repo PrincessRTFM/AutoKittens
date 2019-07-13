@@ -988,7 +988,7 @@ function calculateBuildingPrice() {
 		if (resLimit < maxNum) maxNum = resLimit;
 	}
 	let result = '';
-	if (maxNum != Infinity) result += `With your current resource caps, you can build up to ${maxNum} (${maxNum-bld.val} more) of this building.<br />`;
+	if (maxNum != Infinity) result += `With your current resource caps, you can build up to ${maxNum} (${maxNum - getFrom(bld, 'val')} more) of this building.<br />`;
 	if (number > 0) {
 		result += `Price for ${(getFrom(bld, 'label') || getFrom(bld, 'title') || getFrom(bld, 'stages')[getFrom(bld, 'stage') || 0].label)} #${number} will be:<br />`;
 		for (let i = 0; i < prices.length; i++) {
