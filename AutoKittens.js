@@ -315,7 +315,7 @@ let defaultTimeFormat = game.toDisplaySeconds;
 function shortTimeFormat(secondsRaw) {
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
 	let parts = [];
-	[1, 60, 60, 24, 7].map((v, i, s) => {
+	[1, 60, 60, 24].map((v, i, s) => {
 		if (i) {
 			for (let n = 0; n < i; n++) {
 				v = v * s[n];
