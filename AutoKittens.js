@@ -50,6 +50,11 @@ function buildUI() {
 	$('#gamePageContainer').append(uiContainer, calcContainer);
 	let inlineStylesheet = $('<style type="text/css"></style>');
 	inlineStylesheet.text(`
+		#autoOptions, #kittenCalcs {
+			top: 24% !important;
+			bottom: 14% !important;
+			overflow-y: scroll;
+		}
 		body > #timerTableContainer {
 			width: 100%;
 			height: 50px;
@@ -65,11 +70,6 @@ function buildUI() {
 		}
 		body.scheme_grassy > #timerTableContainer {
 			background-color: #C6EBA1;
-		}
-		#autoOptions, #kittenCalcs {
-			top: 25% !important;
-			bottom: 15% !important;
-			overflow-y: scroll;
 		}
 		body:not(.autokittens-show-timers) > #timerTableContainer {
 			display: none;
@@ -183,7 +183,7 @@ function rebuildOptionsUI() {
 	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
 	addHeading(uiContainer, 'Auto-trading')
 	races = [["No one", ""]];
-	gamePage.diplomacy.races.forEach(r => {
+	game.diplomacy.races.forEach(r => {
 		if (r.unlocked) races.push([r.title || r.name, r.name]);
 	});
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartner', 'Trade with', races, 'by default');
@@ -274,7 +274,7 @@ function rebuildOptionsUI() {
 		['shortest first', 'short'],
 		['longest first', 'long'],
 	], '');
-	gamePage.resPool.resources.forEach(r => {
+	game.resPool.resources.forEach(r => {
 		if (typeof autoOptions.displayOptions[r.name] !== 'undefined') {
 			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, 'show' + r.name, 'Show ' + (r.title || r.name));
 		}
@@ -309,9 +309,9 @@ function changeTimeFormat() {
 		short: shortTimeFormat,
 		seconds: rawSecondsFormat
 	};
-	gamePage.toDisplaySeconds = formats[autoOptions.timeDisplay];
+	game.toDisplaySeconds = formats[autoOptions.timeDisplay];
 }
-let defaultTimeFormat = gamePage.toDisplaySeconds;
+let defaultTimeFormat = game.toDisplaySeconds;
 function shortTimeFormat(secondsRaw) {
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
 	let hours = Math.floor(sec_num / 3600);
@@ -468,9 +468,9 @@ function formatTableRow(name, title, value) {
 }
 function fillTable() {
 	let contents = '<tr>';
-	let tickRate = gamePage.ticksPerSecond;
+	let tickRate = game.ticksPerSecond;
 	let resources = []
-	gamePage.resPool.resources.forEach(r => {
+	game.resPool.resources.forEach(r => {
 		let res = {};
 		res.name = r.name;
 		res.title = r.title || r.name;
@@ -486,14 +486,14 @@ function fillTable() {
 					res.time = 0;
 				}
 				else if (res.perTickUI > 0) {
-					res.time = (r.maxValue - r.value) / (r.perTickUI * tickRate);
+					res.time = (res.maxValue - res.value) / (res.perTickUI * tickRate);
 				}
 				else if (res.perTickUI < 0) {
-					res.time = -r.value / (r.perTickUI * tickRate);
+					res.time = -r.value / (res.perTickUI * tickRate);
 				}
 			}
 			else if (res.value > 0 && res.perTickUI < 0) {
-				res.time = -r.value / (r.perTickUI * tickRate);
+				res.time = -r.value / (res.perTickUI * tickRate);
 			}
 		}
 		resources.push(res)
@@ -517,15 +517,15 @@ function fillTable() {
 					contents += formatTableRow(name, title, 'Full');
 				}
 				else if (r.perTickUI > 0) {
-					contents += formatTableRow(name, title, gamePage.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate)));
+					contents += formatTableRow(name, title, game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate)));
 				}
 				else if (r.perTickUI < 0) {
-					contents += formatTableRow(name, title, -gamePage.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
+					contents += formatTableRow(name, title, -game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
 				}
 				else contents += formatTableRow(name, title, "Err1"); // value > 0 && value < maxValue && (perTickUI || perTickCached) == 0
 			}
 			else if (r.value > 0 && r.perTickUI < 0) {
-				contents += formatTableRow(name, title, -gamePage.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
+				contents += formatTableRow(name, title, -game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
 			}
 		}
 		//else contents += formatTableRow(name, title, "Steady");
@@ -543,11 +543,11 @@ function processAutoKittens() {
 	fillTable();
 	updateCalculators();
 }
-let gameTickFunc = gamePage.tick;
+let gameTickFunc = game.tick;
 let checkInterval = 200;
-if (gamePage.worker) {
-	gamePage.tick = function() {
-		dojo.hitch(gamePage, gameTickFunc)();
+if (game.worker) {
+	game.tick = function() {
+		dojo.hitch(game, gameTickFunc)();
 		processAutoKittens();
 	}
 }
@@ -565,46 +565,46 @@ function starClick() {
 }
 function autoHunt() {
 	if (!autoOptions.autoHunt) return;
-	let msgFunc = gamePage.msg;
+	let msgFunc = game.msg;
 	if (autoOptions.huntOptions.suppressHuntLog) {
-		gamePage.msg = NOP;
+		game.msg = NOP;
 	}
-	let catpower = gamePage.resPool.get('manpower');
+	let catpower = game.resPool.get('manpower');
 	let leftBeforeCap = (1 - autoOptions.huntOptions.huntLimit) * catpower.maxValue;
 	if (catpower.value / catpower.maxValue >= autoOptions.huntOptions.huntLimit || (autoOptions.huntOptions.huntEarly && catpower.value >= (catpower.maxValue - leftBeforeCap) - ((catpower.maxValue - leftBeforeCap) % 100))) {
-		if (autoOptions.huntOptions.craftParchment && gamePage.workshop.getCraft('parchment').unlocked) gamePage.craftAll('parchment');
-		if (autoOptions.huntOptions.craftManuscript && gamePage.workshop.getCraft('manuscript').unlocked) gamePage.craftAll('manuscript');
-		if (autoOptions.huntOptions.craftCompendium && gamePage.workshop.getCraft('compedium').unlocked) gamePage.craftAll('compedium');
-		if (autoOptions.huntOptions.craftBlueprint && gamePage.workshop.getCraft('blueprint').unlocked) gamePage.craftAll('blueprint');
+		if (autoOptions.huntOptions.craftParchment && game.workshop.getCraft('parchment').unlocked) game.craftAll('parchment');
+		if (autoOptions.huntOptions.craftManuscript && game.workshop.getCraft('manuscript').unlocked) game.craftAll('manuscript');
+		if (autoOptions.huntOptions.craftCompendium && game.workshop.getCraft('compedium').unlocked) game.craftAll('compedium');
+		if (autoOptions.huntOptions.craftBlueprint && game.workshop.getCraft('blueprint').unlocked) game.craftAll('blueprint');
 		if (autoOptions.huntOptions.singleHunts) {
-			gamePage.village.huntMultiple(1);
+			game.village.huntMultiple(1);
 		}
 		else {
-			gamePage.village.huntAll();
+			game.village.huntAll();
 		}
 	}
 	if (autoOptions.huntOptions.suppressHuntLog) {
-		gamePage.msg = msgFunc;
+		game.msg = msgFunc;
 	}
 }
 function tryCraft(craftName, amount) {
-	craft = gamePage.workshop.getCraft(craftName);
+	craft = game.workshop.getCraft(craftName);
 	prices = craft.prices;
 	for (let i = 0; i < prices.length; i++) {
-		res = gamePage.resPool.get(prices[i].name);
+		res = game.resPool.get(prices[i].name);
 		if (res.value < prices[i].val * amount) return
 	}
-	gamePage.craft(craftName, amount);
+	game.craft(craftName, amount);
 }
 function calculateCraftAmounts() {
 	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "parchment", "manuscript", "blueprint", "compedium"]
 	for (let i = 0; i < resources.length; i++) {
-		let craft = gamePage.workshop.getCraft(resources[i]);
+		let craft = game.workshop.getCraft(resources[i]);
 		let prices = craft.prices;
 		let amount = 1;
 		for (let j = 0; j < prices.length; j++) {
-			let res = gamePage.resPool.get(prices[j].name);
-			let checkVal = Math.min(res.perTickUI, res.maxValue != 0 ? res.maxValue : res.perTickUI);
+			let res = game.resPool.get(prices[j].name);
+			let checkVal = Math.min((res.perTickUI || res.perTickCached), res.maxValue != 0 ? res.maxValue : (res.perTickUI || perTickCached));
 			if (checkVal > prices[j].val) amount = Math.max(amount, Math.floor(checkVal/prices[j].val))
 		}
 		autoOptions.craftOptions[resources[i]+'Amount'] = amount
@@ -616,21 +616,21 @@ function autoCraft() {
 	if (!autoOptions.autoCraft) return;
 	let resources = [
 		["catnip",   "wood" , "craftWood", true],
-		["wood",     "beam" , "craftBeam", gamePage.science.get('construction').researched],
-		["minerals", "slab" , "craftSlab", gamePage.science.get('construction').researched],
-		["coal",     "steel", "craftSteel", gamePage.science.get('construction').researched],
-		["iron",     "plate", "craftPlate", gamePage.science.get('construction').researched],
-		["titanium", "alloy", "craftAlloy", gamePage.science.get('construction').researched],
-		["culture", "parchment", "craftParchment", gamePage.science.get('construction').researched],
-		["culture", "manuscript", "craftManuscript", gamePage.science.get('construction').researched && (!autoOptions.craftOptions.festivalBuffer || gamePage.resPool.get('parchment').value > 2500 + 25 * autoOptions.craftOptions.manuscriptAmount)],
-		["science", "blueprint", "craftBlueprint", gamePage.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority],
-		["science", "compedium", "craftCompendium", gamePage.science.get('construction').researched],
-		["science", "blueprint", "craftBlueprint", gamePage.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority]
+		["wood",     "beam" , "craftBeam", game.science.get('construction').researched],
+		["minerals", "slab" , "craftSlab", game.science.get('construction').researched],
+		["coal",     "steel", "craftSteel", game.science.get('construction').researched],
+		["iron",     "plate", "craftPlate", game.science.get('construction').researched],
+		["titanium", "alloy", "craftAlloy", game.science.get('construction').researched],
+		["culture", "parchment", "craftParchment", game.science.get('construction').researched],
+		["culture", "manuscript", "craftManuscript", game.science.get('construction').researched && (!autoOptions.craftOptions.festivalBuffer || game.resPool.get('parchment').value > 2500 + 25 * autoOptions.craftOptions.manuscriptAmount)],
+		["science", "blueprint", "craftBlueprint", game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority],
+		["science", "compedium", "craftCompendium", game.science.get('construction').researched],
+		["science", "blueprint", "craftBlueprint", game.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority]
 	];
 	for (let i = 0; i < resources.length; i++) {
-		let curRes = gamePage.resPool.get(resources[i][0]);
+		let curRes = game.resPool.get(resources[i][0]);
 		if (curRes.maxValue == 0) continue;
-		if (resources[i][3] && autoOptions.craftOptions[resources[i][2]] && curRes.value / curRes.maxValue >= autoOptions.craftOptions.craftLimit && gamePage.workshop.getCraft(resources[i][1]).unlocked) {
+		if (resources[i][3] && autoOptions.craftOptions[resources[i][2]] && curRes.value / curRes.maxValue >= autoOptions.craftOptions.craftLimit && game.workshop.getCraft(resources[i][1]).unlocked) {
 			tryCraft(resources[i][1], autoOptions.craftOptions[resources[i][1]+'Amount']);
 		}
 	}
@@ -640,23 +640,23 @@ window.onbeforeunload = function(){
 };
 function autoPray() {
 	if (!autoOptions.autoPray) return;
-	let faith = gamePage.resPool.get('faith');
+	let faith = game.resPool.get('faith');
 	if (faith.value / faith.maxValue >= autoOptions.prayLimit && faith.value > 0.01) {
-		gamePage.religion.praise();
+		game.religion.praise();
 	}
 }
 function autoTrade() {
 	if (!autoOptions.autoTrade || autoOptions.tradeOptions.tradePartner === "") return;
 	let race;
-	let season = ["Spring", "Summer", "Autumn", "Winter"][gamePage.calendar.season];
+	let season = ["Spring", "Summer", "Autumn", "Winter"][game.calendar.season];
 	if (autoOptions.tradeOptions['tradePartner' + season]) {
-		race = gamePage.diplomacy.get(autoOptions.tradeOptions['tradePartner' + season]);
+		race = game.diplomacy.get(autoOptions.tradeOptions['tradePartner' + season]);
 		if (!race.unlocked) {
 			autoOptions.tradeOptions['tradePartner' + season] = "";
 		}
 	}
 	else {
-		race = gamePage.diplomacy.get(autoOptions.tradeOptions.tradePartner);
+		race = game.diplomacy.get(autoOptions.tradeOptions.tradePartner);
 		if (!race.unlocked) {
 			autoOptions.tradeOptions.tradePartner = "";
 		}
@@ -665,33 +665,33 @@ function autoTrade() {
 		saveAutoOptions();
 		return;
 	}
-	let gold = gamePage.resPool.get('gold');
-	if (gamePage.resPool.get(race.buys[0].name).value < race.buys[0].val || gamePage.resPool.get("manpower").value < 50 || gold.value / gold.maxValue < autoOptions.tradeOptions.tradeLimit) {
+	let gold = game.resPool.get('gold');
+	if (game.resPool.get(race.buys[0].name).value < race.buys[0].val || game.resPool.get("manpower").value < 50 || gold.value / gold.maxValue < autoOptions.tradeOptions.tradeLimit) {
 		return;
 	}
-	let msgFunc = gamePage.msg;
+	let msgFunc = game.msg;
 	if (autoOptions.tradeOptions.suppressTradeLog) {
-		gamePage.msg = NOP;
+		game.msg = NOP;
 	}
 	if (autoOptions.tradeOptions['trade' + season]) {
-		gamePage.diplomacy.tradeMultiple(race, Math.max(autoOptions.tradeOptions.tradeCount, 1));
+		game.diplomacy.tradeMultiple(race, Math.max(autoOptions.tradeOptions.tradeCount, 1));
 	}
 	if (autoOptions.tradeOptions.suppressTradeLog) {
-		gamePage.msg = msgFunc;
+		game.msg = msgFunc;
 	}
 }
 function autoFestival() { // FIXME this is not a good implementation
-	if (gamePage.calendar.festivalDays || !autoOptions.autoFestival || !gamePage.science.get('drama').researched) return;
-	let origTab = gamePage.activeTabId;
-	if (!(gamePage.villageTab.festivalBtn && gamePage.villageTab.festivalBtn.onClick && gamePage.villageTab.festivalBtn.visible))
+	if (game.calendar.festivalDays || !autoOptions.autoFestival || !game.science.get('drama').researched) return;
+	let origTab = game.activeTabId;
+	if (!(game.villageTab.festivalBtn && game.villageTab.festivalBtn.onClick && game.villageTab.festivalBtn.visible))
 	{
-		gamePage.activeTabId = gamePage.villageTab.tabId; gamePage.render();
+		game.activeTabId = game.villageTab.tabId; game.render();
 	}
-	if (gamePage.villageTab.festivalBtn.hasResources()) {
-		gamePage.villageTab.festivalBtn.onClick();
+	if (game.villageTab.festivalBtn.hasResources()) {
+		game.villageTab.festivalBtn.onClick();
 	}
-	if (origTab != gamePage.activeTabId) {
-		gamePage.activeTabId = origTab; gamePage.render();
+	if (origTab != game.activeTabId) {
+		game.activeTabId = origTab; game.render();
 	}
 }
 let calculators=[];
@@ -745,17 +745,17 @@ function rebuildCalculatorUI() {
 }
 // Unicorn calculator
 function getZiggurats() {
-	return gamePage.bld.get('ziggurat').val;
+	return game.bld.getBuildingExt('ziggurat').get('val');
 }
 function calculateUnicornBuild() {
-	if (gamePage.bld.get('unicornPasture').val == 0) return 'You need at least one Unicorn Pasture to use this. Send off some hunters!';
+	if (game.bld.getBuildingExt('unicornPasture').get('val') == 0) return 'You need at least one Unicorn Pasture to use this. Send off some hunters!';
 	let ziggurats = getZiggurats();
 	if (ziggurats == 0) return 'You need at least one Ziggurat to use this.';
 	let startUps = calculateEffectiveUps();
 	let details = '';
-	let result = 'Base unicorn production per second: ' + gamePage.getDisplayValue(calculateBaseUps());
-	result += '<br />Rift production per second (amortized): ' + gamePage.getDisplayValue(calculateRiftUps());
-	result += '<br />Current effective unicorn production per second: ' + gamePage.getDisplayValue(startUps);
+	let result = 'Base unicorn production per second: ' + game.getDisplayValue(calculateBaseUps());
+	result += '<br />Rift production per second (amortized): ' + game.getDisplayValue(calculateRiftUps());
+	result += '<br />Current effective unicorn production per second: ' + game.getDisplayValue(startUps);
 	let buildings = ['Unicorn Pasture', 'Unicorn Tomb', 'Ivory Tower', 'Ivory Citadel', 'Sky Palace'];
 	let tears = getTearPrices();
 	let ivory = getIvoryPrices();
@@ -773,19 +773,19 @@ function calculateUnicornBuild() {
 		if (tears[secondBest] / increases[secondBest] > tears[i] / increases[i] && i != best || secondBest == best) {
 			secondBest = i;
 		}
-		details += 'Unicorn/s increase with 1 more ' + buildings[i] + ': ' + gamePage.getDisplayValue(increases[i]);
+		details += 'Unicorn/s increase with 1 more ' + buildings[i] + ': ' + game.getDisplayValue(increases[i]);
 		if (i != 0) {
-			details += '<br />Total unicorns needed: ' + gamePage.getDisplayValueExt(Math.ceil(tears[i] / ziggurats) * 2500);
-			details += ' (' + gamePage.getDisplayValueExt(tears[i]) +' tears, ' + Math.ceil(tears[i] / ziggurats) + ' sacrifice(s))';
+			details += '<br />Total unicorns needed: ' + game.getDisplayValueExt(Math.ceil(tears[i] / ziggurats) * 2500);
+			details += ' (' + game.getDisplayValueExt(tears[i]) +' tears, ' + Math.ceil(tears[i] / ziggurats) + ' sacrifice(s))';
 			details += '<br />'+checkUnicornReserves(tears[i], false, startUps, ivory[i]);
 		}
 		else {
-			details += '<br />Total unicorns needed: ' + gamePage.getDisplayValueExt(tears[i] / ziggurats * 2500);
+			details += '<br />Total unicorns needed: ' + game.getDisplayValueExt(tears[i] / ziggurats * 2500);
 			details += '<br />'+checkUnicornReserves(tears[i] / ziggurats * 2500, true, startUps, ivory[i]);
 		}
-		details += '<br />Tears for 1 extra unicorn/s: ' + gamePage.getDisplayValueExt(tears[i] / increases[i]) + '<br /><br />';
+		details += '<br />Tears for 1 extra unicorn/s: ' + game.getDisplayValueExt(tears[i] / increases[i]) + '<br /><br />';
 	}
-	result += '<br /><br />Best purchase is ' + buildings[best] + ', by a factor of ' + gamePage.getDisplayValue((tears[secondBest] / increases[secondBest]) / (tears[best] / increases[best]));
+	result += '<br /><br />Best purchase is ' + buildings[best] + ', by a factor of ' + game.getDisplayValue((tears[secondBest] / increases[secondBest]) / (tears[best] / increases[best]));
 	if (best != 0) {
 		result += '<br />' + checkUnicornReserves(tears[best], false, startUps, ivory[best]);
 	}
@@ -797,16 +797,16 @@ function calculateUnicornBuild() {
 function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 	let unicornsLeft = 0;
 	if (!isPasture) {
-		let tearsLeft = resNumber - gamePage.resPool.get('tears').value;
+		let tearsLeft = resNumber - game.resPool.get('tears').value;
 		unicornsLeft = 2500 * Math.ceil(tearsLeft / getZiggurats());
 	}
 	else {
 		unicornsLeft = resNumber;
 	}
-	unicornsLeft = unicornsLeft - gamePage.resPool.get('unicorns').value;
-	let ivoryLeft = ivoryNeeded - gamePage.resPool.get('ivory').value;
+	unicornsLeft = unicornsLeft - game.resPool.get('unicorns').value;
+	let ivoryLeft = ivoryNeeded - game.resPool.get('ivory').value;
 	if (unicornsLeft > 0) {
-		return `You need ${gamePage.getDisplayValueExt(unicornsLeft)} more unicorns (approximately ${gamePage.toDisplaySeconds(unicornsLeft/currUps)}) to build this.`;
+		return `You need ${game.getDisplayValueExt(unicornsLeft)} more unicorns (approximately ${game.toDisplaySeconds(unicornsLeft/currUps)}) to build this.`;
 	}
 	if (ivoryLeft > 0){
 		return "You have enough unicorns, but need more ivory to build this.";
@@ -817,14 +817,19 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 }
 function getTearPrices() {
 	let result = [0, 0, 0, 0, 0];
-	let buildings = [gamePage.bld.get('unicornPasture'), gamePage.religion.getZU('unicornTomb'), gamePage.religion.getZU('ivoryTower'), gamePage.religion.getZU('ivoryCitadel'), gamePage.religion.getZU('skyPalace')];
+	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
+	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	for (let i = 0; i < 5; i++) {
-		for (let j = 0; j < buildings[i].prices.length; j++) {
-			if (buildings[i].prices[j].name == 'unicorns') {
-				result[i] = calcPrice(buildings[i].prices[j].val, gamePage.bld.getPriceRatio(buildings[i].name), buildings[i].val) / 2500 * getZiggurats();
+		const prices = getFrom(buildings[i], 'prices');
+		const name = getFrom(building[i], 'name');
+		const val = getFrom(building[i], 'val');
+		const priceRatio = getFrom(building[i], 'priceRatio');
+		for (let j = 0; j < prices.length; j++) {
+			if (prices[j].name == 'unicorns') {
+				result[i] = calcPrice(prices[j].val, game.bld.getPriceRatio(name), val) / 2500 * getZiggurats();
 			}
 			else if (buildings[i].prices[j].name == 'tears') {
-				result[i] = calcPrice(buildings[i].prices[j].val, buildings[i].priceRatio, buildings[i].val);
+				result[i] = calcPrice(prices[j].val, priceRatio, val);
 			}
 		}
 	}
@@ -832,11 +837,14 @@ function getTearPrices() {
 }
 function getIvoryPrices() {
 	let result = [0, 0, 0, 0, 0];
-	let buildings = [gamePage.bld.get('unicornPasture'), gamePage.religion.getZU('unicornTomb'), gamePage.religion.getZU('ivoryTower'), gamePage.religion.getZU('ivoryCitadel'), gamePage.religion.getZU('skyPalace')];
+	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
 	for (let i = 0; i < 5; i++) {
-		for (let j = 0; j < buildings[i].prices.length; j++) {
-			if (buildings[i].prices[j].name == 'ivory') {
-				result[i] = calcPrice(buildings[i].prices[j].val, buildings[i].priceRatio, buildings[i].val);
+		const prices = getFrom(buildings[i], 'prices');
+		const val = getFrom(building[i], 'val');
+		const priceRatio = getFrom(building[i], 'priceRatio');
+		for (let j = 0; j < prices.length; j++) {
+			if (prices[j].name == 'ivory') {
+				result[i] = calcPrice(prices[j].val, priceRatio, val);
 			}
 		}
 	}
@@ -850,32 +858,32 @@ function calcPrice(base, ratio, num) {
 }
 function calculateBaseUps(extras) {
 	extras = extras || [];
-	let pastures = gamePage.bld.get('unicornPasture').val + (extras[0] || 0);
-	let baseUps = pastures * gamePage.bld.get('unicornPasture').effects['unicornsPerTickBase'] * gamePage.rate;
-	let tombs = gamePage.religion.getZU('unicornTomb').val + (extras[1] || 0);
-	let towers = gamePage.religion.getZU('ivoryTower').val + (extras[2] || 0);
-	let citadels = gamePage.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
-	let palaces = gamePage.religion.getZU('skyPalace').val + (extras[4] || 0);
-	let tombEffect = gamePage.religion.getZU('unicornTomb').effects['unicornsRatio'];
-	let towerEffect = gamePage.religion.getZU('ivoryTower').effects['unicornsRatio'];
-	let citadelEffect = gamePage.religion.getZU('ivoryCitadel').effects['unicornsRatio'];
-	let palaceEffect = gamePage.religion.getZU('skyPalace').effects['unicornsRatio'];
+	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0);
+	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate;
+	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0);
+	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0);
+	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
+	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
+	let tombEffect = game.religion.getZU('unicornTomb').effects['unicornsRatio'];
+	let towerEffect = game.religion.getZU('ivoryTower').effects['unicornsRatio'];
+	let citadelEffect = game.religion.getZU('ivoryCitadel').effects['unicornsRatio'];
+	let palaceEffect = game.religion.getZU('skyPalace').effects['unicornsRatio'];
 	let bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces;
 	let faithEffect = 1;
-	if (gamePage.religion.getRU("solarRevolution").researched){
-		faithEffect += gamePage.religion.getProductionBonus() / 100;
+	if (game.religion.getRU("solarRevolution").researched){
+		faithEffect += game.religion.getProductionBonus() / 100;
 	}
-	let paragonRatio = gamePage.resPool.get("paragon").value * 0.01;
-	paragonRatio = 1 + gamePage.bld.getHyperbolicEffect(paragonRatio, 2);
+	let paragonRatio = game.resPool.get("paragon").value * 0.01;
+	paragonRatio = 1 + game.bld.getHyperbolicEffect(paragonRatio, 2);
 	return baseUps * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
 	extras = extras || [];
 	let unicornChanceRatio = 1;
-	if (gamePage.prestige.getPerk("unicornmancy").researched) {
+	if (game.prestige.getPerk("unicornmancy").researched) {
 		unicornChanceRatio = 1.1;
 	}
-	return Math.min(500, 0.25 * unicornChanceRatio * (gamePage.religion.getZU('ivoryTower').val + (extras[2] || 0))) * gamePage.calendar.dayPerTick * gamePage.rate;
+	return Math.min(500, 0.25 * unicornChanceRatio * (game.religion.getZU('ivoryTower').val + (extras[2] || 0))) * game.calendar.dayPerTick * game.rate;
 }
 function calculateEffectiveUps(extras) {
 	return calculateBaseUps(extras) + calculateRiftUps(extras);
@@ -891,34 +899,34 @@ function buildingCalculator() {
 	let result = '';
 	result += '<select id="buildingPriceSelector" oninput="calculateBuildingPrice()">';
 	result += '<optgroup label="Buildings">';
-	let buildings = gamePage.bld.buildingsData.slice(0);
+	let buildings = game.bld.buildingsData.slice(0);
 	buildings.sort(bldLabelCmp);
 	for (let i = 0; i < buildings.length; i++) {
 		if (buildings[i].unlocked) {
 			result += '<option value="bld_' + buildings[i].name + '">' + getBldLabel(buildings[i]) + '</option>';
 		}
 	}
-	if (gamePage.religionTab.visible) {
+	if (game.religionTab.visible) {
 		result += '</optgroup><optgroup label="Religion">';
-		let religion = gamePage.religion.religionUpgrades.slice(0);
+		let religion = game.religion.religionUpgrades.slice(0);
 		religion.sort(function(a, b){return a.label.localeCompare(b.label)});
 		for (let i = 0; i < religion.length; i++) {
-			if (gamePage.religion.faith >= religion[i].faith && religion[i].upgradable) {
+			if (game.religion.faith >= religion[i].faith && religion[i].upgradable) {
 				result += '<option value="RU_' + religion[i].name + '">' + religion[i].label + '</option>';
 			}
 		}
 	}
-	if (gamePage.bld.get('ziggurat').val>0) {
+	if (game.bld.getBuildingExt('ziggurat').get('val') > 0) {
 		result += '</optgroup><optgroup label="Ziggurats">';
-		let religion = gamePage.religion.zigguratUpgrades.slice(0);
+		let religion = game.religion.zigguratUpgrades.slice(0);
 		religion.sort(function(a, b){return a.label.localeCompare(b.label)});
 		for (let i = 0; i < religion.length; i++) {
 			result += '<option value="ZU_' + religion[i].name + '">' + religion[i].label + '</option>';
 		}
 	}
-	if (gamePage.spaceTab.visible) {
+	if (game.spaceTab.visible) {
 		result += '</optgroup><optgroup label="Space">';
-		let space = gamePage.space.programs.slice(0);
+		let space = game.space.programs.slice(0);
 		space.sort(function(a, b){return a.title.localeCompare(b.title)});
 		for (let i = 0; i < space.length; i++) {
 			if (space[i].unlocked && space[i].upgradable) {
@@ -931,45 +939,46 @@ function buildingCalculator() {
 	return result;
 }
 function calculateBuildingPrice() {
+	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	let priceContainer = document.getElementById('buildingPriceHolder');
 	let bldName = $('#buildingPriceSelector').val().split('_');
 	let bld;
 	let priceRatio = 1;
 	switch (bldName[0]) {
 		case 'bld':
-			bld = gamePage.bld.get(bldName[1]);
-			priceRatio = gamePage.bld.getPriceRatio(bldName[1]);
+			bld = game.bld.getBuildingExt(bldName[1]);
+			priceRatio = game.bld.getPriceRatio(bldName[1]);
 			break;
 		case 'RU':
-			bld = gamePage.religion.getRU(bldName[1]);
+			bld = game.religion.getRU(bldName[1]);
 			priceRatio = bld.priceRatio;
 			break;
 		case 'ZU':
-			bld = gamePage.religion.getZU(bldName[1]);
+			bld = game.religion.getZU(bldName[1]);
 			priceRatio = bld.priceRatio;
 			break;
 		case 'space':
-			bld = gamePage.space.getProgram(bldName[1]);
+			bld = game.space.getProgram(bldName[1]);
 			priceRatio = bld.priceRatio;
 			break;
 	}
 	let prices;
-	if(typeof(bld.stages) !== 'undefined') prices = bld.stages[bld.stage || 0].prices;
-	else prices = bld.prices;
+	if(typeof(bld.stages) !== 'undefined') prices = getFrom(bld, 'stages')[getFrom(bld, 'stage') || 0].prices;
+	else prices = getFrom(bld, 'prices');
 	let number = Math.floor(tryNumericParse($('#buildingPriceNumber').val()));
 	let maxNum = Infinity;
 	for (let i = 0; i < prices.length; i++) {
-		let resLimit = bld.val;
-		let res = gamePage.resPool.get(prices[i].name);
+		let resLimit = getFrom(bld, 'val');
+		let res = game.resPool.get(prices[i].name);
 		if ((res.maxValue || 0) == 0) continue;
 		if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 			let reductionRatio = 0;
-			if (prices[i].name == "oil") reductionRatio = gamePage.bld.getHyperbolicEffect(gamePage.space.getEffect("oilReductionRatio"), 0.75);
+			if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
 			if (res.maxValue > prices[i].val * (1 - reductionRatio)) resLimit = maxNum;
 			else resLimit = 0;
 		}
 		else {
-			for (let j = bld.val; ; j++) {
+			for (let j = getFrom(bld, 'val'); ; j++) {
 				if (calcPrice(prices[i].val, priceRatio, j) > res.maxValue) {
 					resLimit = j;
 					break;
@@ -981,34 +990,34 @@ function calculateBuildingPrice() {
 	let result = '';
 	if (maxNum != Infinity) result += `With your current resource caps, you can build up to ${maxNum} (${maxNum-bld.val} more) of this building.<br />`;
 	if (number > 0) {
-		result += `Price for ${(bld.label || bld.title || bld.stages[bld.stage || 0].label)} #${number} will be:<br />`;
+		result += `Price for ${(getFrom(bld, 'label') || getFrom(bld, 'title') || getFrom(bld, 'stages')[getFrom(bld, 'stage') || 0].label)} #${number} will be:<br />`;
 		for (let i = 0; i < prices.length; i++) {
 			let finalPrice;
 			if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 				let reductionRatio = 0;
-				if (prices[i].name == "oil") reductionRatio = gamePage.bld.getHyperbolicEffect(gamePage.space.getEffect("oilReductionRatio"), 0.75);
+				if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
 				finalPrice = prices[i].val * (1 - reductionRatio);
 			}
 			else finalPrice = calcPrice(prices[i].val, priceRatio, number - 1);
-			let res = gamePage.resPool.get(prices[i].name);
-			result += (res.title || res.name) + ': ' + gamePage.getDisplayValueExt(finalPrice) + '<br />';
+			let res = game.resPool.get(prices[i].name);
+			result += (res.title || res.name) + ': ' + game.getDisplayValueExt(finalPrice) + '<br />';
 		}
-		if (bld.val < number) {
+		if (getFrom(bld, 'val') < number) {
 			result += '<br />Cumulative resources required to reach this:<br />';
 			for (let i = 0; i < prices.length; i++) {
 				let price = 0;
 				if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 					let reductionRatio = 0;
-					if (prices[i].name == "oil") reductionRatio = gamePage.bld.getHyperbolicEffect(gamePage.space.getEffect("oilReductionRatio"), 0.75);
-					price = prices[i].val  * (1 - reductionRatio) * (number - bld.val);
+					if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
+					price = prices[i].val  * (1 - reductionRatio) * (number - getFrom(bld, 'val'));
 				}
 				else {
-					for (let j = bld.val; j < number; j++) {
+					for (let j = getFrom(bld, 'val'); j < number; j++) {
 						price += calcPrice(prices[i].val, priceRatio, j);
 					}
 				}
-				let res = gamePage.resPool.get(prices[i].name);
-				result += (res.title || res.name) + ': ' + gamePage.getDisplayValueExt(price) + '<br />';
+				let res = game.resPool.get(prices[i].name);
+				result += (res.title || res.name) + ': ' + game.getDisplayValueExt(price) + '<br />';
 			}
 		}
 	}
@@ -1016,37 +1025,37 @@ function calculateBuildingPrice() {
 }
 // Mint/hunter efficiency calculator
 function mintCalculator() {
-	let hunterRatio = gamePage.workshop.getEffect("hunterRatio");
-	let expectedFurs = 32.5 * (hunterRatio + 1);
-	let expectedIvory = 20 * (hunterRatio + 1);
+	let hunterRatio = game.getEffect("hunterRatio") + game.village.getEffectLeader("manager", 0);;
+	let expectedFursFromHunts = 32.5 * (hunterRatio + 1);
+	let expectedIvoryFromHunts = 20 * (hunterRatio + 1);
 	if (2 * hunterRatio < 55) {
-		expectedIvory *= 1 - (55 - 2 * hunterRatio) / 100;
+		expectedIvoryFromHunts *= 1 - (55 - 2 * hunterRatio) / 100;
 	}
-	let catpower = gamePage.resPool.get("manpower");
-	let catpowerRate = catpower.perTickUI * 5;
-	let huntTime = 100 / catpowerRate;
-	let huntTimeWithMint = 100 / (catpowerRate - 3.75);
-	let fpsNormal = expectedFurs / huntTime;
-	let ipsNormal = expectedIvory / huntTime;
-	let fpsWithMint = expectedFurs / huntTimeWithMint;
-	let ipsWithMint = expectedIvory / huntTimeWithMint;
-	let cpratio = (catpower.maxValue * gamePage.bld.get("mint").effects["mintEffect"]) / 100;
-	let fpsFromMint = cpratio * 1.25 * 5;
-	let ipsFromMint = cpratio * 0.3 * 5;
-	let mintsRunning = gamePage.bld.get('mint').on;
-	fpsNormal += fpsFromMint * mintsRunning;
-	ipsNormal += ipsFromMint * mintsRunning;
-	fpsWithMint += fpsFromMint * mintsRunning;
-	ipsWithMint += ipsFromMint * mintsRunning;
+	const mintBuildingData = game.bld.getBuildingExt('mint');
+	let catpower = game.resPool.get("manpower");
+	let catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
+	let catpowerRateWithMints = ((catpower.perTickUI || catpower.perTickCached) + mintBuildingData.get('effects').manpowerPerTickCon) * game.ticksPerSecond;
+	let huntTimeWithoutMint = 100 / catpowerRateBase;
+	let huntTimeWithMint = 100 / catpowerRateWithMints;
+	let fpsHuntsNoMints = expectedFursFromHunts / huntTimeWithoutMint;
+	let ipsHuntsNoMints = expectedIvoryFromHunts / huntTimeWithoutMint;
+	let fpsHuntsWithMint = expectedFursFromHunts / huntTimeWithMint;
+	let ipsHuntsWithMint = expectedIvoryFromHunts / huntTimeWithMint;
+	let mintsRunning = mintBuildingData.get('on');
+	let fpsFromMint = mintBuildingData.get('effects').fursPerTickProd * mintsRunning * game.ticksPerSecond;
+	let ipsFromMint = mintBuildingData.get('effects').ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
+	fpsHuntsWithMint += fpsFromMint;
+	ipsHuntsWithMint += ipsFromMint;
 	let result = "";
-	result += "Average furs per hunt: " + gamePage.getDisplayValue(expectedFurs);
-	result += "<br />Average ivory per hunt: " + gamePage.getDisplayValue(expectedIvory);
-	result += "<br />Average time between hunts: " + gamePage.getDisplayValue(huntTime);
-	result += "<br />Approximate furs per second: " + gamePage.getDisplayValue(fpsNormal);
-	result += "<br />Approximate ivory per second: " + gamePage.getDisplayValue(ipsNormal);
-	result += "<br /><br />With extra mint running:<br />Approximate furs per second: " + gamePage.getDisplayValue(fpsWithMint + fpsFromMint);
-	result += "<br />Approximate ivory per second: " + gamePage.getDisplayValue(ipsWithMint + ipsFromMint);
-	result += "<br /><br />Profit from extra mint:<br />Furs per second: " + gamePage.getDisplayValue(fpsFromMint + fpsWithMint - fpsNormal);
-	result += "<br />Ivory per second: " + gamePage.getDisplayValue(ipsFromMint + ipsWithMint - ipsNormal);
+	result += "Average furs per hunt: " + game.getDisplayValue(expectedFursFromHunts);
+	result += "<br />Average ivory per hunt: " + game.getDisplayValue(expectedIvoryFromHunts);
+	result += "<br />Average time between hunts (hunts, no mints): " + game.getDisplayValue(huntTimeWithoutMint) + ' sec';
+	result += "<br />Approximate furs per second (hunts, no mints): " + game.getDisplayValue(fpsHuntsNoMints);
+	result += "<br />Approximate ivory per second (hunts, no mints): " + game.getDisplayValue(ipsHuntsNoMints);
+	result += `<br />Approximate furs per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
+	result += `<br />Approximate ivory per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
+	result += `<br /><br />Profit from ${mintsRunning} running mint${mintsRunning == 1 ? '' : 's'}:`;
+	result += "<br />Furs per second: " + game.getDisplayValue((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
+	result += "<br />Ivory per second: " + game.getDisplayValue((ipsFromMint + ipsHuntsWithMint) - ipsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
 	return result;
 }
