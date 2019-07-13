@@ -505,7 +505,7 @@ function fillTable() {
 		resources.sort((a, b) => { return b.time - a.time; });
 	}
 	for (let i = 0; i < resources.length; i++) {
-		r = resources[i];
+		let r = resources[i];
 		let name = r.name;
 		let title = r.title;
 		if (r.perTickUI !== 0) {
@@ -520,12 +520,12 @@ function fillTable() {
 					contents += formatTableRow(name, title, game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate)));
 				}
 				else if (r.perTickUI < 0) {
-					contents += formatTableRow(name, title, -game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
+					contents += formatTableRow(name, title, '-' + game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
 				}
 				else contents += formatTableRow(name, title, "Err1"); // value > 0 && value < maxValue && (perTickUI || perTickCached) == 0
 			}
 			else if (r.value > 0 && r.perTickUI < 0) {
-				contents += formatTableRow(name, title, -game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
+				contents += formatTableRow(name, title, '-' + game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate)));
 			}
 		}
 		//else contents += formatTableRow(name, title, "Steady");
@@ -588,11 +588,11 @@ function autoHunt() {
 	}
 }
 function tryCraft(craftName, amount) {
-	craft = game.workshop.getCraft(craftName);
-	prices = craft.prices;
+	let craft = game.workshop.getCraft(craftName);
+	let prices = craft.prices;
 	for (let i = 0; i < prices.length; i++) {
-		res = game.resPool.get(prices[i].name);
-		if (res.value < prices[i].val * amount) return
+		let res = game.resPool.get(prices[i].name);
+		if (res.value < prices[i].val * amount) return;
 	}
 	game.craft(craftName, amount);
 }
