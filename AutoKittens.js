@@ -317,11 +317,15 @@ function shortTimeFormat(secondsRaw) {
 	let parts = [];
 	[1, 60, 60, 24, 7].map((v, i, s) => {
 		if (i) {
-			for (let n = 0; n < i; n++) v = v * s[i - 1];
+			for (let n = 0; n < i; n++) {
+				v = v * s[n];
+			}
 		}
 		return v;
 	}).reverse().forEach((secsForPart, currPart, secAmounts) => {
-		parts.push(Math.floor((sec_num - (currPart ? parts[currPart - 1] * secAmounts[currPart - 1] : 0)) / secsForPart));
+		let secondsLeft = sec_num;
+		if (currPart > 0) secondsLeft = sec_num - parts.slice(0, currPart).reduce((acc, countOfUnit, unitIndex) => { return acc + countOfUnit * secAmounts[unitIndex] }, 0);
+		parts.push(Math.floor(secondsLeft / secsForPart));
 	});
 	while (!parts[0]) parts.shift();
 	return parts.map(s => ('' + s).padStart(2, 0)).join(':');
