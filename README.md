@@ -19,4 +19,6 @@ You can either copy the contents of the script into your browser console on the 
 
 	javascript:(function(){var d=document,s=d.createElement('script');s.src='https://princessrtfm.github.io/AutoKittens/AutoKittens.js';d.body.appendChild(s);})();
 
+Please note, if you use a script blocker (uMatrix, NoScript, etc), you may need to allow script loading from `princessrtfm.github.io` for this to work!
+
 If you want to use some other method of injection, the script is available via [Github Pages](https://princessrtfm.github.io/AutoKittens/AutoKittens.js). 
