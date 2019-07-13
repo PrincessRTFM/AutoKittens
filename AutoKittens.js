@@ -314,6 +314,18 @@ function changeTimeFormat() {
 let defaultTimeFormat = game.toDisplaySeconds;
 function shortTimeFormat(secondsRaw) {
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
+	let parts = [];
+	[1, 60, 60, 24, 7].map((v, i, s) => {
+		if (i) {
+			for (let n = 0; n < i; n++) v = v * s[i - 1];
+		}
+		return v;
+	}).reverse().forEach((secsForPart, currPart, secAmounts) => {
+		parts.push(Math.floor((sec_num - (currPart ? parts[currPart - 1] * secAmounts[currPart - 1] : 0)) / secsForPart));
+	});
+	while (!parts[0]) parts.shift();
+	return parts.map(s => ('' + s).padStart(2, 0)).join(':');
+	/*
 	let hours = Math.floor(sec_num / 3600);
 	let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
 	let seconds = sec_num - (hours * 3600) - (minutes * 60);
@@ -323,6 +335,7 @@ function shortTimeFormat(secondsRaw) {
 	}
 	timeFormated += (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds + "";
 	return timeFormated;
+	*/
 }
 function rawSecondsFormat(secondsRaw) {
 	return parseInt(secondsRaw, 10) + "s";
