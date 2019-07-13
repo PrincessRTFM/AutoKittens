@@ -15,8 +15,8 @@ AutoKittens is an automation assistant script for the [Kittens Game](http://bloo
 The [original AutoKittens script](http://birdiesoft.dk/autokittens.php) (author not actually known) was a brilliant piece of work, but it is sadly no longer properly functional. The internals were written on what are now thoroughly outdated conventions, and the game has undergone script-breaking UI changes since. This is an update to modern JS, as well as a fix of the various bugs (internal and visible ones both) that rendered it effectively unusable.
 
 ## How do I use it?
-You can either copy the contents of the script into your browser console on the game page (not recommended) or we can take a page out from [ScriptKitties](https://github.com/MaPaul1977/KittensGame) and use a scriptlet bookmark - just save this as a bookmark and click on it (once!) on the game page:
+You can either copy the contents of the script into your browser console on the game page (not recommended) or we can borrow a page from [ScriptKitties](https://github.com/MaPaul1977/KittensGame) and use a scriptlet bookmark - just save this as a bookmark and click on it (once!) on the game page:
 
-	javascript:(function(){var d=document,s=d.createElement('script');s.src='https://rawgit.com/PrincessRTFM/AutoKittens/master/AutoKittens.js';d.body.appendChild(s);})();
+	javascript:(function(){var d=document,s=d.createElement('script');s.src='https://princessrtfm.github.io/AutoKittens/AutoKittens.js';d.body.appendChild(s);})();
 
-If you want to use some other method of injection, the script is available via [rawgit](https://rawgit.com/PrincessRTFM/AutoKittens/master/AutoKittens.js). 
+If you want to use some other method of injection, the script is available via [Github Pages](https://princessrtfm.github.io/AutoKittens/AutoKittens.js). 
