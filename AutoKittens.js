@@ -597,17 +597,17 @@ function tryCraft(craftName, amount) {
 	game.craft(craftName, amount);
 }
 function calculateCraftAmounts() {
-	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "parchment", "manuscript", "blueprint", "compedium"]
+	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "parchment", "manuscript", "blueprint", "compedium"];
 	for (let i = 0; i < resources.length; i++) {
 		let craft = game.workshop.getCraft(resources[i]);
 		let prices = craft.prices;
 		let amount = 1;
 		for (let j = 0; j < prices.length; j++) {
 			let res = game.resPool.get(prices[j].name);
-			let checkVal = Math.min((res.perTickUI || res.perTickCached), res.maxValue != 0 ? res.maxValue : (res.perTickUI || perTickCached));
-			if (checkVal > prices[j].val) amount = Math.max(amount, Math.floor(checkVal/prices[j].val))
+			let checkVal = Math.min((res.perTickUI || res.perTickCached), res.maxValue != 0 ? res.maxValue : (res.perTickUI || res.perTickCached));
+			if (checkVal > prices[j].val) amount = Math.max(amount, Math.floor(checkVal/prices[j].val));
 		}
-		autoOptions.craftOptions[resources[i]+'Amount'] = amount
+		autoOptions.craftOptions[resources[i]+'Amount'] = amount;
 	}
 	saveAutoOptions();
 	updateOptionsUI();
