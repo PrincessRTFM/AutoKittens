@@ -841,10 +841,11 @@ function getTearPrices() {
 function getIvoryPrices() {
 	let result = [0, 0, 0, 0, 0];
 	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
+	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	for (let i = 0; i < 5; i++) {
 		const prices = getFrom(buildings[i], 'prices');
-		const val = getFrom(building[i], 'val');
-		const priceRatio = getFrom(building[i], 'priceRatio');
+		const val = getFrom(buildings[i], 'val');
+		const priceRatio = getFrom(buildings[i], 'priceRatio');
 		for (let j = 0; j < prices.length; j++) {
 			if (prices[j].name == 'ivory') {
 				result[i] = calcPrice(prices[j].val, priceRatio, val);
