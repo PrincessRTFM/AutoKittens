@@ -1050,17 +1050,20 @@ function mintCalculator() {
 	let ipsFromMint = mintBuildingData.get('effects').ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
 	fpsHuntsWithMint += fpsFromMint;
 	ipsHuntsWithMint += ipsFromMint;
+	let fpsProfitWithMints = (fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints;
+	let ipsProfitWithMints = (ipsFromMint + ipsHuntsWithMint) - ipsHuntsNoMints;
 	let result = "";
 	result += "Average furs per hunt: " + game.getDisplayValue(expectedFursFromHunts);
 	result += "<br />Average ivory per hunt: " + game.getDisplayValue(expectedIvoryFromHunts);
-	result += "<br />Average time between hunts (hunts, no mints): " + game.getDisplayValue(huntTimeWithoutMint) + ' sec';
+	result += "<br />Average time between hunts (no mints): " + game.getDisplayValue(huntTimeWithoutMint) + ' sec';
 	result += "<br />Approximate furs per second (hunts, no mints): " + game.getDisplayValue(fpsHuntsNoMints);
 	result += "<br />Approximate ivory per second (hunts, no mints): " + game.getDisplayValue(ipsHuntsNoMints);
+	result += `<br />Average time between hunts (${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(huntTimeWithMint);
 	result += `<br />Approximate furs per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
 	result += `<br />Approximate ivory per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
 	result += `<br /><br />Profit from ${mintsRunning} running mint${mintsRunning == 1 ? '' : 's'}:`;
-	result += "<br />Furs per second: " + game.getDisplayValue((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
-	result += "<br />Ivory per second: " + game.getDisplayValue((ipsFromMint + ipsHuntsWithMint) - ipsHuntsNoMints) + ((fpsFromMint + fpsHuntsWithMint) - fpsHuntsNoMints ? ' (LOSS)' : '');
+	result += "<br />Furs per second: " + game.getDisplayValue(fpsProfitWithMints) + (fpsProfitWithMints ? ' (LOSS)' : '');
+	result += "<br />Ivory per second: " + game.getDisplayValue(ipsProfitWithMints) + (ipsProfitWithMints ? ' (LOSS)' : '');
 	return result;
 }
 
