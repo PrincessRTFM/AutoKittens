@@ -413,8 +413,8 @@ function shortTimeFormat(secondsRaw) {
 	let minutes = Math.floor((sec_num % 3600) / 60);
 	let seconds = sec_num % 60;
 	let timeFormated = "";
-	if (days) timeFormatted += days + ':';
-	if (timeFormatted) timeFormated += hours.padStart(2, 0) + ":";
+	if (days) timeFormated += days + ':';
+	if (timeFormated) timeFormated += hours.padStart(2, 0) + ":";
 	else if (hours) timeFormated += hours + ":";
 	timeFormated += ('' + minutes).padStart(2, 0) + ":" + ('' + seconds).padStart(2, 0);
 	return timeFormated;
