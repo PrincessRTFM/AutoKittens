@@ -1036,16 +1036,16 @@ function mintCalculator() {
 		expectedIvoryFromHunts *= 1 - (55 - 2 * hunterRatio) / 100;
 	}
 	const mintBuildingData = game.bld.getBuildingExt('mint');
+	let mintsRunning = mintBuildingData.get('on');
 	let catpower = game.resPool.get("manpower");
 	let catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
-	let catpowerRateWithMints = ((catpower.perTickUI || catpower.perTickCached) + mintBuildingData.get('effects').manpowerPerTickCon) * game.ticksPerSecond;
+	let catpowerRateWithMints = ((catpower.perTickUI || catpower.perTickCached) + mintBuildingData.get('effects').manpowerPerTickCon * mintsRunning) * game.ticksPerSecond;
 	let huntTimeWithoutMint = 100 / catpowerRateBase;
 	let huntTimeWithMint = 100 / catpowerRateWithMints;
 	let fpsHuntsNoMints = expectedFursFromHunts / huntTimeWithoutMint;
 	let ipsHuntsNoMints = expectedIvoryFromHunts / huntTimeWithoutMint;
 	let fpsHuntsWithMint = expectedFursFromHunts / huntTimeWithMint;
 	let ipsHuntsWithMint = expectedIvoryFromHunts / huntTimeWithMint;
-	let mintsRunning = mintBuildingData.get('on');
 	let fpsFromMint = mintBuildingData.get('effects').fursPerTickProd * mintsRunning * game.ticksPerSecond;
 	let ipsFromMint = mintBuildingData.get('effects').ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
 	fpsHuntsWithMint += fpsFromMint;
