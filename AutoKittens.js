@@ -824,9 +824,9 @@ function getTearPrices() {
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	for (let i = 0; i < 5; i++) {
 		const prices = getFrom(buildings[i], 'prices');
-		const name = getFrom(building[i], 'name');
-		const val = getFrom(building[i], 'val');
-		const priceRatio = getFrom(building[i], 'priceRatio');
+		const name = getFrom(buildings[i], 'name');
+		const val = getFrom(buildings[i], 'val');
+		const priceRatio = getFrom(buildings[i], 'priceRatio');
 		for (let j = 0; j < prices.length; j++) {
 			if (prices[j].name == 'unicorns') {
 				result[i] = calcPrice(prices[j].val, game.bld.getPriceRatio(name), val) / 2500 * getZiggurats();
