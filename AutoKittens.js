@@ -393,7 +393,7 @@ function changeTimeFormat() {
 }
 function shortTimeFormat(secondsRaw) {
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
-	let parts = [];
+	/*let parts = [];
 	[1, 60, 60, 24].map((v, i, s) => {
 		if (i) {
 			for (let n = 0; n < i; n++) {
@@ -407,18 +407,17 @@ function shortTimeFormat(secondsRaw) {
 		parts.push(Math.floor(secondsLeft / secsForPart));
 	});
 	while (!parts[0]) parts.shift();
-	return parts.map(s => ('' + s).padStart(2, 0)).join(':');
-	/*
-	let hours = Math.floor(sec_num / 3600);
-	let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-	let seconds = sec_num - (hours * 3600) - (minutes * 60);
+	return parts.map(s => ('' + s).padStart(2, 0)).join(':');*/
+	let days = Math.floor(sec_num / 86400);
+	let hours = Math.floor((sec_num % 86400) / 3600);
+	let minutes = Math.floor((sec_num % 3600) / 60);
+	let seconds = sec_num % 60;
 	let timeFormated = "";
-	if (hours) {
-		timeFormated = hours + ":";
-	}
-	timeFormated += (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds + "";
+	if (days) timeFormatted += days + ':';
+	if (timeFormatted) timeFormated += hours.padStart(2, 0) + ":";
+	else if (hours) timeFormated += hours + ":";
+	timeFormated += ('' + minutes).padStart(2, 0) + ":" + ('' + seconds).padStart(2, 0);
 	return timeFormated;
-	*/
 }
 function rawSecondsFormat(secondsRaw) {
 	return parseInt(secondsRaw, 10) + "s";
@@ -752,9 +751,9 @@ function getZiggurats() {
 	return game.bld.getBuildingExt('ziggurat').get('val');
 }
 function calculateUnicornBuild() {
-	if (game.bld.getBuildingExt('unicornPasture').get('val') == 0) return 'You need at least one Unicorn Pasture to use this. Send off some hunters!';
+	if (game.bld.getBuildingExt('unicornPasture').get('val') == 0) return ['You need at least one Unicorn Pasture to use this. Send off some hunters!', 'Without unicorns and ziggurats, nothing can be calculated here.'];
 	let ziggurats = getZiggurats();
-	if (ziggurats == 0) return 'You need at least one Ziggurat to use this.';
+	if (ziggurats == 0) return ['You need at least one Ziggurat to use this.', 'Until you have ziggurats, nothing can be calculated here.'];
 	let startUps = calculateEffectiveUps();
 	let details = '';
 	let result = 'Base unicorn production per second: ' + game.getDisplayValue(calculateBaseUps());
@@ -878,7 +877,7 @@ function calculateBaseUps(extras) {
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
 	let paragonRatio = game.resPool.get("paragon").value * 0.01;
-	paragonRatio = 1 + game.bld.getHyperbolicEffect(paragonRatio, 2);
+	paragonRatio = 1 + game.getHyperbolicEffect(paragonRatio, 2);
 	return baseUps * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
@@ -977,7 +976,7 @@ function calculateBuildingPrice() {
 		if ((res.maxValue || 0) == 0) continue;
 		if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 			let reductionRatio = 0;
-			if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
+			if (prices[i].name == "oil") reductionRatio = game.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
 			if (res.maxValue > prices[i].val * (1 - reductionRatio)) resLimit = maxNum;
 			else resLimit = 0;
 		}
@@ -999,7 +998,7 @@ function calculateBuildingPrice() {
 			let finalPrice;
 			if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 				let reductionRatio = 0;
-				if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
+				if (prices[i].name == "oil") reductionRatio = game.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
 				finalPrice = prices[i].val * (1 - reductionRatio);
 			}
 			else finalPrice = calcPrice(prices[i].val, priceRatio, number - 1);
@@ -1012,7 +1011,7 @@ function calculateBuildingPrice() {
 				let price = 0;
 				if (bldName[0] == 'space' && (prices[i].name == "oil" || prices[i].name == "rocket")) {
 					let reductionRatio = 0;
-					if (prices[i].name == "oil") reductionRatio = game.bld.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
+					if (prices[i].name == "oil") reductionRatio = game.getHyperbolicEffect(game.space.getEffect("oilReductionRatio"), 0.75);
 					price = prices[i].val  * (1 - reductionRatio) * (number - getFrom(bld, 'val'));
 				}
 				else {
