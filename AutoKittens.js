@@ -11,7 +11,6 @@ let checkInterval = 200;
 
 const NOP = function() {};
 function setArbitrarilyDeepObject(location, value, initialTarget) {
-	"use strict";
 	// jshint browser:true
 	let target = initialTarget || window;
 	if (Array.isArray(location)) {
@@ -29,7 +28,6 @@ function setArbitrarilyDeepObject(location, value, initialTarget) {
 	target[lastPoint] = value;
 }
 function wrapCallback(trigger) {
-	"use strict";
 	// jshint browser:true, devel:true
 	if (typeof trigger == 'function') {
 		return trigger;
@@ -46,23 +44,19 @@ function wrapCallback(trigger) {
 	return NOP;
 }
 function runCallback(callback, ...args) {
-	"use strict";
 	return wrapCallback(callback)(...args);
 }
 function tryNumericParse(value) {
-	"use strict";
 	let newVal = parseFloat(value);
 	return !isNaN(newVal) && isFinite(newVal) && newVal > 0 ? newVal : 0;
 }
 function tryNumericSet(collection, attrName, value) {
-	"use strict";
 	let newVal = parseFloat(value);
 	if (!isNaN(newVal) && isFinite(newVal) && newVal > 0) {
 		setArbitrarilyDeepObject([collection, attrName], newVal);
 	}
 }
 function copyObject(source, target) {
-	"use strict";
 	for (let attrname in source) {
 		if (typeof source[attrname] === "object") {
 			if (typeof target[attrname] === "undefined") {
@@ -82,23 +76,19 @@ function copyObject(source, target) {
 }
 
 function calcPrice(base, ratio, num) {
-	"use strict";
 	for (let i = 0; i < num; i++) {
 		base *= ratio;
 	}
 	return base;
 }
 function getBldLabel(a) {
-	"use strict";
 	return typeof a.label !== 'undefined' ? a.label : a.stages[a.stage || 0].label;
 }
 function bldLabelCmp(a, b) {
-	"use strict";
 	return getBldLabel(a).localeCompare(getBldLabel(b));
 }
 
 function shortTimeFormat(secondsRaw) {
-	"use strict";
 	let sec_num = parseInt(secondsRaw, 10); // don't forget the second param
 	let days = Math.floor(sec_num / 86400);
 	let hours = Math.floor(sec_num % 86400 / 3600);
@@ -118,7 +108,6 @@ function shortTimeFormat(secondsRaw) {
 	return timeFormated;
 }
 function rawSecondsFormat(secondsRaw) {
-	"use strict";
 	return parseInt(secondsRaw, 10) + "s";
 }
 
@@ -198,11 +187,9 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function saveAutoOptions() {
-	"use strict";
 	LCstorage["kittensgame.autoOptions"] = JSON.stringify(window.autoOptions);
 }
 function changeFurCrafts() {
-	"use strict";
 	let crafts = [
 		["parchmentMode", "craftParchment"],
 		["manuscriptMode", "craftManuscript"],
@@ -217,7 +204,6 @@ function changeFurCrafts() {
 }
 
 function tryCraft(craftName, amount) {
-	"use strict";
 	let craft = game.workshop.getCraft(craftName);
 	let prices = craft.prices;
 	for (let i = 0; i < prices.length; i++) {
@@ -229,11 +215,9 @@ function tryCraft(craftName, amount) {
 	game.craft(craftName, amount);
 }
 function getZiggurats() {
-	"use strict";
 	return game.bld.getBuildingExt('ziggurat').get('val');
 }
 function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
-	"use strict";
 	let unicornsLeft = 0;
 	if (!isPasture) {
 		let tearsLeft = resNumber - game.resPool.get('tears').value;
@@ -255,7 +239,6 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 	}
 }
 function getTearPrices() {
-	"use strict";
 	let result = [0, 0, 0, 0, 0];
 	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
@@ -276,7 +259,6 @@ function getTearPrices() {
 	return result;
 }
 function getIvoryPrices() {
-	"use strict";
 	let result = [0, 0, 0, 0, 0];
 	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
@@ -293,7 +275,6 @@ function getIvoryPrices() {
 	return result;
 }
 function calculateBaseUps(extras) {
-	"use strict";
 	extras = extras || [];
 	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0);
 	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate;
@@ -315,7 +296,6 @@ function calculateBaseUps(extras) {
 	return baseUps * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
-	"use strict";
 	extras = extras || [];
 	let unicornChanceRatio = 1;
 	if (game.prestige.getPerk("unicornmancy").researched) {
@@ -324,11 +304,9 @@ function calculateRiftUps(extras) {
 	return Math.min(500, 0.25 * unicornChanceRatio * (game.religion.getZU('ivoryTower').val + (extras[2] || 0))) * game.calendar.dayPerTick * game.rate;
 }
 function calculateEffectiveUps(extras) {
-	"use strict";
 	return calculateBaseUps(extras) + calculateRiftUps(extras);
 }
 function calculateUnicornBuild() {
-	"use strict";
 	if (game.bld.getBuildingExt('unicornPasture').get('val') == 0) {
 		return ['You need at least one Unicorn Pasture to use this. Send off some hunters!', 'Without unicorns and ziggurats, nothing can be calculated here.'];
 	}
@@ -382,7 +360,6 @@ function calculateUnicornBuild() {
 }
 
 function changeTimeFormat() {
-	"use strict";
 	let formats = {
 		standard: defaultTimeFormat,
 		short: shortTimeFormat,
@@ -392,13 +369,11 @@ function changeTimeFormat() {
 }
 
 function handleDisplayOptions(obj) {
-	"use strict";
 	for (let o in obj) {
 		$("#autoKittens_show" + o)[0].checked = obj[o];
 	}
 }
 function traverseObject(obj) {
-	"use strict";
 	for (let o in obj) {
 		if (o === "displayOptions") {
 			handleDisplayOptions(obj[o]);
@@ -422,7 +397,6 @@ function traverseObject(obj) {
 }
 
 function updateOptionsUI() {
-	"use strict";
 	let crafts = [
 		["manuscriptMode", "craftManuscript"],
 		["compendiumMode", "craftCompendium"],
@@ -436,17 +410,14 @@ function updateOptionsUI() {
 }
 
 function adjustColumns() {
-	"use strict";
 	$('#midColumn').css('width', autoOptions.widenUI ? '1000px' : '');
 	$('#leftColumn').css('max-width', autoOptions.widenUI ? '25%' : '');
 }
 function adjustTimerBar() {
-	"use strict";
 	$('body').first()[autoOptions.showTimerDisplays ? 'addClass' : 'removeClass']('autokittens-show-timers');
 }
 
 function addTriggerNamedCheckbox(container, prefix, optionName, controlName, caption, trigger) {
-	"use strict";
 	container.append($(`<input id="autoKittens_${controlName}" type="checkbox" />`).on('input', function() {
 		setArbitrarilyDeepObject([prefix, optionName], this.checked);
 		saveAutoOptions();
@@ -454,25 +425,20 @@ function addTriggerNamedCheckbox(container, prefix, optionName, controlName, cap
 	}), $(`<label for="autoKittens_${controlName}">${caption}</label>`), '<br />');
 }
 function addTriggerCheckbox(container, prefix, optionName, caption, trigger) {
-	"use strict";
 	addTriggerNamedCheckbox(container, prefix, optionName, optionName, caption, trigger);
 }
 function addNamedCheckbox(container, prefix, optionName, controlName, caption) {
-	"use strict";
 	addTriggerNamedCheckbox(container, prefix, optionName, controlName, caption, NOP);
 }
 function addCheckbox(container, prefix, optionName, caption) {
-	"use strict";
 	addNamedCheckbox(container, prefix, optionName, optionName, caption);
 }
 
 function addHeading(container, title) {
-	"use strict";
 	container.append(`<h3>${title}</h3>`);
 }
 
 function addTriggerOptionMenu(container, prefix, optionName, left_caption, options, right_caption, trigger) {
-	"use strict";
 	let select = $(`<select id="autoKittens_${optionName}"></select>`).on('input', function() {
 		setArbitrarilyDeepObject([prefix, optionName], $(this).val());
 		saveAutoOptions();
@@ -490,22 +456,18 @@ function addTriggerOptionMenu(container, prefix, optionName, left_caption, optio
 	container.append(left_caption, select, right_caption, '<br />');
 }
 function addOptionMenu(container, prefix, optionName, left_caption, options, right_caption) {
-	"use strict";
 	addTriggerOptionMenu(container, prefix, optionName, left_caption, options, right_caption, NOP);
 }
 
 function addTriggerButton(container, caption, trigger) {
-	"use strict";
 	container.append($('<input type="button" />').attr('value', caption).on('click', wrapCallback(trigger)), '<br />');
 }
 
 function addIndent(container) {
-	"use strict";
 	container.append('<span style="width:20px; display:inline-block;"></span>');
 }
 
 function addInputField(container, prefix, optionName, left_caption, right_caption) {
-	"use strict";
 	let field = $(`<input id="autoKittens_${optionName}" size="6" type="text" />`).on('input', function() {
 		tryNumericSet(prefix, optionName, this.value);
 		saveAutoOptions();
@@ -514,7 +476,6 @@ function addInputField(container, prefix, optionName, left_caption, right_captio
 }
 
 function prepareContainer(id) {
-	"use strict";
 	let result = $('#' + id);
 	let internal = $('<a class="close" style="top: 10px; right: 15px; position: absolute;" href="#">close</a>').on('click', result.hide.bind(result));
 	result.empty().append(internal);
@@ -522,7 +483,6 @@ function prepareContainer(id) {
 }
 
 function calculateCraftAmounts() {
-	"use strict";
 	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "parchment", "manuscript", "blueprint", "compedium"];
 	for (let i = 0; i < resources.length; i++) {
 		let craft = game.workshop.getCraft(resources[i]);
@@ -545,7 +505,6 @@ function calculateCraftAmounts() {
 }
 
 function formatTableRow(name, title, value) {
-	"use strict";
 	if (typeof autoOptions.displayOptions[name] === 'undefined') {
 		autoOptions.displayOptions[name] = true;
 	}
@@ -555,7 +514,6 @@ function formatTableRow(name, title, value) {
 	return '';
 }
 function fillTable() {
-	"use strict";
 	let contents = '<tr>';
 	let tickRate = game.ticksPerSecond;
 	let resources = [];
@@ -626,7 +584,6 @@ function fillTable() {
 }
 
 function generateBuildingCalculatorUI() {
-	"use strict";
 	let result = '';
 	result += '<select id="buildingPriceSelector" oninput="calculateBuildingPrice()">';
 	result += '<optgroup label="Buildings">';
@@ -670,7 +627,6 @@ function generateBuildingCalculatorUI() {
 	return result;
 }
 function calculateBuildingPrice() {
-	"use strict";
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	let priceContainer = document.getElementById('buildingPriceHolder');
 	let bldName = $('#buildingPriceSelector').val().split('_');
@@ -778,7 +734,6 @@ function calculateBuildingPrice() {
 	priceContainer.innerHTML = result;
 }
 function mintCalculator() {
-	"use strict";
 	let hunterRatio = game.getEffect("hunterRatio") + game.village.getEffectLeader("manager", 0);
 	let expectedFursFromHunts = 32.5 * (hunterRatio + 1);
 	let expectedIvoryFromHunts = 20 * (hunterRatio + 1);
@@ -818,7 +773,6 @@ function mintCalculator() {
 }
 
 function addCalculator(container, id, title, contents, calc_func, sub_id, sub_title) {
-	"use strict";
 	if (sub_id) {
 		container.append($(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on('click', function() {
 			$(`#${id}_container`).toggle();
@@ -848,7 +802,6 @@ function addCalculator(container, id, title, contents, calc_func, sub_id, sub_ti
 	}
 }
 function updateCalculators() {
-	"use strict";
 	for (let i in calculators) {
 		let c = calculators[i];
 		let contents = [].concat(c[1]());
@@ -858,7 +811,6 @@ function updateCalculators() {
 	}
 }
 function rebuildCalculatorUI() {
-	"use strict";
 	let calcContainer = prepareContainer('kittenCalcs');
 	calculators = [];
 	addCalculator(calcContainer, 'unicornCalc', 'Unicorn structures', '<h5>(<a href="https://www.reddit.com/r/kittensgame/comments/2iungv/turning_the_sacrificing_of_unicorns_into_an_exact/" target="_blank">Based on spreadsheet by /u/yatima2975</a>)</h5>', calculateUnicornBuild, 'unicornDetails', 'Calculation details');
@@ -868,7 +820,6 @@ function rebuildCalculatorUI() {
 }
 
 function rebuildOptionsUI() {
-	"use strict";
 	let percentages = [
 		["1%", 0.01],
 		["5%", 0.05],
@@ -1016,7 +967,6 @@ function rebuildOptionsUI() {
 	updateOptionsUI();
 }
 function buildUI() {
-	"use strict";
 	let tableContainer = $('<div id="timerTableContainer"></div>');
 	tableContainer.html('<table id="timerTable" style="width: 100%; table-layout: fixed;"></table>');
 	$('body').first().append(tableContainer);
@@ -1081,13 +1031,11 @@ function buildUI() {
 }
 
 function starClick() {
-	"use strict";
 	if (autoOptions.autoStar) {
 		(document.getElementById("observeBtn") || { click: NOP }).click();
 	}
 }
 function autoHunt() {
-	"use strict";
 	if (!autoOptions.autoHunt) {
 		return;
 	}
@@ -1125,7 +1073,6 @@ function autoHunt() {
 	}
 }
 function autoCraft() {
-	"use strict";
 	if (!autoOptions.autoCraft) {
 		return;
 	}
@@ -1158,7 +1105,6 @@ function autoCraft() {
 	}
 }
 function autoPray() {
-	"use strict";
 	if (!autoOptions.autoPray) {
 		return;
 	}
@@ -1168,7 +1114,6 @@ function autoPray() {
 	}
 }
 function autoTrade() {
-	"use strict";
 	if (!autoOptions.autoTrade || autoOptions.tradeOptions.tradePartner === "") {
 		return;
 	}
@@ -1210,7 +1155,6 @@ function autoTrade() {
 	}
 }
 function autoFestival() { // FIXME this is not a good implementation
-	"use strict";
 	if (game.calendar.festivalDays || !autoOptions.autoFestival || !game.science.get('drama').researched) {
 		return;
 	}
@@ -1226,7 +1170,6 @@ function autoFestival() { // FIXME this is not a good implementation
 	}
 }
 function processAutoKittens() {
-	"use strict";
 	starClick();
 	autoHunt();
 	autoCraft();
@@ -1238,14 +1181,12 @@ function processAutoKittens() {
 }
 
 window.onbeforeunload = function(){
-	"use strict";
 	if (autoOptions.warnOnLeave) {
 		return 'Are you sure you want to leave?';
 	}
 };
 if (game.worker) {
 	game.tick = function() {
-		"use strict";
 		dojo.hitch(game, gameTickFunc)();
 		processAutoKittens();
 	};
