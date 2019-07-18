@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 17:24:53 EDT (UTC-0400) on Prickle-Prickle, Confusion 53, 3185 YOLD (Thursday, July 18, 2019)
+Last build: 17:54:10 EDT (UTC-0400) on Prickle-Prickle, Confusion 53, 3185 YOLD (Thursday, July 18, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -869,6 +869,14 @@ function rebuildOptionsUI() {
 	let uiContainer = prepareContainer('autoOptions');
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', () => {
+		if (autoOptions.dialogRight) {
+			$('body').first().addClass('autokittensRight');
+		}
+		else {
+			$('body').first().removeClass('autokittensRight');
+		}
+	});
 	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
 	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
 	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
@@ -1017,6 +1025,12 @@ function buildUI() {
 			top: 24% !important;
 			bottom: 14% !important;
 			overflow-y: scroll;
+		}
+		body.autokittensRight #autoOptions,
+		body.autokittensRight #kittenCalcs {
+			right: 10px;
+			left: auto;
+			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
 		}
 		body > #timerTableContainer {
 			width: 100%;
