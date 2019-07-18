@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 17:20:14 EDT (UTC-0400) on Prickle-Prickle, Confusion 53, 3185 YOLD (Thursday, July 18, 2019)
+Last build: 17:24:53 EDT (UTC-0400) on Prickle-Prickle, Confusion 53, 3185 YOLD (Thursday, July 18, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -294,7 +294,7 @@ function getIvoryPrices() {
 function calculateBaseUps(extras) {
 	extras = extras || [];
 	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0);
-	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * (game.opts.usePerSecondValues ? game.rate : 1);
+	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * (game.opts.usePerSecondValues ? game.ticksPerSecond : 1);
 	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0);
 	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0);
 	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
@@ -318,7 +318,7 @@ function calculateRiftUps(extras) {
 	if (game.prestige.getPerk("unicornmancy").researched) {
 		unicornChanceRatio = 1.1;
 	}
-	return Math.min(500, 0.25 * unicornChanceRatio * (game.religion.getZU('ivoryTower').val + (extras[2] || 0))) * game.calendar.dayPerTick * (game.opts.usePerSecondValues ? game.rate : 1);
+	return Math.min(500, 0.25 * unicornChanceRatio * (game.religion.getZU('ivoryTower').val + (extras[2] || 0))) * game.calendar.dayPerTick * (game.opts.usePerSecondValues ? game.ticksPerSecond : 1);
 }
 function calculateEffectiveUps(extras) {
 	return calculateBaseUps(extras) + calculateRiftUps(extras);
