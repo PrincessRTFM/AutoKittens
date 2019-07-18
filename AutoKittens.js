@@ -288,19 +288,19 @@ function getIvoryPrices() {
 }
 function calculateBaseUps(extras) {
 	extras = extras || [];
-	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0) || 0;
-	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate || 0;
-	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0) || 0;
-	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0) || 0;
-	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0) || 0;
-	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0) || 0;
-	let tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatio || 0;
-	let towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatio || 0;
-	let citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatio || 0;
-	let palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatio || 0;
+	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0);
+	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate;
+	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0);
+	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0);
+	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
+	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
+	let tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatioReligion;
+	let towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatioReligion;
+	let citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatioReligion;
+	let palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
 	let bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces;
 	let faithEffect = 1;
-	if (game.religion.getRU("solarRevolution").researched){
+	if (game.religion.getRU("solarRevolution").on){
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
 	let paragonRatio = game.resPool.get("paragon").value * 0.01;
