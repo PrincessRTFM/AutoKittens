@@ -1,7 +1,7 @@
 /*
 AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/kittens/)
 */
-/* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false */
+/* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
 let defaultTimeFormat = game.toDisplaySeconds;
@@ -238,18 +238,30 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 		return "You have enough resources to build this now.";
 	}
 }
-function getTearPrices() {
+function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE
 	let result = [0, 0, 0, 0, 0];
-	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
+	let buildings = [
+		game.bld.getBuildingExt('unicornPasture'),
+		game.religion.getZU('unicornTomb'),
+		game.religion.getZU('ivoryTower'),
+		game.religion.getZU('ivoryCitadel'),
+		game.religion.getZU('skyPalace'),
+	];
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
 	for (let i = 0; i < 5; i++) {
 		const prices = getFrom(buildings[i], 'prices');
 		const name = getFrom(buildings[i], 'name');
 		const val = getFrom(buildings[i], 'val');
-		const priceRatio = getFrom(buildings[i], 'priceRatio');
+		let priceRatio;
+		try {
+			priceRatio = game.bld.getPriceRatio(name);
+		}
+		catch (e) {
+			priceRatio = getFrom(buildings[i], 'priceRatio');
+		}
 		for (let j = 0; j < prices.length; j++) {
 			if (prices[j].name == 'unicorns') {
-				result[i] = calcPrice(prices[j].val, game.bld.getPriceRatio(name), val) / 2500 * getZiggurats();
+				result[i] = calcPrice(prices[j].val, priceRatio, val) / 2500 * getZiggurats();
 			}
 			else if (buildings[i].prices[j].name == 'tears') {
 				result[i] = calcPrice(prices[j].val, priceRatio, val);
@@ -276,16 +288,16 @@ function getIvoryPrices() {
 }
 function calculateBaseUps(extras) {
 	extras = extras || [];
-	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0);
-	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate;
-	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0);
-	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0);
-	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
-	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
-	let tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatio;
-	let towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatio;
-	let citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatio;
-	let palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatio;
+	let pastures = game.bld.getBuildingExt('unicornPasture').get('val') + (extras[0] || 0) || 0;
+	let baseUps = pastures * game.bld.getBuildingExt('unicornPasture').get('effects').unicornsPerTickBase * game.rate || 0;
+	let tombs = game.religion.getZU('unicornTomb').val + (extras[1] || 0) || 0;
+	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0) || 0;
+	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0) || 0;
+	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0) || 0;
+	let tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatio || 0;
+	let towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatio || 0;
+	let citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatio || 0;
+	let palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatio || 0;
 	let bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces;
 	let faithEffect = 1;
 	if (game.religion.getRU("solarRevolution").researched){
@@ -315,10 +327,10 @@ function calculateUnicornBuild() {
 		return ['You need at least one Ziggurat to use this.', 'Until you have ziggurats, nothing can be calculated here.'];
 	}
 	let startUps = calculateEffectiveUps();
-	let details = '';
-	let result = 'Base unicorn production per second: ' + game.getDisplayValue(calculateBaseUps());
-	result += '<br />Rift production per second (amortized): ' + game.getDisplayValue(calculateRiftUps());
-	result += '<br />Current effective unicorn production per second: ' + game.getDisplayValue(startUps);
+	let details = [];
+	let result = ['Base unicorn production per second: ' + game.getDisplayValue(calculateBaseUps())];
+	result.push('Rift production per second (amortized): ' + game.getDisplayValue(calculateRiftUps()));
+	result.push('Current effective unicorn production per second: ' + game.getDisplayValue(startUps));
 	let buildings = ['Unicorn Pasture', 'Unicorn Tomb', 'Ivory Tower', 'Ivory Citadel', 'Sky Palace'];
 	let tears = getTearPrices();
 	let ivory = getIvoryPrices();
@@ -336,27 +348,36 @@ function calculateUnicornBuild() {
 		if (tears[secondBest] / increases[secondBest] > tears[i] / increases[i] && i != best || secondBest == best) {
 			secondBest = i;
 		}
-		details += 'Unicorn/s increase with 1 more ' + buildings[i] + ': ' + game.getDisplayValue(increases[i]);
-		if (i != 0) {
-			details += '<br />Total unicorns needed: ' + game.getDisplayValueExt(Math.ceil(tears[i] / ziggurats) * 2500);
-			details += ' (' + game.getDisplayValueExt(tears[i]) +' tears, ' + Math.ceil(tears[i] / ziggurats) + ' sacrifice(s))';
-			details += '<br />'+checkUnicornReserves(tears[i], false, startUps, ivory[i]);
+		details.push('Unicorn/s increase with 1 more ' + buildings[i] + ': ' + game.getDisplayValue(increases[i]));
+		if (i != 0) { // NOT unicorn pastures
+			let line = 'Total unicorns needed: ' + game.getDisplayValueExt(Math.ceil(tears[i] / ziggurats) * 2500);
+			line += ' (' + game.getDisplayValueExt(tears[i]) +' tears, ' + Math.ceil(tears[i] / ziggurats) + ' sacrifice' + (Math.ceil(tears[i] / ziggurats) == 1 ? '' : 's') + ')';
+			details.push(line);
+			details.push(checkUnicornReserves(tears[i], false, startUps, ivory[i]));
+		}
+		else { // ONLY unicorn pastures
+			details.push('Total unicorns needed: ' + game.getDisplayValueExt(tears[i] / ziggurats * 2500));
+			details.push(checkUnicornReserves(tears[i] / ziggurats * 2500, true, startUps, ivory[i]));
+		}
+		let line = 'Tears for 1 extra unicorn/s: ';
+		if (increases[i]) {
+			line += game.getDisplayValueExt(tears[i] / increases[i]); // tears[i] is the tears needed to build another $building, increases[i] is the effective increase in unicorns per second if you had one more $building than you actually do
 		}
 		else {
-			details += '<br />Total unicorns needed: ' + game.getDisplayValueExt(tears[i] / ziggurats * 2500);
-			details += '<br />'+checkUnicornReserves(tears[i] / ziggurats * 2500, true, startUps, ivory[i]);
+			line += '-n/a- (this will not noticeably affect unicorn generation)';
 		}
-		details += '<br />Tears for 1 extra unicorn/s: ' + game.getDisplayValueExt(tears[i] / increases[i]) + '<br /><br />';
+		details.push(line);
+		details.push('');
 	}
-	result += '<br /><br />Best purchase is ' + buildings[best] + ', by a factor of ' +
-		game.getDisplayValue(tears[secondBest] / increases[secondBest] / (tears[best] / increases[best]));
+	result.push('');
+	result.push('Best purchase is ' + buildings[best] + ', by a factor of ' + game.getDisplayValue(tears[secondBest] / increases[secondBest] / (tears[best] / increases[best])));
 	if (best != 0) {
-		result += '<br />' + checkUnicornReserves(tears[best], false, startUps, ivory[best]);
+		result.push(checkUnicornReserves(tears[best], false, startUps, ivory[best]));
 	}
 	else {
-		result += '<br />' + checkUnicornReserves(tears[best] / ziggurats * 2500, true, startUps, ivory[best]);
+		result.push(checkUnicornReserves(tears[best] / ziggurats * 2500, true, startUps, ivory[best]));
 	}
-	return [result, details];
+	return [result.join('<br />'), details.join('<br />')];
 }
 
 function changeTimeFormat() {
@@ -813,7 +834,7 @@ function updateCalculators() {
 function rebuildCalculatorUI() {
 	let calcContainer = prepareContainer('kittenCalcs');
 	calculators = [];
-	addCalculator(calcContainer, 'unicornCalc', 'Unicorn structures', '<h5>(<a href="https://www.reddit.com/r/kittensgame/comments/2iungv/turning_the_sacrificing_of_unicorns_into_an_exact/" target="_blank">Based on spreadsheet by /u/yatima2975</a>)</h5>', calculateUnicornBuild, 'unicornDetails', 'Calculation details');
+	addCalculator(calcContainer, 'unicornCalc', 'Unicorn structures', '', calculateUnicornBuild, 'unicornDetails', 'Calculation details');
 	addCalculator(calcContainer, 'buildingCalc', 'Building price calculator', generateBuildingCalculatorUI());
 	addCalculator(calcContainer, 'mintCalc', 'Mint efficiency calculator', '', mintCalculator);
 	calculateBuildingPrice();
