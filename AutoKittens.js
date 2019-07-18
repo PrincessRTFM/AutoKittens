@@ -778,19 +778,19 @@ function mintCalculator() {
 	ipsHuntsWithMint += ipsFromMint;
 	let fpsProfitWithMints = fpsFromMint + fpsHuntsWithMint - fpsHuntsNoMints;
 	let ipsProfitWithMints = ipsFromMint + ipsHuntsWithMint - ipsHuntsNoMints;
-	let result = "";
-	result += "Average furs per hunt: " + game.getDisplayValue(expectedFursFromHunts);
-	result += "<br />Average ivory per hunt: " + game.getDisplayValue(expectedIvoryFromHunts);
-	result += "<br />Average time between hunts (no mints): " + game.getDisplayValue(huntTimeWithoutMint) + ' sec';
-	result += "<br />Approximate furs per second (hunts, no mints): " + game.getDisplayValue(fpsHuntsNoMints);
-	result += "<br />Approximate ivory per second (hunts, no mints): " + game.getDisplayValue(ipsHuntsNoMints);
-	result += `<br />Average time between hunts (${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(huntTimeWithMint);
-	result += `<br />Approximate furs per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
-	result += `<br />Approximate ivory per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
-	result += `<br /><br />Profit from ${mintsRunning} running mint${mintsRunning == 1 ? '' : 's'}:`;
-	result += "<br />Furs per second: " + game.getDisplayValue(fpsProfitWithMints) + (fpsProfitWithMints ? ' (LOSS)' : '');
-	result += "<br />Ivory per second: " + game.getDisplayValue(ipsProfitWithMints) + (ipsProfitWithMints ? ' (LOSS)' : '');
-	return result;
+	let result = [];
+	result.push("Average furs per hunt: " + game.getDisplayValue(expectedFursFromHunts));
+	result.push("Average ivory per hunt: " + game.getDisplayValue(expectedIvoryFromHunts));
+	result.push("Average time between hunts (no mints): " + game.getDisplayValue(huntTimeWithoutMint) + ' sec');
+	result.push("Approximate furs per second (hunts, no mints): " + game.getDisplayValue(fpsHuntsNoMints));
+	result.push("Approximate ivory per second (hunts, no mints): " + game.getDisplayValue(ipsHuntsNoMints));
+	result.push(`Average time between hunts (${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(huntTimeWithMint));
+	result.push(`Approximate furs per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(fpsHuntsWithMint + fpsFromMint));
+	result.push(`Approximate ivory per second (hunts, ${mintsRunning} mint${mintsRunning == 1 ? '' : 's'}): ` + game.getDisplayValue(ipsHuntsWithMint + ipsFromMint));
+	result.push(`<br />Profit from ${mintsRunning} running mint${mintsRunning == 1 ? '' : 's'}:`);
+	result.push("Furs per second: " + game.getDisplayValue(fpsProfitWithMints) + (fpsProfitWithMints < 0 ? ' (LOSS)' : ''));
+	result.push("Ivory per second: " + game.getDisplayValue(ipsProfitWithMints) + (ipsProfitWithMints < 0 ? ' (LOSS)' : ''));
+	return result.join("<br />");
 }
 
 function addCalculator(container, id, title, contents, calc_func, sub_id, sub_title) {
