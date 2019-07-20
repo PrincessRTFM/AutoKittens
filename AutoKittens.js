@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 17:54:10 EDT (UTC-0400) on Prickle-Prickle, Confusion 53, 3185 YOLD (Thursday, July 18, 2019)
+Last build: 17:44:47 EDT (UTC-0400) on Sweetmorn, Confusion 55, 3185 YOLD (Saturday, July 20, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -149,6 +149,7 @@ let defaultOptions = {
 		blueprintAmount: 1,
 		blueprintPriority: false,
 	},
+	dialogRight: false,
 	furOptions: {
 		parchmentMode: 0,
 		manuscriptMode: 0,
@@ -543,11 +544,12 @@ function fillTable() {
 	let contents = '<tr>';
 	let tickRate = game.ticksPerSecond;
 	let resources = [];
-	game.resPool.resources.forEach(r => {
+	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
+		const r = game.resPool.resources[resIndex];
 		let res = {};
 		res.name = r.name;
 		res.title = r.title || r.name;
-		res.perTickUI = r.perTickUI || r.perTickCached;
+		res.perTickUI = game.getResourcePerTick(res.name, true); // Is this the right property name for this? No. Am I willing to refactor all of this to do it right? Also no.
 		res.value = r.value;
 		res.maxValue = r.maxValue;
 		if (res.perTickUI !== 0) {
@@ -570,7 +572,7 @@ function fillTable() {
 			}
 		}
 		resources.push(res);
-	});
+	}
 	if (autoOptions.displayOrder == "short") {
 		resources.sort((a, b) => { return a.time - b.time; });
 	}
@@ -845,6 +847,15 @@ function rebuildCalculatorUI() {
 	calculateBuildingPrice();
 }
 
+function realignSciptDialogs() {
+	if (autoOptions.dialogRight) {
+		$('body').first().addClass('autokittensRight');
+	}
+	else {
+		$('body').first().removeClass('autokittensRight');
+	}
+}
+
 function rebuildOptionsUI() {
 	let percentages = [
 		["1%", 0.01],
@@ -869,14 +880,7 @@ function rebuildOptionsUI() {
 	let uiContainer = prepareContainer('autoOptions');
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', () => {
-		if (autoOptions.dialogRight) {
-			$('body').first().addClass('autokittensRight');
-		}
-		else {
-			$('body').first().removeClass('autokittensRight');
-		}
-	});
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
 	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
 	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
 	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
@@ -1006,6 +1010,7 @@ function buildUI() {
 	$('body').first().append(tableContainer);
 	adjustColumns();
 	adjustTimerBar();
+	realignSciptDialogs();
 	$(resetGameLogHeight);
 	let optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>').on('click', () => {
 		rebuildOptionsUI();
