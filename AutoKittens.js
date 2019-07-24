@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 17:44:47 EDT (UTC-0400) on Sweetmorn, Confusion 55, 3185 YOLD (Saturday, July 20, 2019)
+Last build: 02:08:08 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -441,7 +441,7 @@ function adjustColumns() {
 	$('#leftColumn').css('max-width', autoOptions.widenUI ? '25%' : '');
 }
 function adjustTimerBar() {
-	$('body').first()[autoOptions.showTimerDisplays ? 'addClass' : 'removeClass']('autokittens-show-timers');
+	$('html').first()[autoOptions.showTimerDisplays ? 'addClass' : 'removeClass']('autokittens-show-timers');
 }
 
 function addTriggerNamedCheckbox(container, prefix, optionName, controlName, caption, trigger) {
@@ -849,10 +849,10 @@ function rebuildCalculatorUI() {
 
 function realignSciptDialogs() {
 	if (autoOptions.dialogRight) {
-		$('body').first().addClass('autokittensRight');
+		$('html').first().addClass('autokittensRight');
 	}
 	else {
-		$('body').first().removeClass('autokittensRight');
+		$('html').first().removeClass('autokittensRight');
 	}
 }
 
@@ -1031,13 +1031,13 @@ function buildUI() {
 			bottom: 14% !important;
 			overflow-y: scroll;
 		}
-		body.autokittensRight #autoOptions,
-		body.autokittensRight #kittenCalcs {
+		html.autokittensRight #autoOptions,
+		html.autokittensRight #kittenCalcs {
 			right: 10px;
 			left: auto;
 			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
 		}
-		body > #timerTableContainer {
+		#timerTableContainer {
 			width: 100%;
 			height: 50px;
 			position: fixed;
@@ -1053,19 +1053,19 @@ function buildUI() {
 		body.scheme_grassy > #timerTableContainer {
 			background-color: #C6EBA1;
 		}
-		body:not(.autokittens-show-timers) > #timerTableContainer {
+		html:not(.autokittens-show-timers) #timerTableContainer {
 			display: none;
 		}
-		body.autokittens-show-timers > #timerTableContainer {
+		html.autokittens-show-timers #timerTableContainer {
 			display: block;
 		}
-		body.autokittens-show-timers > #game {
+		html.autokittens-show-timers #game {
 			margin-bottom: 50px;
 		}
-		body.autokittens-show-timers > #footerLinks {
+		html.autokittens-show-timers #footerLinks {
 			margin-bottom: 60px;
 		}
-		body.autokittens-show-timers {
+		html.autokittens-show-timers {
 			background-position: center bottom 30px;
 		}
 		.fakelink {
