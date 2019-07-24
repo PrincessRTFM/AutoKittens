@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 15:53:35 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
+Last build: 16:05:47 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -488,8 +488,12 @@ function addOptionMenu(container, prefix, optionName, left_caption, options, rig
 	addTriggerOptionMenu(container, prefix, optionName, left_caption, options, right_caption, NOP);
 }
 
-function addTriggerButton(container, caption, trigger) {
-	container.append($('<input type="button" />').attr('value', caption).on('click', wrapCallback(trigger)), '<br />');
+function addTriggerButton(container, caption, trigger, hint) {
+	let button = $('<input type="button" />').attr('value', caption).on('click', wrapCallback(trigger));
+	if (hint) {
+		button.attr('title', hint);
+	}
+	container.append(button, '<br />');
 }
 
 function addIndent(container) {
@@ -512,18 +516,24 @@ function prepareContainer(id) {
 }
 
 function calculateCraftAmounts() {
-	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "parchment", "manuscript", "blueprint", "compedium"];
+	let resources = ["wood", "beam", "slab", "steel", "plate", "alloy", "kerosene", "parchment", "manuscript", "blueprint", "compedium"];
 	for (let i = 0; i < resources.length; i++) {
 		let craft = game.workshop.getCraft(resources[i]);
 		let prices = craft.prices;
 		let amount = 1;
 		for (let j = 0; j < prices.length; j++) {
 			let res = game.resPool.get(prices[j].name);
+			// The lesser of (per tick gain) and (max value, falling back to per tick gain)
+			// If there is no max value, it uses the per tick gain
 			let checkVal = Math.min(
 				res.perTickUI || res.perTickCached,
 				res.maxValue != 0 ? res.maxValue : res.perTickUI || res.perTickCached
 			);
+			// If that calculated number (usually per tick gain, you'd have to make more than you can STORE for otherwise) is HIGHER than the price of this item for one craft
 			if (checkVal > prices[j].val) {
+				// Craft the HIGHER of (1) and (the truncations of (that value divided by the single-craft cost))
+				// Always craft at least one, but only craft MORE if you're producing more per tick than one craft would take
+				// Final verdict: craft as many per autocraft as possible WITHOUT consuming more per craft (tick) than you MAKE per tick
 				amount = Math.max(amount, Math.floor(checkVal/prices[j].val));
 			}
 		}
@@ -924,7 +934,7 @@ function rebuildOptionsUI() {
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
 	addHeading(uiContainer, 'Auto-crafting');
-	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts);
+	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftWood', 'Automatically convert catnip to wood');
 	addIndent(uiContainer);
