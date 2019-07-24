@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 02:08:08 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
+Last build: 15:53:35 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -138,6 +138,8 @@ let defaultOptions = {
 		plateAmount: 1,
 		craftAlloy: false,
 		alloyAmount: 1,
+		craftKerosene: false,
+		keroseneAmount: 1,
 		festivalBuffer: false,
 		craftParchment: false,
 		parchmentAmount: 1,
@@ -942,6 +944,9 @@ function rebuildOptionsUI() {
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftAlloy', 'Automatically convert titanium to alloy');
 	addIndent(uiContainer);
 	addInputField(uiContainer, 'autoOptions.craftOptions', 'alloyAmount', 'Craft', 'alloy at a time');
+	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftKerosene', 'Automatically convert oil to kerosene');
+	addIndent(uiContainer);
+	addInputField(uiContainer, 'autoOptions.craftOptions', 'keroseneAmount', 'Craft', 'kerosene at a time');
 	addHeading(uiContainer, 'Fur product crafting');
 	addTriggerOptionMenu(uiContainer, 'autoOptions.furOptions', 'parchmentMode', 'Auto-craft parchment', [
 		['never', 0],
@@ -1128,6 +1133,7 @@ function autoCraft() {
 		["coal",     "steel", "craftSteel", game.science.get('construction').researched],
 		["iron",     "plate", "craftPlate", game.science.get('construction').researched],
 		["titanium", "alloy", "craftAlloy", game.science.get('construction').researched],
+		["oil", "kerosene", "craftKerosene", game.science.get('construction').researched], // Unlocked by Oil Processing, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
 		["culture", "parchment", "craftParchment", game.science.get('construction').researched],
 		["culture", "manuscript", "craftManuscript", game.science.get('construction').researched && (!autoOptions.craftOptions.festivalBuffer || game.resPool.get('parchment').value > 2500 + 25 * autoOptions.craftOptions.manuscriptAmount)],
 		["science", "blueprint", "craftBlueprint", game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority],
