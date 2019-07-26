@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 01:23:39 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
+Last build: 01:54:46 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564118619#
+// #AULBS:1564120486#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -202,7 +202,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564118619;
+	const AULBS = 1564120486;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
@@ -1008,7 +1008,7 @@ function rebuildOptionsUI() {
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
 	addHeading(uiContainer, 'Auto-crafting');
-	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick');
+	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick').after('<br />');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
 	addAutocraftConfigLine(uiContainer, 'catnip', 'wood');
 	addAutocraftConfigLine(uiContainer, 'wood', 'beam', true);
