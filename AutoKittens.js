@@ -298,17 +298,18 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 		return "You have enough resources to build this now.";
 	}
 }
-function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE
-	let result = [0, 0, 0, 0, 0];
+function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE, UTOPIA
+	let result = [0, 0, 0, 0, 0, 0];
 	let buildings = [
 		game.bld.getBuildingExt('unicornPasture'),
 		game.religion.getZU('unicornTomb'),
 		game.religion.getZU('ivoryTower'),
 		game.religion.getZU('ivoryCitadel'),
 		game.religion.getZU('skyPalace'),
+                game.religion.getZU('unicornUtopia'),
 	];
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < 6; i++) {
 		const prices = getFrom(buildings[i], 'prices');
 		const name = getFrom(buildings[i], 'name');
 		const val = getFrom(buildings[i], 'val');
@@ -331,10 +332,10 @@ function getTearPrices() { // Get the number of tears required to build one more
 	return result;
 }
 function getIvoryPrices() {
-	let result = [0, 0, 0, 0, 0];
-	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace')];
+	let result = [0, 0, 0, 0, 0, 0];
+	let buildings = [game.bld.getBuildingExt('unicornPasture'), game.religion.getZU('unicornTomb'), game.religion.getZU('ivoryTower'), game.religion.getZU('ivoryCitadel'), game.religion.getZU('skyPalace'), game.religion.getZU('unicornUtopia')];
 	const getFrom = (source, thing) => source.get ? source.get(thing) : source[thing];
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < 6; i++) {
 		const prices = getFrom(buildings[i], 'prices');
 		const val = getFrom(buildings[i], 'val');
 		const priceRatio = getFrom(buildings[i], 'priceRatio');
@@ -354,11 +355,13 @@ function calculateBaseUps(extras) {
 	let towers = game.religion.getZU('ivoryTower').val + (extras[2] || 0);
 	let citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
 	let palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
+        let utopias = game.religion.getZU('unicornUtopia').val + (extras[5] || 0);
 	let tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatioReligion;
 	let towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatioReligion;
 	let citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatioReligion;
 	let palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
-	let bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces;
+	let utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
+	let bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
 	let faithEffect = 1;
 	if (game.religion.getRU("solarRevolution").on){
 		faithEffect += game.religion.getProductionBonus() / 100;
@@ -391,14 +394,14 @@ function calculateUnicornBuild() {
 	let result = ['Base unicorn production per second: ' + game.getDisplayValue(calculateBaseUps())];
 	result.push('Rift production per second (amortized): ' + game.getDisplayValue(calculateRiftUps()));
 	result.push('Current effective unicorn production per second: ' + game.getDisplayValue(startUps));
-	let buildings = ['Unicorn Pasture', 'Unicorn Tomb', 'Ivory Tower', 'Ivory Citadel', 'Sky Palace'];
+	let buildings = ['Unicorn Pasture', 'Unicorn Tomb', 'Ivory Tower', 'Ivory Citadel', 'Sky Palace', 'Unicorn Utopia'];
 	let tears = getTearPrices();
 	let ivory = getIvoryPrices();
-	let increases = [0, 0, 0, 0, 0];
+	let increases = [0, 0, 0, 0, 0,0];
 	let best = 0;
 	let secondBest = 0;
-	for (let i = 0; i < 5; i++) {
-		let extras = [0, 0, 0, 0, 0];
+	for (let i = 0; i < 6; i++) {
+		let extras = [0, 0, 0, 0, 0, 0];
 		extras[i] = 1;
 		increases[i] = calculateEffectiveUps(extras) - startUps;
 		if (tears[best] / increases[best] > tears[i] / increases[i]) {
