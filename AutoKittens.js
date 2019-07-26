@@ -4,7 +4,7 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 16:05:47 EDT (UTC-0400) on Setting Orange, Confusion 59, 3185 YOLD (Wednesday, July 24, 2019)
+Last build: 21:36:22 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -140,6 +140,10 @@ let defaultOptions = {
 		alloyAmount: 1,
 		craftKerosene: false,
 		keroseneAmount: 1,
+		craftThorium: false,
+		thoriumAmount: 1,
+		craftEludium: false,
+		eludiumAmount: 1,
 		festivalBuffer: false,
 		craftParchment: false,
 		parchmentAmount: 1,
@@ -868,6 +872,15 @@ function realignSciptDialogs() {
 	}
 }
 
+function addAutocraftConfigLine(uiContainer, from, to, needsPluralising) {
+	let internalTo = to.replace(/\s+([a-z])/g, (m, l) => l.toUpperCase());
+	let labelTo = internalTo.replace(/([A-Z])/g, l => ` ${l.toLowerCase()}`);
+	let suffix = needsPluralising ? '(s)' : '';
+	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo}`);
+	addIndent(uiContainer);
+	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + suffix} at a time`);
+}
+
 function rebuildOptionsUI() {
 	let percentages = [
 		["1%", 0.01],
@@ -936,7 +949,16 @@ function rebuildOptionsUI() {
 	addHeading(uiContainer, 'Auto-crafting');
 	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
-	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftWood', 'Automatically convert catnip to wood');
+	addAutocraftConfigLine(uiContainer, 'catnip', 'wood');
+	addAutocraftConfigLine(uiContainer, 'wood', 'beam', true);
+	addAutocraftConfigLine(uiContainer, 'minerals', 'slab', true);
+	addAutocraftConfigLine(uiContainer, 'coal and iron', 'steel');
+	addAutocraftConfigLine(uiContainer, 'iron', 'plate', true);
+	addAutocraftConfigLine(uiContainer, 'titanium', 'alloy');
+	addAutocraftConfigLine(uiContainer, 'oil', 'kerosene');
+	addAutocraftConfigLine(uiContainer, 'uranium', 'thorium');
+	addAutocraftConfigLine(uiContainer, 'unobtainium', 'eludium');
+	/*addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftWood', 'Automatically convert catnip to wood');
 	addIndent(uiContainer);
 	addInputField(uiContainer, 'autoOptions.craftOptions', 'woodAmount', 'Craft', 'wood at a time');
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftBeam', 'Automatically convert wood to beams');
@@ -957,6 +979,9 @@ function rebuildOptionsUI() {
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftKerosene', 'Automatically convert oil to kerosene');
 	addIndent(uiContainer);
 	addInputField(uiContainer, 'autoOptions.craftOptions', 'keroseneAmount', 'Craft', 'kerosene at a time');
+	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'craftThorium', 'Automatically convert uranium to thorium');
+	addIndent(uiContainer);
+	addInputField(uiContainer, 'autoOptions.craftOptions', 'thoriumAmount', 'Craft', 'thorium at a time');*/
 	addHeading(uiContainer, 'Fur product crafting');
 	addTriggerOptionMenu(uiContainer, 'autoOptions.furOptions', 'parchmentMode', 'Auto-craft parchment', [
 		['never', 0],
@@ -1136,6 +1161,10 @@ function autoCraft() {
 	if (!autoOptions.autoCraft) {
 		return;
 	}
+	// To add a new one:
+	// 1: add `craft<Thing>` and `<thing>Amount` options in the defaults
+	// 2: add the `addAutocraftConfigLine(uiContainer, '<from label>', '<internal to>', pluraliseOutputLabelP)` line to `rebuildOptionsUI()` above
+	// 3: add a `['<source ID>', '<result ID>', 'craft<Thing>', condition]` line here
 	let resources = [
 		["catnip",   "wood" , "craftWood", true],
 		["wood",     "beam" , "craftBeam", game.science.get('construction').researched],
@@ -1143,7 +1172,9 @@ function autoCraft() {
 		["coal",     "steel", "craftSteel", game.science.get('construction').researched],
 		["iron",     "plate", "craftPlate", game.science.get('construction').researched],
 		["titanium", "alloy", "craftAlloy", game.science.get('construction').researched],
-		["oil", "kerosene", "craftKerosene", game.science.get('construction').researched], // Unlocked by Oil Processing, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
+		["oil", "thorium", "craftKerosene", game.science.get('construction').researched], // Unlocked by Oil Processing tech, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
+		["uranium", "thorium", "craftThorium", game.science.get('construction').researched], // Unlocked by Thorium tech
+		["unobtainium", "eludium", "craftEludium", game.science.get('construction').researched],
 		["culture", "parchment", "craftParchment", game.science.get('construction').researched],
 		["culture", "manuscript", "craftManuscript", game.science.get('construction').researched && (!autoOptions.craftOptions.festivalBuffer || game.resPool.get('parchment').value > 2500 + 25 * autoOptions.craftOptions.manuscriptAmount)],
 		["science", "blueprint", "craftBlueprint", game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority],
@@ -1215,19 +1246,21 @@ function autoTrade() {
 		game.msg = msgFunc;
 	}
 }
-function autoFestival() { // FIXME this is not a good implementation
+function autoFestival() { // FIXME this is not a good implementation (UPDATE: it's causing major fuckery if you can't hold a festival)
 	if (game.calendar.festivalDays || !autoOptions.autoFestival || !game.science.get('drama').researched) {
 		return;
 	}
 	let origTab = game.activeTabId;
 	if (!(game.villageTab.festivalBtn && game.villageTab.festivalBtn.onClick && game.villageTab.festivalBtn.visible)) {
-		game.activeTabId = game.villageTab.tabId; game.render();
+		game.activeTabId = game.villageTab.tabId;
+		game.render();
 	}
 	if (game.villageTab.festivalBtn.hasResources()) {
 		game.villageTab.festivalBtn.onClick();
 	}
 	if (origTab != game.activeTabId) {
-		game.activeTabId = origTab; game.render();
+		game.activeTabId = origTab;
+		game.render();
 	}
 }
 function processAutoKittens() {
