@@ -1,10 +1,11 @@
+// #AULBS:1564107263#
 /*
 AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/kittens/)
 
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 21:36:22 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
+Last build: 22:14:23 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
 */
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
@@ -196,6 +197,11 @@ let defaultOptions = {
 window.autoOptions = defaultOptions;
 if (LCstorage["kittensgame.autoOptions"]) {
 	copyObject(JSON.parse(LCstorage["kittensgame.autoOptions"]), window.autoOptions);
+}
+
+function checkUpdate() {
+	const AULBS = '1564107263';
+	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 }
 
 function saveAutoOptions() {
@@ -1172,7 +1178,7 @@ function autoCraft() {
 		["coal",     "steel", "craftSteel", game.science.get('construction').researched],
 		["iron",     "plate", "craftPlate", game.science.get('construction').researched],
 		["titanium", "alloy", "craftAlloy", game.science.get('construction').researched],
-		["oil", "thorium", "craftKerosene", game.science.get('construction').researched], // Unlocked by Oil Processing tech, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
+		["oil", "kerosene", "craftKerosene", game.science.get('construction').researched], // Unlocked by Oil Processing tech, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
 		["uranium", "thorium", "craftThorium", game.science.get('construction').researched], // Unlocked by Thorium tech
 		["unobtainium", "eludium", "craftEludium", game.science.get('construction').researched],
 		["culture", "parchment", "craftParchment", game.science.get('construction').researched],
