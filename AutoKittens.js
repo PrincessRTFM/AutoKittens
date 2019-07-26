@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 01:03:57 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
+Last build: 01:23:39 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564117437#
+// #AULBS:1564118619#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -202,7 +202,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564117437;
+	const AULBS = 1564118619;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
@@ -1144,7 +1144,7 @@ function buildUI() {
 			bottom: 14% !important;
 			overflow-y: scroll;
 		}
-		html.autokittensRight > body.scheme_sleek .autokittens-dialog {
+		html.autokittensRight #gamePageContainer > div.autokittens-dialog {
 			right: 10px;
 			left: auto;
 		}
