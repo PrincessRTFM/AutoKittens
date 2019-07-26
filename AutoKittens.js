@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 00:14:18 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
+Last build: 00:46:40 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564114458#
+// #AULBS:1564116400#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -157,6 +157,8 @@ let defaultOptions = {
 		blueprintPriority: false,
 	},
 	dialogRight: false,
+	forceShadow: false,
+	forceShadowGlobal: false,
 	furOptions: {
 		parchmentMode: 0,
 		manuscriptMode: 0,
@@ -200,7 +202,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564114458;
+	const AULBS = 1564116400;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
@@ -531,6 +533,12 @@ function addTriggerOptionMenu(container, prefix, optionName, left_caption, optio
 		else {
 			select.append(`<option value="${options[i].value}">${options[i].label}</option>`);
 		}
+	}
+	if (left_caption.trim()) {
+		left_caption = left_caption.trim() + ' ';
+	}
+	if (right_caption.trim()) {
+		right_caption = ' ' + right_caption.trim();
 	}
 	container.append(left_caption, select, right_caption, '<br />');
 }
@@ -918,6 +926,20 @@ function realignSciptDialogs() {
 		$('html').first().removeClass('autokittensRight');
 	}
 }
+function reapplyShadows() {
+	if (autoOptions.forceShadowGlobal) {
+		$('html').first().addClass('forceShadowGlobal');
+		$('html').first().removeClass('forceShadow');
+	}
+	else if (autoOptions.forceShadow) {
+		$('html').first().addClass('forceShadow');
+		$('html').first().removeClass('forceShadowGlobal');
+	}
+	else {
+		$('html').first().removeClass('forceShadow');
+		$('html').first().removeClass('forceShadowGlobal');
+	}
+}
 
 function addAutocraftConfigLine(uiContainer, from, to, needsPluralising) {
 	let internalTo = to.replace(/\s+([a-z])/g, (m, l) => l.toUpperCase());
@@ -1078,7 +1100,9 @@ function rebuildOptionsUI() {
 	addHeading(uiContainer, 'UI options');
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', "Move AK dialogs to the right of the window to improve playability", realignSciptDialogs);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadow', "Enable a light shadow on AK dialogs", reapplyShadows);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadowGlobal', "Enable a light shadow on ALL dialogs (overrides the above option!)", reapplyShadows);
 	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
 		["default", "standard"],
 		["short", "short"],
@@ -1110,20 +1134,24 @@ function buildUI() {
 		$('#kittenCalcs').toggle();
 	});
 	$('#headerLinks').append(' | ', optLink, ' | ', calcLink);
-	let uiContainer = $('<div class="dialog help" id="autoOptions"></div>').hide();
-	let calcContainer = $('<div class="dialog help" id="kittenCalcs"></div>').hide();
+	let uiContainer = $('<div class="dialog help autokittens-dialog" id="autoOptions"></div>').hide();
+	let calcContainer = $('<div class="dialog help autokittens-dialog" id="kittenCalcs"></div>').hide();
 	$('#gamePageContainer').append(uiContainer, calcContainer);
 	let inlineStylesheet = $('<style type="text/css"></style>');
 	inlineStylesheet.text(`
-		#autoOptions, #kittenCalcs {
+		.autokittens-dialog {
 			top: 24% !important;
 			bottom: 14% !important;
 			overflow-y: scroll;
 		}
-		html.autokittensRight #autoOptions,
-		html.autokittensRight #kittenCalcs {
+		html.autokittensRight > body.scheme_sleek > .autokittens-dialog {
 			right: 10px;
 			left: auto;
+		}
+		html.autokittensRight > body.scheme_sleek > .autokittens-dialog,
+		html.autokittensRight.forceShadow .autokittens-dialog,
+		html.forceShadowGlobal > body .dialog,
+		html.forceShadowGlobal > body .help {
 			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
 		}
 		#autokittens-checkupdate {
