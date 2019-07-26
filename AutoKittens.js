@@ -1,12 +1,12 @@
-// #AULBS:1564107263#
 /*
 AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/kittens/)
 
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 22:14:23 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
+Last build: 23:19:52 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
 */
+// #AULBS:1564111192#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -200,8 +200,46 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564107263';
+	const AULBS = 1564111192;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
+	let onError = (xhr, stat, err) => {
+		alert('AutoKittens was unable to check for an update - details are in your console.');
+		console.group("AK Update Check (failure)");
+		console.info('Status value:', stat);
+		console.info('Error value:', err);
+		console.groupEnd();
+	};
+	let doCheck = (data, stat, xhr) => {
+		if (typeof data != 'string') {
+			return onError(xhr, stat, data);
+		}
+		let liveVersion = data.match(/#AULBS:(\d+)#/);
+		if (!liveVersion) {
+			return onError(xhr, 'no version string', data);
+		}
+		let liveStamp = parseInt(liveVersion[1], 10);
+		if (liveStamp > AULBS) {
+			alert('AutoKittens found an update! Reload your game page and refresh the script to apply it.');
+		}
+		else if (liveStamp < AULBS) {
+			alert("Something may be weird, unless you're one of the developers - your copy of AutoKittens is newer than the live one.");
+		}
+		else {
+			alert("You're already on the latest copy of AutoKittens!");
+		}
+	};
+	try {
+		$.ajax(SOURCE, {
+			method: 'GET',
+			cache: false,
+			dataType: 'text',
+			error: onError,
+			success: doCheck,
+		});
+	}
+	catch (e) {
+		onError(null, 'request failed', e);
+	}
 }
 
 function saveAutoOptions() {
@@ -504,6 +542,7 @@ function addTriggerButton(container, caption, trigger, hint) {
 		button.attr('title', hint);
 	}
 	container.append(button, '<br />');
+	return button;
 }
 
 function addIndent(container) {
@@ -909,6 +948,7 @@ function rebuildOptionsUI() {
 		["0.1%", 0.001],
 	].concat(percentages);
 	let uiContainer = prepareContainer('autoOptions');
+	addTriggerButton(uiContainer, 'Check for script update', checkUpdate).attr('id', 'autokittens-checkupdate'); // TODO implement CSS for this button
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
