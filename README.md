@@ -14,7 +14,7 @@ AutoKittens is an automation assistant script for the [Kittens Game](http://bloo
 - UI tweaks like lighter shadows and different time formats
 
 ## Version 2?
-The [original AutoKittens script](http://birdiesoft.dk/autokittens.php) (author not actually known) was a brilliant piece of work, but it is sadly no longer properly functional. The internals were written on what are now thoroughly outdated conventions, and the game has undergone script-breaking changes since. This is an update to modern JS, as well as a fix of the various bugs (internal and visible ones both) that rendered it effectively unusable.
+The [original AutoKittens script](http://birdiesoft.dk/autokittens.php) (author believed to be Michael Madsen, owner of Birdiesoft and the operator of that site) was a brilliant piece of work, but it is sadly no longer properly functional. The internals were written on what are now thoroughly outdated conventions, and the game has undergone script-breaking changes since. This is an update to modern JS, as well as a fix of the various bugs (internal and visible ones both) that rendered it effectively unusable.
 
 ## How do I use it?
 You can either copy the contents of the script into your browser console on the game page (not recommended) or we can borrow a page from [ScriptKitties](https://github.com/MaPaul1977/KittensGame) and use a scriptlet bookmark - just save this as a bookmark and click on it (once!) on the game page:
