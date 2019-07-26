@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 23:19:52 EDT (UTC-0400) on Sweetmorn, Confusion 60, 3185 YOLD (Thursday, July 25, 2019)
+Last build: 00:10:44 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564111192#
+// #AULBS:1564114244#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -200,10 +200,11 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564111192;
+	const AULBS = 1564114244;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
+	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
-		alert('AutoKittens was unable to check for an update - details are in your console.');
+		button.val('Update check failed!');
 		console.group("AK Update Check (failure)");
 		console.info('Status value:', stat);
 		console.info('Error value:', err);
@@ -219,16 +220,17 @@ function checkUpdate() {
 		}
 		let liveStamp = parseInt(liveVersion[1], 10);
 		if (liveStamp > AULBS) {
-			alert('AutoKittens found an update! Reload your game page and refresh the script to apply it.');
+			button.val('Update found!');
 		}
 		else if (liveStamp < AULBS) {
-			alert("Something may be weird, unless you're one of the developers - your copy of AutoKittens is newer than the live one.");
+			button.val('Live copy behind');
 		}
 		else {
-			alert("You're already on the latest copy of AutoKittens!");
+			button.val('No update available');
 		}
 	};
 	try {
+		button.val('Checking...');
 		$.ajax(SOURCE, {
 			method: 'GET',
 			cache: false,
@@ -948,7 +950,6 @@ function rebuildOptionsUI() {
 		["0.1%", 0.001],
 	].concat(percentages);
 	let uiContainer = prepareContainer('autoOptions');
-	addTriggerButton(uiContainer, 'Check for script update', checkUpdate).attr('id', 'autokittens-checkupdate'); // TODO implement CSS for this button
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
@@ -1082,6 +1083,7 @@ function rebuildOptionsUI() {
 			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, 'show' + r.name, 'Show ' + (r.title || r.name));
 		}
 	});
+	addTriggerButton(uiContainer, 'Check for script update', checkUpdate).attr('id', 'autokittens-checkupdate');
 	addHeading(uiContainer, 'Reset options');
 	uiContainer.append($('<a href="#">Reset options</a>').on('click', () => {
 		autoOptions = defaultOptions;
@@ -1122,6 +1124,15 @@ function buildUI() {
 			right: 10px;
 			left: auto;
 			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
+		}
+		#autokittens-checkupdate {
+			width: 100%;
+			margin-left: 0;
+			margin-right: 0;
+			margin-top: 20px;
+			margin-bottom: 20px;
+			padding: 8px;
+			font-size: 1.1em;
 		}
 		#timerTableContainer {
 			width: 100%;
