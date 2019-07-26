@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 00:10:44 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
+Last build: 00:14:18 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564114244#
+// #AULBS:1564114458#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -200,7 +200,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564114244;
+	const AULBS = 1564114458;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
@@ -223,7 +223,7 @@ function checkUpdate() {
 			button.val('Update found!');
 		}
 		else if (liveStamp < AULBS) {
-			button.val('Live copy behind');
+			button.val('Release behind live');
 		}
 		else {
 			button.val('No update available');
@@ -950,9 +950,6 @@ function rebuildOptionsUI() {
 		["0.1%", 0.001],
 	].concat(percentages);
 	let uiContainer = prepareContainer('autoOptions');
-	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
 	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
 	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
 	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
@@ -960,11 +957,6 @@ function rebuildOptionsUI() {
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions', 'prayLimit', 'Pray when faith is', faithPercentages, 'full');
 	addCheckbox(uiContainer, 'autoOptions', 'autoTrade', 'Trade when gold is near limit');
-	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
-		["default", "standard"],
-		["short", "short"],
-		["seconds", "seconds"],
-	], '', changeTimeFormat);
 	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
 	addHeading(uiContainer, 'Auto-trading');
 	let races = [
@@ -1083,6 +1075,15 @@ function rebuildOptionsUI() {
 			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, 'show' + r.name, 'Show ' + (r.title || r.name));
 		}
 	});
+	addHeading(uiContainer, 'UI options');
+	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', 'Move AutoKittens dialog boxes to the right of the window and reduce the shadow', realignSciptDialogs);
+	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
+		["default", "standard"],
+		["short", "short"],
+		["seconds", "seconds"],
+	], '', changeTimeFormat);
 	addTriggerButton(uiContainer, 'Check for script update', checkUpdate).attr('id', 'autokittens-checkupdate');
 	addHeading(uiContainer, 'Reset options');
 	uiContainer.append($('<a href="#">Reset options</a>').on('click', () => {
