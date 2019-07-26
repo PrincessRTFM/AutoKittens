@@ -4,9 +4,9 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 Original author: unknown
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 
-Last build: 00:58:41 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
+Last build: 01:03:57 EDT (UTC-0400) on Boomtime, Confusion 61, 3185 YOLD (Friday, July 26, 2019)
 */
-// #AULBS:1564117121#
+// #AULBS:1564117437#
 /* jshint browser: true, devel: true, dojo: true, jquery: true, unused: false, strict: false */ // The game runs in non-strict, according to one of the devs
 /* globals game: true, LCstorage: true, resetGameLogHeight: true, autoOptions: true */
 
@@ -202,7 +202,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = 1564117121;
+	const AULBS = 1564117437;
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	let onError = (xhr, stat, err) => {
@@ -1149,9 +1149,9 @@ function buildUI() {
 			left: auto;
 		}
 		html.autokittensRight > body.scheme_sleek .autokittens-dialog,
-		html.autokittensRight.forceShadow .autokittens-dialog,
-		html.forceShadowGlobal > body .dialog,
-		html.forceShadowGlobal > body .help {
+		html.forceShadow > body > #gamePageContainer > .autokittens-dialog,
+		html.forceShadowGlobal > body > #gamePageContainer > .dialog,
+		html.forceShadowGlobal > body > #gamePageContainer > .help {
 			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
 		}
 		#autokittens-checkupdate {
