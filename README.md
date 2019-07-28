@@ -27,3 +27,27 @@ If you want to use some other method of injection, the script is available via [
 
 ## Update checker?
 In the options box, at the very bottom, is a button to check for an update. It loads the script from Github as _text_ - not a script - and looks for a specific marker that indicates whether it's older, newer, or the same as the version you're running the check from. You might need to allow AJAX/XHR from `princessrtfm.github.io` in your script blocker because that's how it loads the script contents to inspect them. Some blockers may also require you to allow loading scripts from `princessrtfm.github.io` because it is still trying to load "a script" even if it's not running it.
+
+## Contributing
+
+### I found a bug!
+
+If it's a game-breaker or a script-breaker, please join the [Kittens Game discord](https://discord.gg/2arBf9K) and ping me (`Lily#5459`) in the `#scripts-code` channel. If I'm awake and able, I'll respond to breaking bugs immediately; I consider these to be priority 1.
+
+If it's something that's acting a little funky, you can either ping me there or (preferably) open an issue on the tracker here. I usually check my Github notifications at least once a day and often more.
+
+If it's in one of the calculators, I know they're janky. The math is complicated and the game code is messy in places. Definitely let me know, but don't expect it to be completely fixed soon.
+
+### I have a request!
+
+By all means, let me know! Small things are usually added very quickly, big ones or things that are just incompatible enough to need a larger overhaul update take longer. Entirely new features from scratch will take the longest, but I'm still very much open to ideas.
+
+If it's a little thing, like "can you make _X_ autocraftable too?" then you can just ping me on the discord server and I can probably have it up in ten minutes or so if I'm available at the time. Big requests should probably go on here instead.
+
+### I (fixed a bug / implemented a feature / etc) for you!
+
+You definitely have my gratitude for that, and I hope you open a pull request to send me the code! You're fully allowed to sign your own changed bits in comments too, so you have credit for your work. Just remember to check `CONTRIBUTING.md` for guidelines.
+
+## Contact
+
+You can email me (my email is available through my Github profile), open an issue on here, or ping `Lily#5459` on discord. I don't accept friend requests from people I don't know, especially if we don't even share a server, so please don't send me any.
