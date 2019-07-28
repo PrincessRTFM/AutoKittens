@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 07:41:44 on Sunday, July 28, 2019 UTC
+Last built at 18:53:33 on Sunday, July 28, 2019 UTC
 
-#AULBS:1564299704#
+#AULBS:1564340013#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable */
@@ -199,7 +199,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564299704';
+	const AULBS = '1564340013';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -380,13 +380,19 @@ function calculateBaseUps(extras) {
 	const palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
 	const utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
 	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
+	let upgradeEffect = 1;
+	for (let i = 0; i < game.workshop.upgrades.length; i++) {
+		if ('unicornsGlobalRatio' in (game.workshop.upgrades[i].effects || {}) && game.workshop.upgrades[i].researched) {
+			upgradeEffect += game.workshop.upgrades[i].effects.unicornsGlobalRatio;
+		}
+	}
 	let faithEffect = 1;
 	if (game.religion.getRU("solarRevolution").on) {
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
 	let paragonRatio = game.resPool.get("paragon").value * 0.01;
 	paragonRatio = 1 + game.getHyperbolicEffect(paragonRatio, 2);
-	return baseUps * bldEffect * faithEffect * paragonRatio;
+	return baseUps * upgradeEffect * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
 	extras = extras || [];

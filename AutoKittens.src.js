@@ -381,13 +381,19 @@ function calculateBaseUps(extras) {
 	const palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
 	const utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
 	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
+	let upgradeEffect = 1;
+	for (let i = 0; i < game.workshop.upgrades.length; i++) {
+		if ('unicornsGlobalRatio' in (game.workshop.upgrades[i].effects || {}) && game.workshop.upgrades[i].researched) {
+			upgradeEffect += game.workshop.upgrades[i].effects.unicornsGlobalRatio;
+		}
+	}
 	let faithEffect = 1;
 	if (game.religion.getRU("solarRevolution").on) {
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
 	let paragonRatio = game.resPool.get("paragon").value * 0.01;
 	paragonRatio = 1 + game.getHyperbolicEffect(paragonRatio, 2);
-	return baseUps * bldEffect * faithEffect * paragonRatio;
+	return baseUps * upgradeEffect * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
 	extras = extras || [];
