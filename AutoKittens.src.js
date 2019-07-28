@@ -6,7 +6,7 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: $SIGNATURE
 Repository: $GITHUB/$PROJECT_NAME/
 
-$BUILD_SIG
+$BUILD_STAMP
 
 #AULBS:$__UNIXTIME__#
 */
