@@ -1033,14 +1033,10 @@ function rebuildOptionsUI() {
 	];
 	const faithPercentages = [ [ "0%", 0 ], [ "0.1%", 0.001 ] ].concat(percentages);
 	const uiContainer = prepareContainer('autoOptions');
-	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
-	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
-	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
+	addHeading(uiContainer, 'Prayer');
 	addCheckbox(uiContainer, 'autoOptions', 'autoPray', 'Praise the sun when faith is near limit');
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions', 'prayLimit', 'Pray when faith is', faithPercentages, 'full');
-	addCheckbox(uiContainer, 'autoOptions', 'autoTrade', 'Trade when gold is near limit');
-	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
 	addHeading(uiContainer, 'Auto-trading');
 	const races = [[ "No one", "" ]];
 	game.diplomacy.races.forEach(r => {
@@ -1048,10 +1044,12 @@ function rebuildOptionsUI() {
 			races.push([ r.title || r.name, r.name ]);
 		}
 	});
+	addCheckbox(uiContainer, 'autoOptions', 'autoTrade', 'Trade when gold is near limit');
+	addIndent(uiContainer);
+	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradeLimit', 'Trade when gold is', percentages, 'full');
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartner', 'Trade with', races, 'by default');
 	addCheckbox(uiContainer, 'autoOptions.tradeOptions', 'suppressTradeLog', 'Hide log messages when auto-trading');
 	races[0][0] = "Default selection";
-	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradeLimit', 'Trade when gold is', percentages, 'full');
 	addIndent(uiContainer);
 	addInputField(uiContainer, 'autoOptions.tradeOptions', 'tradeCount', 'Send', 'caravans at a time');
 	addCheckbox(uiContainer, 'autoOptions.tradeOptions', 'tradeSpring', 'Allow trading in spring');
@@ -1067,6 +1065,7 @@ function rebuildOptionsUI() {
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
 	addHeading(uiContainer, 'Auto-crafting');
+	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
 	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick').after('<br />');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
 	addAutocraftConfigLine(uiContainer, 'catnip', 'wood');
@@ -1115,6 +1114,7 @@ function rebuildOptionsUI() {
 	addInputField(uiContainer, 'autoOptions.craftOptions', 'blueprintAmount', 'When storage full, craft', 'blueprints(s) at a time');
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'blueprintPriority', 'When crafting both from full storage, check blueprints before compendiums');
 	addHeading(uiContainer, 'Auto-hunting');
+	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
 	addOptionMenu(uiContainer, 'autoOptions.huntOptions', 'huntLimit', 'Hunt when catpower is', percentages, 'full');
 	addCheckbox(uiContainer, 'autoOptions.huntOptions', 'suppressHuntLog', 'Hide log messages when auto-hunting (includes hunt-triggered crafts)');
 	addCheckbox(uiContainer, 'autoOptions.huntOptions', 'singleHunts', 'Only send one hunt at a time');
@@ -1132,6 +1132,9 @@ function rebuildOptionsUI() {
 			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, `show${r.name}`, `Show ${r.title || r.name}`);
 		}
 	});
+	addHeading(uiContainer, 'General game options');
+	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
+	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
 	addHeading(uiContainer, 'UI options');
 	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
 	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
@@ -1161,12 +1164,22 @@ function buildUI() {
 	realignSciptDialogs();
 	$(resetGameLogHeight);
 	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>').on('click', () => {
-		rebuildOptionsUI();
-		$('#autoOptions').toggle();
+		if ($('#autoOptions').is(':visible')) {
+			$('#autoOptions').hide();
+		}
+		else {
+			rebuildOptionsUI();
+			$('#autoOptions').show();
+		}
 	});
 	const calcLink = $('<a id="autokittens-calclink" href="#" title="According to my catculations...">Calculators</a>').on('click', () => {
-		rebuildCalculatorUI();
-		$('#kittenCalcs').toggle();
+		if ($('#kittenCalcs').is(':visible')) {
+			$('#kittenCalcs').hide();
+		}
+		else {
+			rebuildCalculatorUI();
+			$('#kittenCalcs').show();
+		}
 	});
 	$('#headerLinks').append(' | ', optLink, ' | ', calcLink);
 	const uiContainer = $('<div class="dialog help autokittens-dialog" id="autoOptions"></div>').hide();
