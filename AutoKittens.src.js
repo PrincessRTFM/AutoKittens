@@ -1030,10 +1030,11 @@ function reapplyShadows() {
 function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
 	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
 	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
-	const suffix = needsPluralising ? '(s)' : '';
-	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo}`);
+	const questioningSuffix = needsPluralising ? '(s)' : '';
+	const certainSuffix = needsPluralising ? 's' : '';
+	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo + certainSuffix}`);
 	addIndent(uiContainer);
-	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + suffix} at a time`);
+	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + questioningSuffix} at a time`);
 }
 
 function rebuildOptionsUI() {
@@ -1482,9 +1483,6 @@ function autoCraft() {
 						if (percentage < autoOptions.craftOptions.craftLimit) {
 							continue AUTOCRAFT;
 						}
-						continue;
-					}
-					if (input.value > output.value) {
 						continue;
 					}
 					if (input.value > 0) { // Check by percentage of the PRODUCT'S CURRENT VALUE - for secondary/uncapped resources

@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 05:29:58 on Monday, July 29, 2019 UTC
+Last built at 05:40:15 on Monday, July 29, 2019 UTC
 
-#AULBS:1564378198#
+#AULBS:1564378815#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -215,7 +215,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564378198';
+	const AULBS = '1564378815';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1029,10 +1029,11 @@ function reapplyShadows() {
 function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
 	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
 	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
-	const suffix = needsPluralising ? '(s)' : '';
-	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo}`);
+	const questioningSuffix = needsPluralising ? '(s)' : '';
+	const certainSuffix = needsPluralising ? 's' : '';
+	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo + certainSuffix}`);
 	addIndent(uiContainer);
-	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + suffix} at a time`);
+	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + questioningSuffix} at a time`);
 }
 
 function rebuildOptionsUI() {
@@ -1481,9 +1482,6 @@ function autoCraft() {
 						if (percentage < autoOptions.craftOptions.craftLimit) {
 							continue AUTOCRAFT;
 						}
-						continue;
-					}
-					if (input.value > output.value) {
 						continue;
 					}
 					if (input.value > 0) { // Check by percentage of the PRODUCT'S CURRENT VALUE - for secondary/uncapped resources
