@@ -11,7 +11,7 @@ $BUILD_STAMP
 #AULBS:$__UNIXTIME__#
 */
 
-/* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable */
+/* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
 
 const defaultTimeFormat = game.toDisplaySeconds;
 const gameTickFunc = game.tick;
@@ -21,6 +21,7 @@ let calculators = [];
 const NOP = function() {
 	// no-op
 };
+
 function setArbitrarilyDeepObject(location, value, initialTarget) {
 	let target = initialTarget || window;
 	if (Array.isArray(location)) {
@@ -125,31 +126,46 @@ const defaultOptions = {
 	autoFestival: false,
 	craftOptions: {
 		craftLimit: 0.99,
+		secondaryCraftLimit: 0.6,
 		craftWood: false,
 		woodAmount: 10,
 		craftBeam: false,
 		beamAmount: 1,
 		craftSlab: false,
 		slabAmount: 1,
-		craftSteel: false,
-		steelAmount: 1,
 		craftPlate: false,
 		plateAmount: 1,
+		craftSteel: false,
+		steelAmount: 1,
+		craftConcrete: false,
+		concreteAmount: 1,
+		craftGear: false,
+		gearAmount: 1,
 		craftAlloy: false,
 		alloyAmount: 1,
+		craftEludium: false,
+		eludiumAmount: 1,
+		craftScaffold: false,
+		scaffoldAmount: 1,
+		craftShip: false,
+		shipAmount: 1,
+		craftTanker: false,
+		tankerAmount: 1,
 		craftKerosene: false,
 		keroseneAmount: 1,
 		craftThorium: false,
 		thoriumAmount: 1,
-		craftEludium: false,
-		eludiumAmount: 1,
+		craftMegalith: false,
+		megalithAmount: 1,
+		craftBloodstone: false,
+		bloodstoneAmount: 1,
 		festivalBuffer: false,
 		craftParchment: false,
 		parchmentAmount: 1,
 		craftManuscript: false,
 		manuscriptAmount: 1,
 		craftCompendium: false,
-		compediumAmount: 1,
+		compediumAmount: 1, // [sic]
 		craftBlueprint: false,
 		blueprintAmount: 1,
 		blueprintPriority: false,
@@ -382,9 +398,9 @@ function calculateBaseUps(extras) {
 	const utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
 	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
 	let upgradeEffect = 1;
-	for (let i = 0; i < game.workshop.upgrades.length; i++) {
-		if ('unicornsGlobalRatio' in (game.workshop.upgrades[i].effects || {}) && game.workshop.upgrades[i].researched) {
-			upgradeEffect += game.workshop.upgrades[i].effects.unicornsGlobalRatio;
+	for (let i = 0; i < autoKittensCache.unicornUpgrades.length; i++) {
+		if (autoKittensCache.unicornUpgrades[i].researched) {
+			upgradeEffect += autoKittensCache.unicornUpgrades[i].effects.unicornsGlobalRatio;
 		}
 	}
 	let faithEffect = 1;
@@ -1011,9 +1027,9 @@ function reapplyShadows() {
 	}
 }
 
-function addAutocraftConfigLine(uiContainer, from, to, needsPluralising) {
+function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
 	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
-	const labelTo = internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
+	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
 	const suffix = needsPluralising ? '(s)' : '';
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', `craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`, `Automatically convert ${from} to ${labelTo}`);
 	addIndent(uiContainer);
@@ -1072,17 +1088,24 @@ function rebuildOptionsUI() {
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
 	addHeading(uiContainer, 'Auto-crafting');
 	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
-	addTriggerButton(uiContainer, 'Calculate craft amounts', calculateCraftAmounts, 'Will set the numbers to craft as many per operation as possible WITHOUT consuming more per craft (tick) than you MAKE per tick').after('<br />');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
+	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'secondaryCraftLimit', "Keep secondary crafting outputs at least", percentages, 'the amount of the inputs');
 	addAutocraftConfigLine(uiContainer, 'catnip', 'wood');
 	addAutocraftConfigLine(uiContainer, 'wood', 'beam', true);
 	addAutocraftConfigLine(uiContainer, 'minerals', 'slab', true);
-	addAutocraftConfigLine(uiContainer, 'coal and iron', 'steel');
 	addAutocraftConfigLine(uiContainer, 'iron', 'plate', true);
-	addAutocraftConfigLine(uiContainer, 'titanium', 'alloy');
+	addAutocraftConfigLine(uiContainer, 'iron and coal', 'steel');
+	addAutocraftConfigLine(uiContainer, 'slabs and steel', 'concrate', false, 'concrete');
+	addAutocraftConfigLine(uiContainer, 'steel', 'gear', true);
+	addAutocraftConfigLine(uiContainer, 'steel and titanium', 'alloy');
+	addAutocraftConfigLine(uiContainer, 'alloy and unobtainium', 'eludium');
+	addAutocraftConfigLine(uiContainer, 'beams', 'scaffold', true);
+	addAutocraftConfigLine(uiContainer, 'scaffolds, plates, and starcharts', 'ship', true);
+	addAutocraftConfigLine(uiContainer, 'ships, alloy, and blueprints', 'tanker', true);
 	addAutocraftConfigLine(uiContainer, 'oil', 'kerosene');
 	addAutocraftConfigLine(uiContainer, 'uranium', 'thorium');
-	addAutocraftConfigLine(uiContainer, 'unobtainium', 'eludium');
+	addAutocraftConfigLine(uiContainer, 'slabs, beams, and plates', 'megalith', true);
+	addAutocraftConfigLine(uiContainer, 'time crystals and relics', 'bloodstone', true);
 	addHeading(uiContainer, 'Fur product crafting');
 	addTriggerOptionMenu(uiContainer, 'autoOptions.furOptions', 'parchmentMode', 'Auto-craft parchment', [
 		[ 'never', 0 ],
@@ -1304,105 +1327,179 @@ function autoCraft() {
 	// To add a new one:
 	// 1: add `craft<Thing>` and `<thing>Amount` options in the defaults
 	// 2: add the `addAutocraftConfigLine(uiContainer, '<from label>', '<internal to>', pluraliseOutputLabelP)` line to `rebuildOptionsUI()` above
-	// 3: add a `['<source ID>', '<result ID>', 'craft<Thing>', condition]` line here
+	// 3: add a `['<result ID>', 'craft<Thing>', condition]` line here
 	const resources = [
 		[
-			"catnip",
+			"bloodstone",
+			"craftBloodstone",
+			"bloodstoneAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"tanker",
+			"craftTanker",
+			"tankerAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"ship",
+			"craftShip",
+			"shipAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"concrate",
+			"craftConcrete",
+			"concreteAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"megalith",
+			"craftMegalith",
+			"megalithAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"slab",
+			"craftSlab",
+			"slabAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"gear",
+			"craftGear",
+			"gearAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"steel",
+			"craftSteel",
+			"steelAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"plate",
+			"craftPlate",
+			"plateAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"eludium",
+			"craftEludium",
+			"eludiumAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"alloy",
+			"craftAlloy",
+			"alloyAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"kerosene",
+			"craftKerosene",
+			"keroseneAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"thorium",
+			"craftThorium",
+			"thoriumAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"scaffold",
+			"craftScaffold",
+			"scaffoldAmount",
+			game.science.get('construction').researched,
+		],
+		[
+			"beam",
+			"craftBeam",
+			"beamAmount",
+			game.science.get('construction').researched,
+		],
+		[
 			"wood",
 			"craftWood",
+			"woodAmount",
 			true,
 		],
 		[
-			"wood",
-			"beam",
-			"craftBeam",
-			game.science.get('construction').researched,
-		],
-		[
-			"minerals",
-			"slab",
-			"craftSlab",
-			game.science.get('construction').researched,
-		],
-		[
-			"coal",
-			"steel",
-			"craftSteel",
-			game.science.get('construction').researched,
-		],
-		[
-			"iron",
-			"plate",
-			"craftPlate",
-			game.science.get('construction').researched,
-		],
-		[
-			"titanium",
-			"alloy",
-			"craftAlloy",
-			game.science.get('construction').researched,
-		],
-		[
-			"oil",
-			"kerosene",
-			"craftKerosene",
-			game.science.get('construction').researched,
-		], // Unlocked by Oil Processing tech, but the loop checks craft.unlocked so we don't need to look for the specific tech, just for crafting capability
-		[
-			"uranium",
-			"thorium",
-			"craftThorium",
-			game.science.get('construction').researched,
-		], // Unlocked by Thorium tech
-		[
-			"unobtainium",
-			"eludium",
-			"craftEludium",
-			game.science.get('construction').researched,
-		],
-		[
-			"culture",
 			"parchment",
 			"craftParchment",
+			"parchmentAmount",
 			game.science.get('construction').researched,
 		],
 		[
-			"culture",
 			"manuscript",
 			"craftManuscript",
+			"manuscriptAmount",
 			game.science.get('construction').researched && (!autoOptions.craftOptions.festivalBuffer || game.resPool.get('parchment').value > 2500 + 25 * autoOptions.craftOptions.manuscriptAmount),
 		],
 		[
-			"science",
 			"blueprint",
 			"craftBlueprint",
+			"blueprintAmount",
 			game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority,
 		],
 		[
-			"science",
 			"compedium",
 			"craftCompendium",
+			"compediumAmount", // [sic]
 			game.science.get('construction').researched,
 		],
 		[
-			"science",
 			"blueprint",
 			"craftBlueprint",
+			"blueprintAmount",
 			game.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority,
 		],
 	];
-	for (let i = 0; i < resources.length; i++) {
-		const curRes = game.resPool.get(resources[i][0]);
-		if (curRes.maxValue == 0) {
-			continue;
-		}
+	AUTOCRAFT: for (let i = 0; i < resources.length; i++) {
+		const craftData = resources[i];
+		const [
+			product,
+			toggleSetting,
+			amountSetting,
+			consider,
+		] = craftData;
+		const costs = autoKittensCache.craftingInputs[product];
 		if (
-			resources[i][3] &&
-			autoOptions.craftOptions[resources[i][2]] &&
-			curRes.value / curRes.maxValue >= autoOptions.craftOptions.craftLimit &&
-			game.workshop.getCraft(resources[i][1]).unlocked
+			consider &&
+			autoOptions.craftOptions[toggleSetting] &&
+			game.workshop.getCraft(product).unlocked
 		) {
-			tryCraft(resources[i][1], autoOptions.craftOptions[`${resources[i][1]}Amount`]);
+			const output = game.resPool.get(product);
+			for (const resource in costs) {
+				if (Object.prototype.hasOwnProperty.call(costs, resource)) {
+					const input = game.resPool.get(resource);
+					if (input.value < costs[resource]) {
+						continue AUTOCRAFT;
+					}
+					if (input.maxValue > 0) { // Check by percentage of max value - the original method
+						const percentage = input.value / input.maxValue;
+						if (percentage < autoOptions.craftOptions.craftLimit) {
+							continue AUTOCRAFT;
+						}
+						continue;
+					}
+					if (input.value > output.value) {
+						continue;
+					}
+					if (input.value > 0) { // Check by percentage of the PRODUCT'S CURRENT VALUE - for secondary/uncapped resources
+						const percentage = output.value / input.value;
+						// If we have MORE of the OUTPUT than the threshold, skip this entirely
+						if (percentage > autoOptions.craftOptions.secondaryCraftLimit) {
+							continue AUTOCRAFT;
+						}
+						continue;
+					}
+					// Input is uncapped, input <= output, output <= 0, (transitively) input <= 0
+					continue AUTOCRAFT;
+				}
+			}
+			tryCraft(product, autoOptions.craftOptions[amountSetting]);
 		}
 	}
 }
@@ -1489,23 +1586,66 @@ function processAutoKittens() {
 	updateCalculators();
 }
 
-window.addEventListener('beforeunload', () => {
-	if (autoOptions.warnOnLeave) {
-		return 'Are you sure you want to leave?';
-	}
-	return false; // If you don't return a STRING then it just goes right on ahead and unloads
-});
-if (game.worker) {
-	const runOriginalGameTick = dojo.hitch(game, gameTickFunc);
-	game.tick = function runAutoKittensHijackedGameTick() { // eslint-disable-line func-name-matching
-		runOriginalGameTick();
-		processAutoKittens();
+(() => {
+	// The internal cache of things we need that WON'T change over time
+	let internalCache;
+	const rebuildAutoKittensCache = function rebuildAutoKittensCache() {
+		const temporaryCache = {
+			unicornUpgrades: [],
+			craftingInputs: {},
+		};
+		for (let i = 0; i < game.workshop.upgrades.length; i++) {
+			if ('unicornsGlobalRatio' in (game.workshop.upgrades[i].effects || {})) {
+				temporaryCache.unicornUpgrades.push(game.workshop.upgrades[i]);
+			}
+		}
+		Object.freeze(temporaryCache.unicornUpgrades);
+		for (let i = 0; i < game.workshop.crafts.length; i++) {
+			const product = game.workshop.crafts[i].name;
+			const costs = {};
+			game.workshop.crafts[i].prices.forEach(price => {
+				costs[price.name] = price.val;
+			});
+			temporaryCache.craftingInputs[product] = Object.freeze(costs);
+		}
+		Object.freeze(temporaryCache.craftingInputs);
+		internalCache = Object.freeze(temporaryCache);
 	};
-}
-else {
-	window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
-}
-if (!document.getElementById('timerTable')) {
-	buildUI();
-	rebuildOptionsUI();
-}
+	rebuildAutoKittensCache();
+	Object.defineProperties(window, {
+		autoKittensCache: {
+			enumerable: true,
+			get: () => internalCache,
+		},
+		rebuildAutoKittensCache: {
+			enumerable: true,
+			value: rebuildAutoKittensCache,
+		},
+	});
+	// Keep the cache (semi-)regularly updated, every ten minutes
+	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
+	// Set the unload-guard
+	window.addEventListener('beforeunload', () => {
+		if (autoOptions.warnOnLeave) {
+			return 'Are you sure you want to leave?';
+		}
+		return false; // If you don't return a STRING then it just goes right on ahead and unloads
+	});
+	// Inject the script's core function
+	if (game.worker) {
+		const runOriginalGameTick = dojo.hitch(game, gameTickFunc);
+		game.tick = function runAutoKittensHijackedGameTick() { // eslint-disable-line func-name-matching
+			runOriginalGameTick();
+			processAutoKittens();
+		};
+	}
+	else {
+		window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
+	}
+	// Make the UI changes
+	if (!document.getElementById('timerTable')) {
+		buildUI();
+		rebuildOptionsUI();
+	}
+})();
+
