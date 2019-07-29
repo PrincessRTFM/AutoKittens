@@ -1095,7 +1095,7 @@ function rebuildOptionsUI() {
 	addAutocraftConfigLine(uiContainer, 'minerals', 'slab', true);
 	addAutocraftConfigLine(uiContainer, 'iron', 'plate', true);
 	addAutocraftConfigLine(uiContainer, 'iron and coal', 'steel');
-	addAutocraftConfigLine(uiContainer, 'slabs and steel', 'concrate', false, 'concrete');
+	addAutocraftConfigLine(uiContainer, 'slabs and steel', 'concrete', false);
 	addAutocraftConfigLine(uiContainer, 'steel', 'gear', true);
 	addAutocraftConfigLine(uiContainer, 'steel and titanium', 'alloy');
 	addAutocraftConfigLine(uiContainer, 'alloy and unobtainium', 'eludium');

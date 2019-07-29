@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 05:22:34 on Monday, July 29, 2019 UTC
+Last built at 05:29:58 on Monday, July 29, 2019 UTC
 
-#AULBS:1564377754#
+#AULBS:1564378198#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -215,7 +215,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564377754';
+	const AULBS = '1564378198';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1094,7 +1094,7 @@ function rebuildOptionsUI() {
 	addAutocraftConfigLine(uiContainer, 'minerals', 'slab', true);
 	addAutocraftConfigLine(uiContainer, 'iron', 'plate', true);
 	addAutocraftConfigLine(uiContainer, 'iron and coal', 'steel');
-	addAutocraftConfigLine(uiContainer, 'slabs and steel', 'concrate', false, 'concrete');
+	addAutocraftConfigLine(uiContainer, 'slabs and steel', 'concrete', false);
 	addAutocraftConfigLine(uiContainer, 'steel', 'gear', true);
 	addAutocraftConfigLine(uiContainer, 'steel and titanium', 'alloy');
 	addAutocraftConfigLine(uiContainer, 'alloy and unobtainium', 'eludium');
