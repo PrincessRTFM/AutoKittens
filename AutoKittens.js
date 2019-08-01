@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 05:40:15 on Monday, July 29, 2019 UTC
+Last built at 21:57:15 on Thursday, August 01, 2019 UTC
 
-#AULBS:1564378815#
+#AULBS:1564696635#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -215,7 +215,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564378815';
+	const AULBS = '1564696635';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -309,10 +309,9 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 	}
 	return "You have enough resources to build this now.";
 }
-function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE, UTOPIA, SUNSPIRE
-	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia and Sunspire handling
+function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE, UTOPIA
+	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia handling
 	const result = [
-		0,
 		0,
 		0,
 		0,
@@ -327,7 +326,6 @@ function getTearPrices() { // Get the number of tears required to build one more
 		game.religion.getZU('ivoryCitadel'),
 		game.religion.getZU('skyPalace'),
 		game.religion.getZU('unicornUtopia'),
-		game.religion.getZU('sunspire'),
 	];
 	const getFrom = (source, thing) => (source.get ? source.get(thing) : source[thing]);
 	for (let i = 0; i < buildings.length; i++) {
@@ -353,9 +351,8 @@ function getTearPrices() { // Get the number of tears required to build one more
 	return result;
 }
 function getIvoryPrices() {
-	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia and Sunspire handling
+	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia handling
 	const result = [
-		0,
 		0,
 		0,
 		0,
@@ -370,7 +367,6 @@ function getIvoryPrices() {
 		game.religion.getZU('ivoryCitadel'),
 		game.religion.getZU('skyPalace'),
 		game.religion.getZU('unicornUtopia'),
-		game.religion.getZU('sunspire'),
 	];
 	const getFrom = (source, thing) => (source.get ? source.get(thing) : source[thing]);
 	for (let i = 0; i < buildings.length; i++) {
@@ -394,14 +390,12 @@ function calculateBaseUps(extras) {
 	const citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
 	const palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
 	const utopias = game.religion.getZU('unicornUtopia').val + (extras[5] || 0);
-	const sunspires = game.religion.getZU('sunspire').val + (extras[6] || 0);
 	const tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatioReligion;
 	const towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatioReligion;
 	const citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatioReligion;
 	const palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
 	const utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
-	const sunspireEffect = game.religion.getZU('sunspire').effects.unicornsRatioReligion;
-	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect + sunspires * sunspireEffect;
+	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
 	let upgradeEffect = 1;
 	for (let i = 0; i < autoKittensCache.unicornUpgrades.length; i++) {
 		if (autoKittensCache.unicornUpgrades[i].researched) {
@@ -447,12 +441,10 @@ function calculateUnicornBuild() {
 		'Ivory Citadel',
 		'Sky Palace',
 		'Unicorn Utopia',
-		'Sunspire',
 	];
 	const tears = getTearPrices();
 	const ivory = getIvoryPrices();
 	const increases = [
-		0,
 		0,
 		0,
 		0,
@@ -464,7 +456,6 @@ function calculateUnicornBuild() {
 	let secondBest = 0;
 	for (let i = 0; i < buildings.length; i++) {
 		const extras = [
-			0,
 			0,
 			0,
 			0,
@@ -1050,8 +1041,13 @@ function rebuildOptionsUI() {
 		[ "1%", 0.01 ],
 		[ "5%", 0.05 ],
 		[ "10%", 0.1 ],
+		[ "20%", 0.2 ],
 		[ "25%", 0.25 ],
+		[ "30%", 0.3 ],
+		[ "40%", 0.4 ],
 		[ "50%", 0.5 ],
+		[ "60%", 0.6 ],
+		[ "70%", 0.7 ],
 		[ "75%", 0.75 ],
 		[ "80%", 0.8 ],
 		[ "90%", 0.9 ],
