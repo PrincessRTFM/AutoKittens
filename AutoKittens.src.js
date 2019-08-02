@@ -310,9 +310,10 @@ function checkUnicornReserves(resNumber, isPasture, currUps, ivoryNeeded) {
 	}
 	return "You have enough resources to build this now.";
 }
-function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE, UTOPIA
+function getTearPrices() { // Get the number of tears required to build one more of each of PASTURE, TOMB, TOWER, CITADEL, PALACE, UTOPIA, SUNSPIRE
 	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia handling
 	const result = [
+		0,
 		0,
 		0,
 		0,
@@ -327,6 +328,7 @@ function getTearPrices() { // Get the number of tears required to build one more
 		game.religion.getZU('ivoryCitadel'),
 		game.religion.getZU('skyPalace'),
 		game.religion.getZU('unicornUtopia'),
+		game.religion.getZU('sunspire'),
 	];
 	const getFrom = (source, thing) => (source.get ? source.get(thing) : source[thing]);
 	for (let i = 0; i < buildings.length; i++) {
@@ -352,8 +354,9 @@ function getTearPrices() { // Get the number of tears required to build one more
 	return result;
 }
 function getIvoryPrices() {
-	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia handling
+	// Credit to Quizer#1465 on the Kittens Game discord for implementing the Utopia and Sunspire handling
 	const result = [
+		0,
 		0,
 		0,
 		0,
@@ -368,6 +371,7 @@ function getIvoryPrices() {
 		game.religion.getZU('ivoryCitadel'),
 		game.religion.getZU('skyPalace'),
 		game.religion.getZU('unicornUtopia'),
+		game.religion.getZU('sunspire'),
 	];
 	const getFrom = (source, thing) => (source.get ? source.get(thing) : source[thing]);
 	for (let i = 0; i < buildings.length; i++) {
@@ -391,12 +395,14 @@ function calculateBaseUps(extras) {
 	const citadels = game.religion.getZU('ivoryCitadel').val + (extras[3] || 0);
 	const palaces = game.religion.getZU('skyPalace').val + (extras[4] || 0);
 	const utopias = game.religion.getZU('unicornUtopia').val + (extras[5] || 0);
+	const sunspires = game.religion.getZU('sunspire').val + (extras[6] || 0);
 	const tombEffect = game.religion.getZU('unicornTomb').effects.unicornsRatioReligion;
 	const towerEffect = game.religion.getZU('ivoryTower').effects.unicornsRatioReligion;
 	const citadelEffect = game.religion.getZU('ivoryCitadel').effects.unicornsRatioReligion;
 	const palaceEffect = game.religion.getZU('skyPalace').effects.unicornsRatioReligion;
 	const utopiaEffect = game.religion.getZU('unicornUtopia').effects.unicornsRatioReligion;
-	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect;
+	const sunspireEffect = game.religion.getZU('sunspire').effects.unicornsRatioReligion;
+	const bldEffect = 1 + tombEffect * tombs + towerEffect * towers + citadelEffect * citadels + palaceEffect * palaces + utopias * utopiaEffect + sunspires * sunspireEffect;
 	let upgradeEffect = 1;
 	for (let i = 0; i < autoKittensCache.unicornUpgrades.length; i++) {
 		if (autoKittensCache.unicornUpgrades[i].researched) {
@@ -442,10 +448,12 @@ function calculateUnicornBuild() {
 		'Ivory Citadel',
 		'Sky Palace',
 		'Unicorn Utopia',
+		'Sunspire',
 	];
 	const tears = getTearPrices();
 	const ivory = getIvoryPrices();
 	const increases = [
+		0,
 		0,
 		0,
 		0,
@@ -457,6 +465,7 @@ function calculateUnicornBuild() {
 	let secondBest = 0;
 	for (let i = 0; i < buildings.length; i++) {
 		const extras = [
+			0,
 			0,
 			0,
 			0,
