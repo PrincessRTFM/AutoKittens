@@ -1387,6 +1387,12 @@ function autoCraft() {
 			game.science.get('construction').researched,
 		],
 		[
+			"alloy",
+			"craftAlloy",
+			"alloyAmount",
+			game.science.get('construction').researched,
+		],
+		[
 			"steel",
 			"craftSteel",
 			"steelAmount",
@@ -1402,12 +1408,6 @@ function autoCraft() {
 			"eludium",
 			"craftEludium",
 			"eludiumAmount",
-			game.science.get('construction').researched,
-		],
-		[
-			"alloy",
-			"craftAlloy",
-			"alloyAmount",
 			game.science.get('construction').researched,
 		],
 		[
@@ -1488,6 +1488,9 @@ function autoCraft() {
 			const output = game.resPool.get(product);
 			for (const resource in costs) {
 				if (Object.prototype.hasOwnProperty.call(costs, resource)) {
+					if (product == 'steel' && resource == 'iron') {
+						continue; // It's a monkey patch, I know - I'm working on a proper fix
+					}
 					const input = game.resPool.get(resource);
 					if (input.value < costs[resource]) {
 						continue AUTOCRAFT;

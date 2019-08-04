@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 01:43:21 on Friday, August 02, 2019 UTC
+Last built at 00:52:09 on Sunday, August 04, 2019 UTC
 
-#AULBS:1564710201#
+#AULBS:1564879929#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -215,7 +215,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564710201';
+	const AULBS = '1564879929';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1386,6 +1386,12 @@ function autoCraft() {
 			game.science.get('construction').researched,
 		],
 		[
+			"alloy",
+			"craftAlloy",
+			"alloyAmount",
+			game.science.get('construction').researched,
+		],
+		[
 			"steel",
 			"craftSteel",
 			"steelAmount",
@@ -1401,12 +1407,6 @@ function autoCraft() {
 			"eludium",
 			"craftEludium",
 			"eludiumAmount",
-			game.science.get('construction').researched,
-		],
-		[
-			"alloy",
-			"craftAlloy",
-			"alloyAmount",
 			game.science.get('construction').researched,
 		],
 		[
@@ -1487,6 +1487,9 @@ function autoCraft() {
 			const output = game.resPool.get(product);
 			for (const resource in costs) {
 				if (Object.prototype.hasOwnProperty.call(costs, resource)) {
+					if (product == 'steel' && resource == 'iron') {
+						continue; // It's a monkey patch, I know - I'm working on a proper fix
+					}
 					const input = game.resPool.get(resource);
 					if (input.value < costs[resource]) {
 						continue AUTOCRAFT;
