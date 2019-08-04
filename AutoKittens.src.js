@@ -1640,11 +1640,17 @@ function processAutoKittens() {
 	// Keep the cache (semi-)regularly updated, every ten minutes
 	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
 	// Set the unload-guard
-	window.addEventListener('beforeunload', () => {
+	const unloadGuard = function unloadGuard(evt) { // eslint-disable-line consistent-return
 		if (autoOptions.warnOnLeave) {
-			return 'Are you sure you want to leave?';
+			const warning = 'Are you sure you want to leave?';
+			evt.preventDefault();
+			evt.returnValue = warning;
+			return warning;
 		}
-		return false; // If you don't return a STRING then it just goes right on ahead and unloads
+	};
+	window.addEventListener('beforeunload', unloadGuard, {
+		capture: true,
+		once: false,
 	});
 	// Inject the script's core function
 	if (game.worker) {

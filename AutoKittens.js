@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 00:52:09 on Sunday, August 04, 2019 UTC
+Last built at 02:59:09 on Sunday, August 04, 2019 UTC
 
-#AULBS:1564879929#
+#AULBS:1564887549#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -215,7 +215,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564879929';
+	const AULBS = '1564887549';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1639,11 +1639,17 @@ function processAutoKittens() {
 	// Keep the cache (semi-)regularly updated, every ten minutes
 	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
 	// Set the unload-guard
-	window.addEventListener('beforeunload', () => {
+	const unloadGuard = function unloadGuard(evt) { // eslint-disable-line consistent-return
 		if (autoOptions.warnOnLeave) {
-			return 'Are you sure you want to leave?';
+			const warning = 'Are you sure you want to leave?';
+			evt.preventDefault();
+			evt.returnValue = warning;
+			return warning;
 		}
-		return false; // If you don't return a STRING then it just goes right on ahead and unloads
+	};
+	window.addEventListener('beforeunload', unloadGuard, {
+		capture: true,
+		once: false,
 	});
 	// Inject the script's core function
 	if (game.worker) {
