@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 02:59:09 on Sunday, August 04, 2019 UTC
+Last built at 03:17:07 on Sunday, August 04, 2019 UTC
 
-#AULBS:1564887549#
+#AULBS:1564888627#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -16,6 +16,28 @@ const defaultTimeFormat = game.toDisplaySeconds;
 const gameTickFunc = game.tick;
 const checkInterval = 200;
 let calculators = [];
+const percentages = [
+	[ "1%", 0.01 ],
+	[ "5%", 0.05 ],
+	[ "10%", 0.1 ],
+	[ "20%", 0.2 ],
+	[ "25%", 0.25 ],
+	[ "30%", 0.3 ],
+	[ "40%", 0.4 ],
+	[ "50%", 0.5 ],
+	[ "60%", 0.6 ],
+	[ "70%", 0.7 ],
+	[ "75%", 0.75 ],
+	[ "80%", 0.8 ],
+	[ "90%", 0.9 ],
+	[ "95%", 0.95 ],
+	[ "98%", 0.98 ],
+	[ "99%", 0.99 ],
+	[ "99.5%", 0.995 ],
+	[ "99.9%", 0.999 ],
+	[ "100%", 1 ],
+];
+const faithPercentages = [ [ "0%", 0 ], [ "0.1%", 0.001 ] ].concat(percentages);
 
 const NOP = function() {
 	// no-op
@@ -215,7 +237,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564887549';
+	const AULBS = '1564888627';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -525,7 +547,10 @@ function changeTimeFormat() {
 function handleDisplayOptions(obj) {
 	for (const o in obj) {
 		if (Object.prototype.hasOwnProperty.call(obj, o)) {
-			$(`#autoKittens_show${o}`)[0].checked = obj[o];
+			const toggle = $(`#autoKittens_show${o}`);
+			if (toggle.length) { // The toggle might not exist yet, since the UI overhaul
+				toggle[0].checked = obj[o];
+			}
 		}
 	}
 }
@@ -649,9 +674,25 @@ function addInputField(container, prefix, optionName, leftCaption, rightCaption)
 }
 
 function prepareContainer(id) {
-	const result = $(`#${id}`);
-	const internal = $('<a class="close" style="top: 10px; right: 15px; position: absolute;" href="#">close</a>').on('click', result.hide.bind(result));
-	result.empty().append(internal);
+	let result;
+	if (typeof id == "object") {
+		result = id;
+	}
+	else {
+		result = $(`#${id}`);
+	}
+	const closeLink = $('<a class="close" href="#">close</a>').on('click', () => {
+		$('.autokittens-dialog').hide();
+	});
+	const backLink = $('<a class="close" href="#">back</a>').on('click', () => {
+		$('.autokittens-dialog').hide();
+		$('#akSettingsMaster').show();
+	});
+	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
+	if (result.attr('id').toLowerCase().indexOf('master') == -1) {
+		linkContainer.prepend(backLink, ' | ');
+	}
+	result.empty().append(linkContainer);
 	return result;
 }
 
@@ -1045,35 +1086,9 @@ function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFi
 	addInputField(uiContainer, 'autoOptions.craftOptions', `${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`, 'Craft', `${labelTo + questioningSuffix} at a time`);
 }
 
-function rebuildOptionsUI() {
-	const percentages = [
-		[ "1%", 0.01 ],
-		[ "5%", 0.05 ],
-		[ "10%", 0.1 ],
-		[ "20%", 0.2 ],
-		[ "25%", 0.25 ],
-		[ "30%", 0.3 ],
-		[ "40%", 0.4 ],
-		[ "50%", 0.5 ],
-		[ "60%", 0.6 ],
-		[ "70%", 0.7 ],
-		[ "75%", 0.75 ],
-		[ "80%", 0.8 ],
-		[ "90%", 0.9 ],
-		[ "95%", 0.95 ],
-		[ "98%", 0.98 ],
-		[ "99%", 0.99 ],
-		[ "99.5%", 0.995 ],
-		[ "99.9%", 0.999 ],
-		[ "100%", 1 ],
-	];
-	const faithPercentages = [ [ "0%", 0 ], [ "0.1%", 0.001 ] ].concat(percentages);
-	const uiContainer = prepareContainer('autoOptions');
-	addHeading(uiContainer, 'Prayer');
-	addCheckbox(uiContainer, 'autoOptions', 'autoPray', 'Praise the sun when faith is near limit');
-	addIndent(uiContainer);
-	addOptionMenu(uiContainer, 'autoOptions', 'prayLimit', 'Pray when faith is', faithPercentages, 'full');
-	addHeading(uiContainer, 'Auto-trading');
+function rebuildOptionsPaneTrading() {
+	const uiContainer = prepareContainer('akSettingsTrade');
+	addHeading(uiContainer, 'Trading');
 	const races = [[ "No one", "" ]];
 	game.diplomacy.races.forEach(r => {
 		if (r.unlocked) {
@@ -1100,7 +1115,42 @@ function rebuildOptionsUI() {
 	addCheckbox(uiContainer, 'autoOptions.tradeOptions', 'tradeWinter', 'Allow trading in winter');
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
-	addHeading(uiContainer, 'Auto-crafting');
+	updateOptionsUI();
+}
+function rebuildOptionsPaneGeneralUI() {
+	const uiContainer = prepareContainer('akSettingsUi');
+	addHeading(uiContainer, 'Timer displays');
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'showTimerDisplays', 'Show timer displays below', 'adjustTimerBar()');
+	uiContainer.append('Note: Ordering by time may cause elements near cap to frequently switch places.<br />');
+	addOptionMenu(uiContainer, 'autoOptions', 'displayOrder', 'Order time displays by', [
+		[ 'default order', 'standard' ],
+		[ 'shortest first', 'short' ],
+		[ 'longest first', 'long' ],
+	], '');
+	game.resPool.resources.forEach(r => {
+		if (typeof autoOptions.displayOptions[r.name] !== 'undefined') {
+			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, `show${r.name}`, `Show ${r.title || r.name}`);
+		}
+	});
+	addHeading(uiContainer, 'Game options');
+	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
+	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
+	addHeading(uiContainer, 'UI options');
+	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', "Move AK dialogs to the right of the window to improve playability", realignSciptDialogs);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadow', "Enable a light shadow on AK dialogs", reapplyShadows);
+	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadowGlobal', "Enable a light shadow on ALL dialogs (overrides the above option!)", reapplyShadows);
+	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
+		[ "default", "standard" ],
+		[ "short", "short" ],
+		[ "seconds", "seconds" ],
+	], '', changeTimeFormat);
+	updateOptionsUI();
+}
+function rebuildOptionsPaneCrafting() {
+	const uiContainer = prepareContainer('akSettingsCraft');
+	addHeading(uiContainer, 'Crafting');
 	addCheckbox(uiContainer, 'autoOptions', 'autoCraft', 'Craft materials when storage is near limit');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'craftLimit', 'Craft when storage is', percentages, 'full');
 	addOptionMenu(uiContainer, 'autoOptions.craftOptions', 'secondaryCraftLimit', "Keep secondary crafting outputs at least", percentages, 'the amount of the inputs');
@@ -1156,46 +1206,6 @@ function rebuildOptionsUI() {
 	addIndent(uiContainer);
 	addInputField(uiContainer, 'autoOptions.craftOptions', 'blueprintAmount', 'When storage full, craft', 'blueprints(s) at a time');
 	addCheckbox(uiContainer, 'autoOptions.craftOptions', 'blueprintPriority', 'When crafting both from full storage, check blueprints before compendiums');
-	addHeading(uiContainer, 'Auto-hunting');
-	addCheckbox(uiContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
-	addOptionMenu(uiContainer, 'autoOptions.huntOptions', 'huntLimit', 'Hunt when catpower is', percentages, 'full');
-	addCheckbox(uiContainer, 'autoOptions.huntOptions', 'suppressHuntLog', 'Hide log messages when auto-hunting (includes hunt-triggered crafts)');
-	addCheckbox(uiContainer, 'autoOptions.huntOptions', 'singleHunts', 'Only send one hunt at a time');
-	addCheckbox(uiContainer, 'autoOptions.huntOptions', 'huntEarly', 'Hunt as soon as the maximum number of hunts is reached (relative to the limit)');
-	addHeading(uiContainer, 'Timer displays');
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'showTimerDisplays', 'Show timer displays below', 'adjustTimerBar()');
-	uiContainer.append('Note: Ordering by time may cause elements near cap to frequently switch places.<br />');
-	addOptionMenu(uiContainer, 'autoOptions', 'displayOrder', 'Order time displays by', [
-		[ 'default order', 'standard' ],
-		[ 'shortest first', 'short' ],
-		[ 'longest first', 'long' ],
-	], '');
-	game.resPool.resources.forEach(r => {
-		if (typeof autoOptions.displayOptions[r.name] !== 'undefined') {
-			addNamedCheckbox(uiContainer, 'autoOptions.displayOptions', r.name, `show${r.name}`, `Show ${r.title || r.name}`);
-		}
-	});
-	addHeading(uiContainer, 'General game options');
-	addCheckbox(uiContainer, 'autoOptions', 'autoStar', 'Automatically witness astronomical events');
-	addCheckbox(uiContainer, 'autoOptions', 'autoFestival', 'Automatically try to hold festivals');
-	addHeading(uiContainer, 'UI options');
-	addCheckbox(uiContainer, 'autoOptions', 'warnOnLeave', 'Warn before leaving the page');
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'widenUI', 'Make the game use more horizontal space (particularly useful for Grassy theme)', adjustColumns);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'dialogRight', "Move AK dialogs to the right of the window to improve playability", realignSciptDialogs);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadow', "Enable a light shadow on AK dialogs", reapplyShadows);
-	addTriggerCheckbox(uiContainer, 'autoOptions', 'forceShadowGlobal', "Enable a light shadow on ALL dialogs (overrides the above option!)", reapplyShadows);
-	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
-		[ "default", "standard" ],
-		[ "short", "short" ],
-		[ "seconds", "seconds" ],
-	], '', changeTimeFormat);
-	addTriggerButton(uiContainer, 'Check for script update', checkUpdate).attr('id', 'autokittens-checkupdate');
-	addHeading(uiContainer, 'Reset options');
-	uiContainer.append($('<a href="#">Reset options</a>').on('click', () => {
-		autoOptions = defaultOptions;
-		saveAutoOptions();
-		updateOptionsUI();
-	}));
 	updateOptionsUI();
 }
 function buildUI() {
@@ -1206,28 +1216,67 @@ function buildUI() {
 	adjustTimerBar();
 	realignSciptDialogs();
 	$(resetGameLogHeight);
-	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>').on('click', () => {
-		if ($('#autoOptions').is(':visible')) {
-			$('#autoOptions').hide();
+	const akDialogClasses = 'dialog help autokittens-dialog';
+	const switchToDialog = (which, pre) => {
+		$('.autokittens-dialog').hide();
+		if (typeof pre == 'function') {
+			pre();
 		}
-		else {
-			rebuildOptionsUI();
-			$('#autoOptions').show();
-		}
-	});
-	const calcLink = $('<a id="autokittens-calclink" href="#" title="According to my catculations...">Calculators</a>').on('click', () => {
-		if ($('#kittenCalcs').is(':visible')) {
-			$('#kittenCalcs').hide();
-		}
-		else {
-			rebuildCalculatorUI();
-			$('#kittenCalcs').show();
-		}
-	});
+		which.show();
+	};
+	const switcher = (...pass) => switchToDialog.bind(null, ...pass);
+	const makeContainer = id => prepareContainer($(`<div class="${akDialogClasses}" id="akSettings${id.replace(/^[a-z]/u, c => c.toUpperCase())}"></div>`).hide());
+	const masterSettingsContainer = makeContainer("master");
+	const prayerSettingsContainer = makeContainer("prayer");
+	const tradeSettingsContainer = makeContainer("trade");
+	const craftSettingsContainer = makeContainer("craft");
+	const huntSettingsContainer = makeContainer("hunt");
+	const uiSettingsContainer = makeContainer("ui");
+	// The master panel, from here you have override toggles and the other panels
+	// TODO: implement master override toggles (#5)
+	addTriggerButton(masterSettingsContainer, 'Prayer Settings', switcher(prayerSettingsContainer)).addClass('autokittens-dispatch-button');
+	addTriggerButton(masterSettingsContainer, 'Trading Settings', switcher(tradeSettingsContainer, rebuildOptionsPaneTrading)).addClass('autokittens-dispatch-button');
+	addTriggerButton(masterSettingsContainer, 'Crafting Settings', switcher(craftSettingsContainer, rebuildOptionsPaneCrafting)).addClass('autokittens-dispatch-button');
+	addTriggerButton(masterSettingsContainer, 'Hunting Settings', switcher(huntSettingsContainer)).addClass('autokittens-dispatch-button');
+	addTriggerButton(masterSettingsContainer, 'UI Settings', switcher(uiSettingsContainer, rebuildOptionsPaneGeneralUI)).addClass('autokittens-dispatch-button');
+	addTriggerButton(masterSettingsContainer, 'Check for update', checkUpdate)
+		.addClass('autokittens-dispatch-button')
+		.attr('id', 'autokittens-checkupdate');
+	addTriggerButton(masterSettingsContainer, 'Reset options', () => {
+		autoOptions = defaultOptions;
+		saveAutoOptions();
+		updateOptionsUI();
+	}, 'DANGER! This CANNOT be undone!')
+		.addClass('autokittens-dispatch-button')
+		.attr('id', 'autokittens-reset-options');
+	// Prayer settings
+	addHeading(prayerSettingsContainer, 'Prayer');
+	addCheckbox(prayerSettingsContainer, 'autoOptions', 'autoPray', 'Praise the sun when faith is near limit');
+	addIndent(prayerSettingsContainer);
+	addOptionMenu(prayerSettingsContainer, 'autoOptions', 'prayLimit', 'Pray when faith is', faithPercentages, 'full');
+	// Hunting settings
+	addHeading(huntSettingsContainer, 'Hunting');
+	addCheckbox(huntSettingsContainer, 'autoOptions', 'autoHunt', 'Hunt when catpower is near limit');
+	addOptionMenu(huntSettingsContainer, 'autoOptions.huntOptions', 'huntLimit', 'Hunt when catpower is', percentages, 'full');
+	addCheckbox(huntSettingsContainer, 'autoOptions.huntOptions', 'suppressHuntLog', 'Hide log messages when auto-hunting (includes hunt-triggered crafts)');
+	addCheckbox(huntSettingsContainer, 'autoOptions.huntOptions', 'singleHunts', 'Only send one hunt at a time');
+	addCheckbox(huntSettingsContainer, 'autoOptions.huntOptions', 'huntEarly', 'Hunt as soon as the maximum number of hunts is reached (relative to the limit)');
+	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()` functions above instead of being in here
+	const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
+	$('#gamePageContainer').append([
+		masterSettingsContainer,
+		prayerSettingsContainer,
+		tradeSettingsContainer,
+		craftSettingsContainer,
+		huntSettingsContainer,
+		uiSettingsContainer,
+		calcContainer,
+	]);
+	// Put the links in the headers
+	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>').on('click', switcher(masterSettingsContainer));
+	const calcLink = $('<a id="autokittens-calclink" href="#" title="According to my catculations...">Calculators</a>').on('click', switcher(calcContainer));
 	$('#headerLinks').append(' | ', optLink, ' | ', calcLink);
-	const uiContainer = $('<div class="dialog help autokittens-dialog" id="autoOptions"></div>').hide();
-	const calcContainer = $('<div class="dialog help autokittens-dialog" id="kittenCalcs"></div>').hide();
-	$('#gamePageContainer').append(uiContainer, calcContainer);
+	// Inject our stylesheet, because trying to manage inline styles with this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
 	inlineStylesheet.text(`
 		#gamePageContainer > div.dialog.help.autokittens-dialog {
@@ -1245,14 +1294,19 @@ function buildUI() {
 		html.forceShadowGlobal > body > #gamePageContainer > .help {
 			box-shadow: 0 0 0 9999px rgba(0,0,0,0.4); /* 4, chosen by fair dice roll, guaranteed random */
 		}
-		#autokittens-checkupdate {
+		input[type="button"].autokittens-dispatch-button {
 			width: 100%;
 			margin-left: 0;
 			margin-right: 0;
-			margin-top: 20px;
-			margin-bottom: 20px;
-			padding: 8px;
-			font-size: 1.1em;
+			padding: 10px;
+			font-size: 1.15em;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		#autokittens-checkupdate,
+		#autokittens-reset-options {
+			margin-top: 25px;
+			margin-bottom: 25px;
 		}
 		#timerTableContainer {
 			width: 100%;
@@ -1665,7 +1719,10 @@ function processAutoKittens() {
 	// Make the UI changes
 	if (!document.getElementById('timerTable')) {
 		buildUI();
-		rebuildOptionsUI();
+		$('.autokittens-dialog').hide();
+		rebuildOptionsPaneTrading();
+		rebuildOptionsPaneGeneralUI();
+		rebuildOptionsPaneCrafting();
 	}
 })();
 
