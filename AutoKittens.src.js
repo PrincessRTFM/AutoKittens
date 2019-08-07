@@ -701,6 +701,7 @@ function prepareContainer(id) {
 	else {
 		result = $(`#${id}`);
 	}
+	const containerID = result.attr('id').toLowerCase();
 	const closeLink = $('<a class="close" href="#">close</a>').on('click', () => {
 		$('.autokittens-dialog').hide();
 	});
@@ -709,7 +710,7 @@ function prepareContainer(id) {
 		$('#akSettingsMaster').show();
 	});
 	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
-	if (result.attr('id').toLowerCase().indexOf('master') == -1) {
+	if (containerID.startsWith('aksettings') && !containerID.endsWith('master')) {
 		linkContainer.prepend(backLink, ' | ');
 	}
 	result.empty().append(linkContainer);

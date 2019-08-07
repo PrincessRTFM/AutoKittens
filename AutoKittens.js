@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 10:36:30 on Wednesday, August 07, 2019 UTC
+Last built at 10:42:05 on Wednesday, August 07, 2019 UTC
 
-#AULBS:1565174190#
+#AULBS:1565174525#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
@@ -256,7 +256,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1565174190';
+	const AULBS = '1565174525';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -700,6 +700,7 @@ function prepareContainer(id) {
 	else {
 		result = $(`#${id}`);
 	}
+	const containerID = result.attr('id').toLowerCase();
 	const closeLink = $('<a class="close" href="#">close</a>').on('click', () => {
 		$('.autokittens-dialog').hide();
 	});
@@ -708,7 +709,7 @@ function prepareContainer(id) {
 		$('#akSettingsMaster').show();
 	});
 	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
-	if (result.attr('id').toLowerCase().indexOf('master') == -1) {
+	if (containerID.startsWith('aksettings') && !containerID.endsWith('master')) {
 		linkContainer.prepend(backLink, ' | ');
 	}
 	result.empty().append(linkContainer);
