@@ -137,20 +137,23 @@ const defaultOptions = {
 };
 window.autoOptions = defaultOptions;
 
-const ownProp = (target, prop) => Object.prototype.hasOwnProperty.call(target, prop);
-const iterateObject = function(obj, callback) {
+function ownProp(target, prop) {
+	return Object.prototype.hasOwnProperty.call(target, prop);
+}
+function iterateObject(obj, callback) {
 	for (const key of Object.keys(obj)) {
 		callback.call(obj, obj[key], key, obj);
 	}
 	return obj;
-};
-const mapObject = function(obj, callback) {
+}
+function mapObject(obj, callback) {
 	const result = Object.create(Object.getPrototypeOf(obj));
 	iterateObject(obj, (v, k, o) => {
 		result[k] = callback.call(o, v, k, o);
 	});
 	return result;
-};
+}
+
 const NOP = function() {
 	// no-op
 };
@@ -1079,7 +1082,8 @@ function aiCalculator() {
 	}
 	result.push(
 		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
-		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}``Current hashes: ${hashes}`,
+		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}`,
+		`Current hashes: ${hashes}`,
 		`Net hashes per tick: ${hashesPerTick}`,
 		`Current hashlevel: ${hashLevel}`,
 		`Hashes needed to reach next hash level: ${hashesNeeded}`,

@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 10:24:23 on Wednesday, August 07, 2019 UTC
+Last built at 10:30:28 on Wednesday, August 07, 2019 UTC
 
-#AULBS:1565173463#
+#AULBS:1565173828#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
@@ -136,20 +136,23 @@ const defaultOptions = {
 };
 window.autoOptions = defaultOptions;
 
-const ownProp = (target, prop) => Object.prototype.hasOwnProperty.call(target, prop);
-const iterateObject = function(obj, callback) {
+function ownProp(target, prop) {
+	return Object.prototype.hasOwnProperty.call(target, prop);
+}
+function iterateObject(obj, callback) {
 	for (const key of Object.keys(obj)) {
 		callback.call(obj, obj[key], key, obj);
 	}
 	return obj;
-};
-const mapObject = function(obj, callback) {
+}
+function mapObject(obj, callback) {
 	const result = Object.create(Object.getPrototypeOf(obj));
 	iterateObject(obj, (v, k, o) => {
 		result[k] = callback.call(o, v, k, o);
 	});
 	return result;
-};
+}
+
 const NOP = function() {
 	// no-op
 };
@@ -253,7 +256,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1565173463';
+	const AULBS = '1565173828';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1078,7 +1081,8 @@ function aiCalculator() {
 	}
 	result.push(
 		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
-		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}``Current hashes: ${hashes}`,
+		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}`,
+		`Current hashes: ${hashes}`,
 		`Net hashes per tick: ${hashesPerTick}`,
 		`Current hashlevel: ${hashLevel}`,
 		`Hashes needed to reach next hash level: ${hashesNeeded}`,
