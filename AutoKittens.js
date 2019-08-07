@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 03:17:07 on Sunday, August 04, 2019 UTC
+Last built at 09:48:46 on Wednesday, August 07, 2019 UTC
 
-#AULBS:1564888627#
+#AULBS:1565171326#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
@@ -237,7 +237,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1564888627';
+	const AULBS = '1565171326';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1274,7 +1274,7 @@ function buildUI() {
 	]);
 	// Put the links in the headers
 	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>').on('click', switcher(masterSettingsContainer));
-	const calcLink = $('<a id="autokittens-calclink" href="#" title="According to my catculations...">Calculators</a>').on('click', switcher(calcContainer));
+	const calcLink = $('<a id="autokittens-calclink" href="#" title="According to my catculations...">Calculators</a>').on('click', switcher(calcContainer, rebuildCalculatorUI));
 	$('#headerLinks').append(' | ', optLink, ' | ', calcLink);
 	// Inject our stylesheet, because trying to manage inline styles with this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
