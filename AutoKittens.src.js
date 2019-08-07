@@ -11,7 +11,7 @@ $BUILD_STAMP
 #AULBS:$__UNIXTIME__#
 */
 
-/* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache */
+/* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
 
 const defaultTimeFormat = game.toDisplaySeconds;
 const gameTickFunc = game.tick;
@@ -39,7 +39,118 @@ const percentages = [
 	[ "100%", 1 ],
 ];
 const faithPercentages = [ [ "0%", 0 ], [ "0.1%", 0.001 ] ].concat(percentages);
+const gigaflopSafeMax = Math.exp(14.5) - 0.1; // More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
 
+const defaultOptions = {
+	warnOnLeave: true,
+	autoStar: true,
+	autoCraft: false,
+	autoHunt: false,
+	autoPray: false,
+	autoTrade: false,
+	autoFestival: false,
+	craftOptions: {
+		craftLimit: 0.99,
+		secondaryCraftLimit: 0.6,
+		craftWood: false,
+		woodAmount: 10,
+		craftBeam: false,
+		beamAmount: 1,
+		craftSlab: false,
+		slabAmount: 1,
+		craftPlate: false,
+		plateAmount: 1,
+		craftSteel: false,
+		steelAmount: 1,
+		craftConcrete: false,
+		concreteAmount: 1,
+		craftGear: false,
+		gearAmount: 1,
+		craftAlloy: false,
+		alloyAmount: 1,
+		craftEludium: false,
+		eludiumAmount: 1,
+		craftScaffold: false,
+		scaffoldAmount: 1,
+		craftShip: false,
+		shipAmount: 1,
+		craftTanker: false,
+		tankerAmount: 1,
+		craftKerosene: false,
+		keroseneAmount: 1,
+		craftThorium: false,
+		thoriumAmount: 1,
+		craftMegalith: false,
+		megalithAmount: 1,
+		craftBloodstone: false,
+		bloodstoneAmount: 1,
+		festivalBuffer: false,
+		craftParchment: false,
+		parchmentAmount: 1,
+		craftManuscript: false,
+		manuscriptAmount: 1,
+		craftCompendium: false,
+		compediumAmount: 1, // [sic]
+		craftBlueprint: false,
+		blueprintAmount: 1,
+		blueprintPriority: false,
+	},
+	dialogRight: false,
+	forceShadow: false,
+	forceShadowGlobal: false,
+	furOptions: {
+		parchmentMode: 0,
+		manuscriptMode: 0,
+		compendiumMode: 0,
+		blueprintMode: 0,
+	},
+	huntOptions: {
+		huntLimit: 0.99,
+		suppressHuntLog: false,
+		huntEarly: true,
+		singleHunts: false,
+		craftParchment: false,
+		craftManuscript: false,
+		craftCompendium: false,
+		craftBlueprint: false,
+	},
+	prayLimit: 0.99,
+	widenUI: false,
+	displayOptions: {},
+	displayOrder: "standard",
+	timeDisplay: "standard",
+	tradeOptions: {
+		tradeCount: 1,
+		tradeLimit: 0.99,
+		suppressTradeLog: false,
+		tradePartner: "",
+		tradeSpring: false,
+		tradePartnerSpring: "",
+		tradeSummer: false,
+		tradePartnerSummer: "",
+		tradeAutumn: false,
+		tradePartnerAutumn: "",
+		tradeWinter: false,
+		tradePartnerWinter: "",
+	},
+	showTimerDisplays: true,
+};
+window.autoOptions = defaultOptions;
+
+const ownProp = (target, prop) => Object.prototype.hasOwnProperty.call(target, prop);
+const iterateObject = function(obj, callback) {
+	for (const key of Object.keys(obj)) {
+		callback.call(obj, obj[key], key, obj);
+	}
+	return obj;
+};
+const mapObject = function(obj, callback) {
+	const result = Object.create(Object.getPrototypeOf(obj));
+	iterateObject(obj, (v, k, o) => {
+		result[k] = callback.call(o, v, k, o);
+	});
+	return result;
+};
 const NOP = function() {
 	// no-op
 };
@@ -138,101 +249,6 @@ function rawSecondsFormat(secondsRaw) {
 	return `${parseInt(secondsRaw, 10)}s`;
 }
 
-const defaultOptions = {
-	warnOnLeave: true,
-	autoStar: true,
-	autoCraft: false,
-	autoHunt: false,
-	autoPray: false,
-	autoTrade: false,
-	autoFestival: false,
-	craftOptions: {
-		craftLimit: 0.99,
-		secondaryCraftLimit: 0.6,
-		craftWood: false,
-		woodAmount: 10,
-		craftBeam: false,
-		beamAmount: 1,
-		craftSlab: false,
-		slabAmount: 1,
-		craftPlate: false,
-		plateAmount: 1,
-		craftSteel: false,
-		steelAmount: 1,
-		craftConcrete: false,
-		concreteAmount: 1,
-		craftGear: false,
-		gearAmount: 1,
-		craftAlloy: false,
-		alloyAmount: 1,
-		craftEludium: false,
-		eludiumAmount: 1,
-		craftScaffold: false,
-		scaffoldAmount: 1,
-		craftShip: false,
-		shipAmount: 1,
-		craftTanker: false,
-		tankerAmount: 1,
-		craftKerosene: false,
-		keroseneAmount: 1,
-		craftThorium: false,
-		thoriumAmount: 1,
-		craftMegalith: false,
-		megalithAmount: 1,
-		craftBloodstone: false,
-		bloodstoneAmount: 1,
-		festivalBuffer: false,
-		craftParchment: false,
-		parchmentAmount: 1,
-		craftManuscript: false,
-		manuscriptAmount: 1,
-		craftCompendium: false,
-		compediumAmount: 1, // [sic]
-		craftBlueprint: false,
-		blueprintAmount: 1,
-		blueprintPriority: false,
-	},
-	dialogRight: false,
-	forceShadow: false,
-	forceShadowGlobal: false,
-	furOptions: {
-		parchmentMode: 0,
-		manuscriptMode: 0,
-		compendiumMode: 0,
-		blueprintMode: 0,
-	},
-	huntOptions: {
-		huntLimit: 0.99,
-		suppressHuntLog: false,
-		huntEarly: true,
-		singleHunts: false,
-		craftParchment: false,
-		craftManuscript: false,
-		craftCompendium: false,
-		craftBlueprint: false,
-	},
-	prayLimit: 0.99,
-	widenUI: false,
-	displayOptions: {},
-	displayOrder: "standard",
-	timeDisplay: "standard",
-	tradeOptions: {
-		tradeCount: 1,
-		tradeLimit: 0.99,
-		suppressTradeLog: false,
-		tradePartner: "",
-		tradeSpring: false,
-		tradePartnerSpring: "",
-		tradeSummer: false,
-		tradePartnerSummer: "",
-		tradeAutumn: false,
-		tradePartnerAutumn: "",
-		tradeWinter: false,
-		tradePartnerWinter: "",
-	},
-	showTimerDisplays: true,
-};
-window.autoOptions = defaultOptions;
 if (LCstorage["kittensgame.autoOptions"]) {
 	copyObject(JSON.parse(LCstorage["kittensgame.autoOptions"]), window.autoOptions);
 }
@@ -1007,6 +1023,71 @@ function mintCalculator() {
 	return result.join("<br />");
 }
 
+function aiCalculator() {
+	const gflopsRes = gameData.gigaflops;
+	const hashRes = gameData.hashes;
+	const aiCoreData = game.bld.get('aiCore');
+	const entanglerData = game.space.getBuilding('entangler');
+	const gigaflops = gflopsRes.value;
+	const hashes = hashRes.value;
+	const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
+	const hashLevel = gameData.hashLevel;
+	const gigaflopsPerTick = gflopsRes.perTickUI || gflopsRes.perTickCached;
+	const gigaflopProdPerTickRaw = aiCoreData.effects.gflopsPerTickBase;
+	const gigaflopProdPerTickEffective = gigaflopProdPerTickRaw * aiCoreData.on;
+	const gigaflopConsumePerTickRaw = entanglerData.effects.gflopsConsumption;
+	const gigaflopConsumePerTickEffective = gigaflopConsumePerTickRaw * entanglerData.on;
+	const aiLevel = gameData.aiLevel;
+	const gigaflopsNeeded = gameData.gigaflopsToNextLevel;
+	const hashesNeeded = gameData.hashesToNextLevel;
+	const result = [
+		`Current gigaflops: ${gigaflops}`,
+		`Net gigaflops per tick: ${gigaflopsPerTick} - ${gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick ? "checks out" : "<b>INTERNAL MATH ERROR!</b>"}`,
+		`Current AI level: ${aiLevel}`,
+	];
+	if (aiLevel > 14) {
+		const gigaflopsToLose = gigaflops - gigaflopSafeMax;
+		result.push(
+			'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
+			`Gigaflops beyond safe limit: ${gigaflopsToLose}`
+		);
+		if (gigaflopsPerTick > 0) {
+			result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
+		}
+		else if (gigaflopsPerTick == 0) {
+			result.push('<span class="ohshit">AI LEVEL IS STEADY - BUILD MORE ENTANGLERS</span>');
+		}
+		else {
+			result.push(`Time drop back to safe limit: ${game.toDisplaySeconds(Math.abs(gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond))) || 'now'}`);
+		}
+	}
+	else {
+		const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
+		result.push(
+			'The AI apocalypse will not occur yet',
+			`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax}`
+		);
+		if (gigaflopsPerTick > 0) {
+			result.push(`Time to reach maximum safe limit: ${game.toDisplaySeconds(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond)) || 'now'}`);
+		}
+		else if (gigaflopsPerTick == 0) {
+			result.push('AI Level is steady - AI apocalypse is not possible');
+		}
+		else {
+			result.push('AI Level is falling - AI apocalypse is not possible');
+		}
+	}
+	result.push(
+		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
+		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}``Current hashes: ${hashes}`,
+		`Net hashes per tick: ${hashesPerTick}`,
+		`Current hashlevel: ${hashLevel}`,
+		`Hashes needed to reach next hash level: ${hashesNeeded}`,
+		`Time to reach next hash level: ${game.toDisplaySeconds(hashesNeeded / (hashesPerTick * game.ticksPerSecond)) || '<i>no hashes being produced</i>'}`
+	);
+	return result.join("<br />\n");
+}
+
 function addCalculator(container, id, title, contents, calcFunc, subsectionId, subsectionTitle) {
 	if (subsectionId) {
 		container.append($(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on('click', () => {
@@ -1051,6 +1132,7 @@ function rebuildCalculatorUI() {
 	addCalculator(calcContainer, 'unicornCalc', 'Unicorn structures', '', calculateUnicornBuild, 'unicornDetails', 'Calculation details');
 	addCalculator(calcContainer, 'buildingCalc', 'Building price calculator', generateBuildingCalculatorUI());
 	addCalculator(calcContainer, 'mintCalc', 'Mint efficiency calculator', '', mintCalculator);
+	addCalculator(calcContainer, 'aiCalc', 'AI, gigaflops, and hashes', '', aiCalculator);
 	calculateBuildingPrice();
 }
 
@@ -1342,6 +1424,15 @@ function buildUI() {
 		}
 		.fakelink {
 			cursor: pointer;
+		}
+		.ohshit {
+			font-weight: 900;
+		}
+		.ohshit::before {
+			content: "⚠ ";
+		}
+		.ohshit::after {
+			content: " ⚠";
 		}
 	`.trim());
 	$('head').first().append(inlineStylesheet);
@@ -1681,18 +1772,73 @@ function processAutoKittens() {
 		internalCache = Object.freeze(temporaryCache);
 	};
 	rebuildAutoKittensCache();
-	Object.defineProperties(window, {
-		autoKittensCache: {
+	// Keep the cache (semi-)regularly updated, every ten minutes
+	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
+	// The magic "cache" of commonly desired game data
+	const gameDataMap = Object.create(null);
+	'catnip wood minerals coal iron titanium gold oil uranium unobtainium antimatter science culture faith kittens zebras temporalFlux gflops hashrates furs ivory spice unicorns tears karma paragon burnedParagon sorrow void elderBox wrappingPaper blackcoin steel alloy eludium kerosene parchment thorium'.split(/\s+/u).forEach(id => {
+		Object.defineProperty(gameDataMap, id, {
 			enumerable: true,
+			get: () => game.resPool.get(id),
+		});
+	});
+	'starchart alicorn necrocorn timeCrystal relic bloodstone beam slab plate gear scaffold ship tanker manuscript blueprint megalith'.split(/\s+/u).forEach(id => {
+		Object.defineProperty(gameDataMap, `${id}s`, {
+			enumerable: true,
+			get: () => game.resPool.get(id),
+		});
+	});
+	Object.defineProperties(gameDataMap, iterateObject({
+		flux: {
+			get: () => gameDataMap.temporalFlux,
+		},
+		gigaflops: {
+			get: () => gameDataMap.gflops,
+		},
+		hashes: {
+			get: () => gameDataMap.hashrates,
+		},
+		elderBoxes: {
+			get: () => gameDataMap.elderBox,
+		},
+		boxes: {
+			get: () => gameDataMap.elderBox,
+		},
+		concrete: {
+			get: () => game.resPool.get('concrate'),
+		},
+		compendiums: {
+			get: () => game.resPool.get('compedium'),
+		},
+		aiLevel: {
+			get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
+		},
+		gigaflopsToNextLevel: {
+			get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
+		},
+		hashLevel: {
+			get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
+		},
+		hashesToNextLevel: {
+			get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
+		},
+	}, descrip => {
+		descrip.enumerable = true;
+	}));
+	// Inject things into the global namespace as read-only values
+	Object.defineProperties(window, iterateObject({
+		gameData: {
+			value: Object.freeze(gameDataMap),
+		},
+		autoKittensCache: {
 			get: () => internalCache,
 		},
 		rebuildAutoKittensCache: {
-			enumerable: true,
 			value: rebuildAutoKittensCache,
 		},
-	});
-	// Keep the cache (semi-)regularly updated, every ten minutes
-	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
+	}, descrip => {
+		descrip.enumerable = true;
+	}));
 	// Set the unload-guard
 	const unloadGuard = function unloadGuard(evt) { // eslint-disable-line consistent-return
 		if (autoOptions.warnOnLeave) {
