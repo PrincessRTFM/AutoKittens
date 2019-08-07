@@ -1043,6 +1043,8 @@ function aiCalculator() {
 	const aiLevel = gameData.aiLevel;
 	const gigaflopsNeeded = gameData.gigaflopsToNextLevel;
 	const hashesNeeded = gameData.hashesToNextLevel;
+	const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
+	const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
 	const result = [
 		`Current gigaflops: ${gigaflops}`,
 		`Net gigaflops per tick: ${gigaflopsPerTick} - ${gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick ? "checks out" : "<b>INTERNAL MATH ERROR!</b>"}`,
@@ -1082,12 +1084,12 @@ function aiCalculator() {
 	}
 	result.push(
 		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
-		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}`,
+		`Time to reach next AI level: ${isFinite(timeToNextAiLevel) ? game.toDisplaySeconds(timeToNextAiLevel) : '<i>no gigaflops being produced</i>'}`,
 		`Current hashes: ${hashes}`,
 		`Net hashes per tick: ${hashesPerTick}`,
 		`Current hashlevel: ${hashLevel}`,
 		`Hashes needed to reach next hash level: ${hashesNeeded}`,
-		`Time to reach next hash level: ${game.toDisplaySeconds(hashesNeeded / (hashesPerTick * game.ticksPerSecond)) || '<i>no hashes being produced</i>'}`
+		`Time to reach next hash level: ${isFinite(timeToNextHashLevel) ? game.toDisplaySeconds(timeToNextHashLevel) : '<i>no hashes being produced</i>'}`
 	);
 	return result.join("<br />\n");
 }

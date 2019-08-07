@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 10:30:28 on Wednesday, August 07, 2019 UTC
+Last built at 10:36:30 on Wednesday, August 07, 2019 UTC
 
-#AULBS:1565173828#
+#AULBS:1565174190#
 */
 
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
@@ -256,7 +256,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1565173828';
+	const AULBS = '1565174190';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1042,6 +1042,8 @@ function aiCalculator() {
 	const aiLevel = gameData.aiLevel;
 	const gigaflopsNeeded = gameData.gigaflopsToNextLevel;
 	const hashesNeeded = gameData.hashesToNextLevel;
+	const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
+	const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
 	const result = [
 		`Current gigaflops: ${gigaflops}`,
 		`Net gigaflops per tick: ${gigaflopsPerTick} - ${gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick ? "checks out" : "<b>INTERNAL MATH ERROR!</b>"}`,
@@ -1081,12 +1083,12 @@ function aiCalculator() {
 	}
 	result.push(
 		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
-		`Time to reach next AI level: ${game.toDisplaySeconds(gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond)) || '<i>no gigaflops being produced</i>'}`,
+		`Time to reach next AI level: ${isFinite(timeToNextAiLevel) ? game.toDisplaySeconds(timeToNextAiLevel) : '<i>no gigaflops being produced</i>'}`,
 		`Current hashes: ${hashes}`,
 		`Net hashes per tick: ${hashesPerTick}`,
 		`Current hashlevel: ${hashLevel}`,
 		`Hashes needed to reach next hash level: ${hashesNeeded}`,
-		`Time to reach next hash level: ${game.toDisplaySeconds(hashesNeeded / (hashesPerTick * game.ticksPerSecond)) || '<i>no hashes being produced</i>'}`
+		`Time to reach next hash level: ${isFinite(timeToNextHashLevel) ? game.toDisplaySeconds(timeToNextHashLevel) : '<i>no hashes being produced</i>'}`
 	);
 	return result.join("<br />\n");
 }
