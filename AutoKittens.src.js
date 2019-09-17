@@ -11,6 +11,7 @@ $BUILD_STAMP
 #AULBS:$__UNIXTIME__#
 */
 
+/* eslint-env browser, jquery */
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
 
 const defaultTimeFormat = game.toDisplaySeconds;
@@ -454,8 +455,7 @@ function calculateBaseUps(extras) {
 	if (game.religion.getRU("solarRevolution").on) {
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
-	let paragonRatio = game.resPool.get("paragon").value * 0.01;
-	paragonRatio = 1 + game.getHyperbolicEffect(paragonRatio, 2);
+	let paragonRatio = 1 + game.getHyperbolicEffect(game.resPool.get("paragon").value * 0.01, 2);
 	return baseUps * upgradeEffect * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {

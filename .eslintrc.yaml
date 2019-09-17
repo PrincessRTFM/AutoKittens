@@ -1,8 +1,12 @@
 ---
+root: true
 env:
-    browser: true
     es6: true
-    jquery: true
+overrides:
+    - files:
+        - "jquery.*.js"
+      env:
+          jquery: true
 rules:
     for-direction: error
     getter-return: error
