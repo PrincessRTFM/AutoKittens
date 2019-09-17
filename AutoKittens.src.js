@@ -1740,6 +1740,9 @@ function autoBlackcoin() {
 	if (!game.science.get('antimatter').researched || !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get('blackchain').researched)) {
 		return;
 	}
+	if (!game.diplomacy.get('leviathans').unlocked) {
+		return;
+	}
 	const curPrice = game.calendar.cryptoPrice;
 	const maxPrice = game.calendar.cryptoPriceMax;
 	const relics = game.resPool.get("relic");

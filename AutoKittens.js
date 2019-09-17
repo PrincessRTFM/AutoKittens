@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 10:50:15 on Tuesday, September 17, 2019 UTC
+Last built at 11:04:55 on Tuesday, September 17, 2019 UTC
 
-#AULBS:1568717415#
+#AULBS:1568718295#
 */
 
 /* eslint-env browser, jquery */
@@ -259,7 +259,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1568717415';
+	const AULBS = '1568718295';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1737,6 +1737,9 @@ function autoBlackcoin() {
 	// > After researching Antimatter the leviathan info box will list a thing called Blackcoin
 	// > Once you've researched Blackchain (or if you already have blackcoins), blackcoins can be bought with relics.
 	if (!game.science.get('antimatter').researched || !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get('blackchain').researched)) {
+		return;
+	}
+	if (!game.diplomacy.get('leviathans').unlocked) {
 		return;
 	}
 	const curPrice = game.calendar.cryptoPrice;
