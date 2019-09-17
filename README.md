@@ -1,5 +1,14 @@
 # AutoKittens v2
 
+[![GitHub last commit](https://img.shields.io/github/last-commit/PrincessRTFM/AutoKittens?logo=github)](https://github.com/PrincessRTFM/AutoKittens/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues-raw/PrincessRTFM/AutoKittens?logo=github)](https://github.com/PrincessRTFM/AutoKittens/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc)
+[![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/PrincessRTFM/AutoKittens?logo=github)](https://github.com/PrincessRTFM/AutoKittens/issues?q=is%3Aissue+is%3Aclosed+sort%3Aupdated-desc)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/PrincessRTFM/AutoKittens?logo=github)](https://github.com/PrincessRTFM/AutoKittens/pulls?q=is%3Apr+is%3Aopen+sort%3Aupdated-desc)
+
+[![GitHub forks](https://img.shields.io/github/forks/PrincessRTFM/AutoKittens?style=social)](https://github.com/PrincessRTFM/AutoKittens/network/members)
+[![GitHub stars](https://img.shields.io/github/stars/PrincessRTFM/AutoKittens?style=social)](https://github.com/PrincessRTFM/AutoKittens/stargazers)
+[![GitHub watchers](https://img.shields.io/github/watchers/PrincessRTFM/AutoKittens?style=social)](https://github.com/PrincessRTFM/AutoKittens/watchers)
+
 ## What is it?
 AutoKittens is an automation assistant script for the [Kittens Game](http://bloodrizer.ru/games/kittens/#), an addictive click-based browser idle game. It includes a number of features, such as:
 
