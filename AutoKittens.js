@@ -5,11 +5,12 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 10:42:05 on Wednesday, August 07, 2019 UTC
+Last built at 10:50:15 on Tuesday, September 17, 2019 UTC
 
-#AULBS:1565174525#
+#AULBS:1568717415#
 */
 
+/* eslint-env browser, jquery */
 /* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
 
 const defaultTimeFormat = game.toDisplaySeconds;
@@ -131,6 +132,8 @@ const defaultOptions = {
 		tradePartnerAutumn: "",
 		tradeWinter: false,
 		tradePartnerWinter: "",
+		playMarket: true,
+		buyBlackcoinBelow: 900,
 	},
 	showTimerDisplays: true,
 };
@@ -256,7 +259,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1565174525';
+	const AULBS = '1568717415';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -453,8 +456,7 @@ function calculateBaseUps(extras) {
 	if (game.religion.getRU("solarRevolution").on) {
 		faithEffect += game.religion.getProductionBonus() / 100;
 	}
-	let paragonRatio = game.resPool.get("paragon").value * 0.01;
-	paragonRatio = 1 + game.getHyperbolicEffect(paragonRatio, 2);
+	const paragonRatio = 1 + game.getHyperbolicEffect(game.resPool.get("paragon").value * 0.01, 2);
 	return baseUps * upgradeEffect * bldEffect * faithEffect * paragonRatio;
 }
 function calculateRiftUps(extras) {
@@ -1204,6 +1206,9 @@ function rebuildOptionsPaneTrading() {
 	addCheckbox(uiContainer, 'autoOptions.tradeOptions', 'tradeWinter', 'Allow trading in winter');
 	addIndent(uiContainer);
 	addOptionMenu(uiContainer, 'autoOptions.tradeOptions', 'tradePartnerWinter', 'Trade with', races, ' in winter');
+	addCheckbox(uiContainer, 'autoOptions.tradeOptions', 'playMarket', 'Play the blackcoin market');
+	addIndent(uiContainer);
+	addInputField(uiContainer, 'autoOptions.tradeOptions', 'buyBlackcoinBelow', "Buy blackcoin for at most", "relics");
 	updateOptionsUI();
 }
 function rebuildOptionsPaneGeneralUI() {
@@ -1724,6 +1729,31 @@ function autoTrade() {
 		game.msg = msgFunc;
 	}
 }
+function autoBlackcoin() {
+	if (!autoOptions.tradeOptions.playMarket) {
+		return;
+	}
+	// From the wiki:
+	// > After researching Antimatter the leviathan info box will list a thing called Blackcoin
+	// > Once you've researched Blackchain (or if you already have blackcoins), blackcoins can be bought with relics.
+	if (!game.science.get('antimatter').researched || !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get('blackchain').researched)) {
+		return;
+	}
+	const curPrice = game.calendar.cryptoPrice;
+	const maxPrice = game.calendar.cryptoPriceMax;
+	const relics = game.resPool.get("relic");
+	const coins = game.resPool.get("blackcoin");
+	if (relics.value > 0 && curPrice <= autoOptions.tradeOptions.buyBlackcoinBelow) {
+		const amt = relics.value / curPrice;
+		coins.value += amt;
+		relics.value = 0;
+	}
+	else if (coins.value > 0 && (maxPrice - curPrice) < 5) {
+		const amt = relics.value * curPrice;
+		relics.value += amt;
+		coins.value = 0;
+	}
+}
 function autoFestival() { // FIXME this is not a good implementation (UPDATE: it's causing major fuckery if you can't hold a festival)
 	if (game.calendar.festivalDays || !autoOptions.autoFestival || !game.science.get('drama').researched) {
 		return;
@@ -1748,6 +1778,7 @@ function processAutoKittens() {
 	autoTrade();
 	autoPray();
 	autoFestival();
+	autoBlackcoin();
 	fillTable();
 	updateCalculators();
 }
