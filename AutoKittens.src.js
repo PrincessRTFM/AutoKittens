@@ -599,7 +599,7 @@ function formatTableRow(name, title, value) {
 }
 function fillTable() {
 	let contents = '<tr>';
-	const tickRate = game.ticksPerSecond;
+	const tickRate = game.getTicksPerSecondUI();
 	const resources = [];
 	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
 		const r = game.resPool.resources[resIndex];

@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 14:04:43 on Monday, April 13, 2020 UTC
+Last built at 14:10:12 on Monday, April 13, 2020 UTC
 
-#AULBS:1586786683#
+#AULBS:1586787011#
 */
 
 /* eslint-env browser, jquery */
@@ -304,7 +304,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1586786683';
+	const AULBS = '1586787011';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -598,7 +598,7 @@ function formatTableRow(name, title, value) {
 }
 function fillTable() {
 	let contents = '<tr>';
-	const tickRate = game.ticksPerSecond;
+	const tickRate = game.getTicksPerSecondUI();
 	const resources = [];
 	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
 		const r = game.resPool.resources[resIndex];
