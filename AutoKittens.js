@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 14:10:12 on Monday, April 13, 2020 UTC
+Last built at 14:42:18 on Monday, April 13, 2020 UTC
 
-#AULBS:1586787011#
+#AULBS:1586788938#
 */
 
 /* eslint-env browser, jquery */
@@ -121,44 +121,64 @@ const defaultOptions = {
 		secondaryCraftLimit: 0.6,
 		craftWood: false,
 		woodAmount: 10,
+		woodInterval: 15,
 		craftBeam: false,
 		beamAmount: 1,
+		beamInterval: 20,
 		craftSlab: false,
 		slabAmount: 1,
+		slabInterval: 20,
 		craftPlate: false,
 		plateAmount: 1,
+		plateInterval: 20,
 		craftSteel: false,
 		steelAmount: 1,
+		steelInterval: 5,
 		craftConcrete: false,
 		concreteAmount: 1,
+		concreteInterval: 100,
 		craftGear: false,
 		gearAmount: 1,
+		gearInterval: 50,
 		craftAlloy: false,
 		alloyAmount: 1,
+		alloyInterval: 200,
 		craftEludium: false,
 		eludiumAmount: 1,
+		eludiumInterval: 500,
 		craftScaffold: false,
 		scaffoldAmount: 1,
+		scaffoldInterval: 50,
 		craftShip: false,
 		shipAmount: 1,
+		shipInterval: 100,
 		craftTanker: false,
 		tankerAmount: 1,
+		tankerInterval: 200,
 		craftKerosene: false,
 		keroseneAmount: 1,
+		keroseneInterval: 20,
 		craftThorium: false,
 		thoriumAmount: 1,
+		thoriumInterval: 50,
 		craftMegalith: false,
 		megalithAmount: 1,
+		megalithInterval: 20,
 		craftBloodstone: false,
 		bloodstoneAmount: 1,
+		bloodstoneInterval: 100,
 		craftParchment: false,
 		parchmentAmount: 1,
+		parchmentInterval: 30,
 		craftManuscript: false,
 		manuscriptAmount: 1,
+		manuscriptInterval: 80,
 		craftCompendium: false,
 		compendiumAmount: 1,
+		compendiumInterval: 250,
 		craftBlueprint: false,
 		blueprintAmount: 1,
+		blueprintInterval: 500,
 		blueprintPriority: false,
 	},
 	dialogRight: false,
@@ -203,6 +223,7 @@ const defaultOptions = {
 	},
 	showTimerDisplays: true,
 };
+const craftingTickTracker = Object.create(null);
 window.autoOptions = defaultOptions;
 
 function ownProp(target, prop) {
@@ -304,7 +325,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1586787011';
+	const AULBS = '1586788938';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -925,6 +946,14 @@ function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFi
 		`${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`,
 		'Craft',
 		`${labelTo + questioningSuffix} at a time`
+	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		`${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Interval`,
+		`Craft ${labelTo + certainSuffix} every`,
+		"game tick(s)"
 	);
 }
 
@@ -1715,132 +1744,153 @@ function autoCraft() {
 	// 1: add `craft<Thing>` and `<thing>Amount` options in the defaults
 	// 2: add the `addAutocraftConfigLine(uiContainer, '<from label>', '<internal to>', pluraliseOutputLabelP)`
 	//    line to `rebuildOptionsUI()` above
-	// 3: add a `['<result ID>', 'craft<Thing>', '<think>Amount', condition]` line here
+	// 3: add a `['<result ID>', 'craft<Thing>', '<thing>Amount', '<thing>Interval', condition]` line here
 	const resources = [
 		[
 			"bloodstone",
 			"craftBloodstone",
 			"bloodstoneAmount",
+			"bloodstoneInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"tanker",
 			"craftTanker",
 			"tankerAmount",
+			"tankerInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"ship",
 			"craftShip",
 			"shipAmount",
+			"shipInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"concrate",
 			"craftConcrete",
 			"concreteAmount",
+			"concreteInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"megalith",
 			"craftMegalith",
 			"megalithAmount",
+			"megalithInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"slab",
 			"craftSlab",
 			"slabAmount",
+			"slabInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"gear",
 			"craftGear",
 			"gearAmount",
+			"gearInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"alloy",
 			"craftAlloy",
 			"alloyAmount",
+			"alloyInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"steel",
 			"craftSteel",
 			"steelAmount",
+			"steelInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"plate",
 			"craftPlate",
 			"plateAmount",
+			"plateInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"eludium",
 			"craftEludium",
 			"eludiumAmount",
+			"eludiumInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"kerosene",
 			"craftKerosene",
 			"keroseneAmount",
+			"keroseneInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"thorium",
 			"craftThorium",
 			"thoriumAmount",
+			"thoriumInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"scaffold",
 			"craftScaffold",
 			"scaffoldAmount",
+			"scaffoldInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"beam",
 			"craftBeam",
 			"beamAmount",
+			"beamInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"wood",
 			"craftWood",
 			"woodAmount",
+			"woodInterval",
 			true,
 		],
 		[
 			"parchment",
 			"craftParchment",
 			"parchmentAmount",
+			"parchmentInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"manuscript",
 			"craftManuscript",
 			"manuscriptAmount",
+			"manuscriptInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"blueprint",
 			"craftBlueprint",
 			"blueprintAmount",
+			"blueprintInterval",
 			game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority,
 		],
 		[
 			"compedium",
 			"craftCompendium",
-			"compendiumAmount", // [sic]
+			"compendiumAmount",
+			"compendiumInterval",
 			game.science.get('construction').researched,
 		],
 		[
 			"blueprint",
 			"craftBlueprint",
 			"blueprintAmount",
+			"blueprintInterval",
 			game.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority,
 		],
 	];
@@ -1850,14 +1900,21 @@ function autoCraft() {
 			product,
 			toggleSetting,
 			amountSetting,
+			intervalSetting,
 			consider,
 		] = craftData;
 		const costs = autoKittensCache.craftingInputs[product];
+		const ticksSinceLastCraft = craftingTickTracker[product] || 1;
 		if (
 			consider
 			&& autoOptions.craftOptions[toggleSetting]
+			&& ticksSinceLastCraft >= autoOptions.craftOptions[intervalSetting]
 			&& game.workshop.getCraft(product).unlocked
 		) {
+			if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+				console.log(`Attempting to craft ${product}`);
+			}
+			craftingTickTracker[product] = 0;
 			const output = game.resPool.get(product);
 			for (const resource in costs) {
 				if (ownProp(costs, resource)) {
@@ -1889,6 +1946,13 @@ function autoCraft() {
 			}
 			tryCraft(product, autoOptions.craftOptions[amountSetting]);
 		}
+		else if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+			console.log([
+				`Haven't crafted ${product} in ${ticksSinceLastCraft} ticks,`,
+				`crafting every ${autoOptions.craftOptions[intervalSetting]} ticks`,
+			].join(' '));
+		}
+		craftingTickTracker[product] = ticksSinceLastCraft + 1;
 	}
 }
 function autoPray() {
