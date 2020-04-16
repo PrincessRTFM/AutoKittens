@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 14:42:18 on Monday, April 13, 2020 UTC
+Last built at 15:59:01 on Thursday, April 16, 2020 UTC
 
-#AULBS:1586788938#
+#AULBS:1587052741#
 */
 
 /* eslint-env browser, jquery */
@@ -205,6 +205,7 @@ const defaultOptions = {
 	displayOptions: {},
 	displayOrder: "standard",
 	timeDisplay: "standard",
+	perfectLeadership: false,
 	tradeOptions: {
 		tradeCount: 1,
 		tradeLimit: 0.99,
@@ -325,7 +326,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1586788938';
+	const AULBS = '1587052741';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1483,8 +1484,8 @@ function buildUI() {
 	const craftSettingsContainer = makeContainer("craft");
 	const huntSettingsContainer = makeContainer("hunt");
 	const uiSettingsContainer = makeContainer("ui");
+	const miscSettingsContainer = makeContainer("misc");
 	// The master panel, from here you have override toggles and the other panels
-	// TODO: implement master override toggles (#5)
 	addTriggerButton(
 		masterSettingsContainer,
 		'Prayer Settings',
@@ -1517,6 +1518,12 @@ function buildUI() {
 		.addClass('autokittens-dispatch-button');
 	addTriggerButton(
 		masterSettingsContainer,
+		'Miscellaneous Settings',
+		switcher(miscSettingsContainer)
+	)
+		.addClass('autokittens-dispatch-button');
+	addTriggerButton(
+		masterSettingsContainer,
 		'Check for update',
 		checkUpdate
 	)
@@ -1530,10 +1537,7 @@ function buildUI() {
 		.addClass('autokittens-dispatch-button')
 		.attr('id', 'autokittens-reset-options');
 	// Prayer settings
-	addHeading(
-		prayerSettingsContainer,
-		'Prayer'
-	);
+	addHeading(prayerSettingsContainer, 'Prayer');
 	addCheckbox(
 		prayerSettingsContainer,
 		'autoOptions',
@@ -1590,6 +1594,14 @@ function buildUI() {
 		'huntEarly',
 		'Hunt as soon as the maximum number of hunts is reached (relative to the limit)'
 	);
+	// Miscellaneous settings
+	addHeading(miscSettingsContainer, 'Miscellaneous');
+	addCheckbox(
+		miscSettingsContainer,
+		'autoOptions',
+		'perfectLeadership',
+		"Pretend that your leader is perfect at everything"
+	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here
 	const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
@@ -1600,6 +1612,7 @@ function buildUI() {
 		craftSettingsContainer,
 		huntSettingsContainer,
 		uiSettingsContainer,
+		miscSettingsContainer,
 		calcContainer,
 	]);
 	// Put the links in the headers
@@ -2221,6 +2234,34 @@ function processAutoKittens() {
 		capture: true,
 		once: false,
 	});
+	// Cheese the leader's effect checks (when autoOptions.perfectLeadership)
+	// Credit to patsy#5684/160499684744364032 on the discord for the initial code
+	// Practical differences: doesn't care if you even HAVE a leader, doesn't care about the current leader's trait
+	// Internal differences: uses Reflect.apply instead of relying on Function.prototype.apply
+	const realGetEffectLeader = game.village.getEffectLeader;
+	// eslint-disable-next-line func-name-matching
+	game.village.getEffectLeader = function cheesyGetEffectLeader(trait, ...rest) {
+		const realLeader = this.leader;
+		if (
+			autoOptions.perfectLeadership
+			&& game.challenges.currentChallenge != 'anarchy'
+			&& game.science.get('civil').researched
+			&& this.traits
+			&& this.traits.some(t => t.name == trait)
+		) {
+			this.leader = {
+				trait: {
+					name: trait,
+				},
+			};
+		}
+		const value = Reflect.apply(realGetEffectLeader, this, [
+			trait,
+			...rest,
+		]);
+		this.leader = realLeader;
+		return value;
+	};
 	// Inject the script's core function
 	if (game.worker) {
 		const runOriginalGameTick = dojo.hitch(game, gameTickFunc);
