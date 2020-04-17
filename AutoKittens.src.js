@@ -685,7 +685,7 @@ function fillTable() {
 					contents += formatTableRow(
 						name,
 						title,
-						0 - game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))
+						`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
 					);
 				}
 				else {
@@ -697,7 +697,7 @@ function fillTable() {
 				contents += formatTableRow(
 					name,
 					title,
-					0 - game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))
+					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
 				);
 			}
 		}
