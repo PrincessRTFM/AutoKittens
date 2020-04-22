@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 13:10:56 on Friday, April 17, 2020 UTC
+Last built at 04:04:03 on Wednesday, April 22, 2020 UTC
 
-#AULBS:1587129056#
+#AULBS:1587528243#
 */
 
 /* eslint-env browser, jquery */
@@ -326,7 +326,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1587129056';
+	const AULBS = '1587528243';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -663,15 +663,19 @@ function fillTable() {
 		const r = resources[i];
 		const name = r.name;
 		const title = r.title;
-		if (r.perTickUI !== 0) {
-			if (r.maxValue > 0) {
-				if (r.value <= 0) {
-					contents += formatTableRow(name, title, 'Empty');
-				}
-				else if (r.value >= r.maxValue) {
+		if (r.perTickUI != 0) {
+			if (r.value > 0 && r.perTickUI < 0) { // not empty, falling - needs time-to-empty
+				contents += formatTableRow(
+					name,
+					title,
+					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
+				);
+			}
+			else if (r.maxValue > 0) { // not (falling + non-empty) - may be rising, may be empty
+				if (r.value >= r.maxValue) { // full, rising - no timer
 					contents += formatTableRow(name, title, 'Full');
 				}
-				else if (r.perTickUI > 0) {
+				else if (r.perTickUI > 0) { // not full, rising - needs time-to-cap
 					contents += formatTableRow(
 						name,
 						title,
@@ -680,27 +684,11 @@ function fillTable() {
 						)
 					);
 				}
-				else if (r.perTickUI < 0) {
-					contents += formatTableRow(
-						name,
-						title,
-						`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-					);
+				else if (r.value <= 0) { // empty, falling - no timer
+					contents += formatTableRow(name, title, 'Empty');
 				}
-				else {
-					// value > 0 && value < maxValue && (perTickUI || perTickCached) == 0
-					contents += formatTableRow(name, title, "Err1");
-				}
-			}
-			else if (r.value > 0 && r.perTickUI < 0) {
-				contents += formatTableRow(
-					name,
-					title,
-					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-				);
 			}
 		}
-		// else contents += formatTableRow(name, title, "Steady");
 	}
 	contents += '</tr>';
 	document.getElementById('timerTable').innerHTML = contents;

@@ -664,15 +664,19 @@ function fillTable() {
 		const r = resources[i];
 		const name = r.name;
 		const title = r.title;
-		if (r.perTickUI !== 0) {
-			if (r.maxValue > 0) {
-				if (r.value <= 0) {
-					contents += formatTableRow(name, title, 'Empty');
-				}
-				else if (r.value >= r.maxValue) {
+		if (r.perTickUI != 0) {
+			if (r.value > 0 && r.perTickUI < 0) { // not empty, falling - needs time-to-empty
+				contents += formatTableRow(
+					name,
+					title,
+					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
+				);
+			}
+			else if (r.maxValue > 0) { // not (falling + non-empty) - may be rising, may be empty
+				if (r.value >= r.maxValue) { // full, rising - no timer
 					contents += formatTableRow(name, title, 'Full');
 				}
-				else if (r.perTickUI > 0) {
+				else if (r.perTickUI > 0) { // not full, rising - needs time-to-cap
 					contents += formatTableRow(
 						name,
 						title,
@@ -681,27 +685,11 @@ function fillTable() {
 						)
 					);
 				}
-				else if (r.perTickUI < 0) {
-					contents += formatTableRow(
-						name,
-						title,
-						`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-					);
+				else if (r.value <= 0) { // empty, falling - no timer
+					contents += formatTableRow(name, title, 'Empty');
 				}
-				else {
-					// value > 0 && value < maxValue && (perTickUI || perTickCached) == 0
-					contents += formatTableRow(name, title, "Err1");
-				}
-			}
-			else if (r.value > 0 && r.perTickUI < 0) {
-				contents += formatTableRow(
-					name,
-					title,
-					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-				);
 			}
 		}
-		// else contents += formatTableRow(name, title, "Steady");
 	}
 	contents += '</tr>';
 	document.getElementById('timerTable').innerHTML = contents;
