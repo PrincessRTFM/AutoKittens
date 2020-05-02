@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 04:04:03 on Wednesday, April 22, 2020 UTC
+Last built at 21:07:55 on Saturday, May 02, 2020 UTC
 
-#AULBS:1587528243#
+#AULBS:1588453675#
 */
 
 /* eslint-env browser, jquery */
@@ -326,7 +326,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1587528243';
+	const AULBS = '1588453675';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1333,6 +1333,14 @@ function rebuildOptionsPaneCrafting() {
 		'When storage full, craft',
 		'parchment at a time'
 	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'parchmentInterval',
+		'Only craft parchment on full storage every',
+		'game tick(s)'
+	);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
@@ -1366,6 +1374,14 @@ function rebuildOptionsPaneCrafting() {
 		'manuscriptAmount',
 		'When storage full, craft',
 		'manuscript(s) at a time'
+	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'manuscriptInterval',
+		'Only craft manuscripts on full storage every',
+		'game tick(s)'
 	);
 	addIndent(uiContainer);
 	addTriggerOptionMenu(
@@ -1402,6 +1418,14 @@ function rebuildOptionsPaneCrafting() {
 		'When storage full, craft',
 		'compendium(s) at a time'
 	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'compendiumInterval',
+		'Only craft compendiums on full storage every',
+		'game tick(s)'
+	);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
@@ -1435,6 +1459,14 @@ function rebuildOptionsPaneCrafting() {
 		'blueprintAmount',
 		'When storage full, craft',
 		'blueprints(s) at a time'
+	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'blueprintInterval',
+		'Only craft blueprints on full storage every',
+		'game tick(s)'
 	);
 	addCheckbox(
 		uiContainer,

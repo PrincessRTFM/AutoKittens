@@ -1334,6 +1334,14 @@ function rebuildOptionsPaneCrafting() {
 		'When storage full, craft',
 		'parchment at a time'
 	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'parchmentInterval',
+		'Only craft parchment on full storage every',
+		'game tick(s)'
+	);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
@@ -1367,6 +1375,14 @@ function rebuildOptionsPaneCrafting() {
 		'manuscriptAmount',
 		'When storage full, craft',
 		'manuscript(s) at a time'
+	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'manuscriptInterval',
+		'Only craft manuscripts on full storage every',
+		'game tick(s)'
 	);
 	addIndent(uiContainer);
 	addTriggerOptionMenu(
@@ -1403,6 +1419,14 @@ function rebuildOptionsPaneCrafting() {
 		'When storage full, craft',
 		'compendium(s) at a time'
 	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'compendiumInterval',
+		'Only craft compendiums on full storage every',
+		'game tick(s)'
+	);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
@@ -1436,6 +1460,14 @@ function rebuildOptionsPaneCrafting() {
 		'blueprintAmount',
 		'When storage full, craft',
 		'blueprints(s) at a time'
+	);
+	addIndent(uiContainer);
+	addInputField(
+		uiContainer,
+		'autoOptions.craftOptions',
+		'blueprintInterval',
+		'Only craft blueprints on full storage every',
+		'game tick(s)'
 	);
 	addCheckbox(
 		uiContainer,
