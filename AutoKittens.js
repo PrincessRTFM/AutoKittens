@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.princessrtfm.com/AutoKittens/
 
-Last built at 21:07:55 on Saturday, May 02, 2020 UTC
+Last built at 21:48:42 on Saturday, May 02, 2020 UTC
 
-#AULBS:1588453675#
+#AULBS:1588456122#
 */
 
 /* eslint-env browser, jquery */
@@ -326,7 +326,7 @@ if (LCstorage["kittensgame.autoOptions"]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1588453675';
+	const AULBS = '1588456122';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -946,137 +946,6 @@ function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFi
 	);
 }
 
-function rebuildOptionsPaneTrading() {
-	const uiContainer = prepareContainer('akSettingsTrade');
-	addHeading(uiContainer, 'Trading');
-	const races = [
-		[
-			"No one",
-			"",
-		],
-	];
-	game.diplomacy.races.forEach(r => {
-		if (r.unlocked) {
-			races.push([
-				r.title || r.name,
-				r.name,
-			]);
-		}
-	});
-	addCheckbox(
-		uiContainer,
-		'autoOptions',
-		'autoTrade',
-		'Trade when gold is near limit'
-	);
-	addIndent(uiContainer);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeLimit',
-		'Trade when gold is',
-		percentages,
-		'full'
-	);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradePartner',
-		'Trade with',
-		races,
-		'by default'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'suppressTradeLog',
-		'Hide log messages when auto-trading'
-	);
-	races[0][0] = "Default selection";
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeCount',
-		'Send',
-		'caravans at a time'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeSpring',
-		'Allow trading in spring'
-	);
-	addIndent(uiContainer);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerSpring',
-		'Trade with',
-		races,
-		' in spring'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeSummer',
-		'Allow trading in summer'
-	);
-	addIndent(uiContainer);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerSummer',
-		'Trade with',
-		races,
-		' in summer'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeAutumn',
-		'Allow trading in autumn'
-	);
-	addIndent(uiContainer);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerAutumn',
-		'Trade with',
-		races,
-		' in autumn'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradeWinter',
-		'Allow trading in winter'
-	);
-	addIndent(uiContainer);
-	addOptionMenu(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerWinter',
-		'Trade with',
-		races,
-		' in winter'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'playMarket',
-		'Play the blackcoin market like a cheap fiddle'
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		'autoOptions.tradeOptions',
-		'buyBlackcoinBelow',
-		"Buy blackcoin for at most",
-		"relics"
-	);
-	updateOptionsUI();
-}
 function rebuildOptionsPaneGeneralUI() {
 	const uiContainer = prepareContainer('akSettingsUi');
 	addHeading(uiContainer, 'Timer displays');
@@ -1515,7 +1384,7 @@ function buildUI() {
 	addTriggerButton(
 		masterSettingsContainer,
 		'Trading Settings',
-		switcher(tradeSettingsContainer, rebuildOptionsPaneTrading)
+		switcher(tradeSettingsContainer)
 	)
 		.addClass('autokittens-dispatch-button');
 	addTriggerButton(
@@ -1579,6 +1448,132 @@ function buildUI() {
 		'autoOptions',
 		'autoResetFaith',
 		'Perform an apocrypha reset just before praising the sun'
+	);
+	// Trading settings
+	addHeading(tradeSettingsContainer, 'Trading');
+	const races = [
+		[
+			"No one",
+			"",
+		],
+	];
+	game.diplomacy.races.forEach(r => {
+		races.push([
+			r.title || r.name,
+			r.name,
+		]);
+	});
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions',
+		'autoTrade',
+		'Trade when gold is near limit'
+	);
+	addIndent(tradeSettingsContainer);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeLimit',
+		'Trade when gold is',
+		percentages,
+		'full'
+	);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradePartner',
+		'Trade with',
+		races,
+		'by default'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'suppressTradeLog',
+		'Hide log messages when auto-trading'
+	);
+	races[0][0] = "Default selection";
+	addIndent(tradeSettingsContainer);
+	addInputField(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeCount',
+		'Send',
+		'caravans at a time'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeSpring',
+		'Allow trading in spring'
+	);
+	addIndent(tradeSettingsContainer);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradePartnerSpring',
+		'Trade with',
+		races,
+		' in spring'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeSummer',
+		'Allow trading in summer'
+	);
+	addIndent(tradeSettingsContainer);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradePartnerSummer',
+		'Trade with',
+		races,
+		' in summer'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeAutumn',
+		'Allow trading in autumn'
+	);
+	addIndent(tradeSettingsContainer);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradePartnerAutumn',
+		'Trade with',
+		races,
+		' in autumn'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradeWinter',
+		'Allow trading in winter'
+	);
+	addIndent(tradeSettingsContainer);
+	addOptionMenu(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'tradePartnerWinter',
+		'Trade with',
+		races,
+		' in winter'
+	);
+	addCheckbox(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'playMarket',
+		'Play the blackcoin market like a cheap fiddle'
+	);
+	addIndent(tradeSettingsContainer);
+	addInputField(
+		tradeSettingsContainer,
+		'autoOptions.tradeOptions',
+		'buyBlackcoinBelow',
+		"Buy blackcoin for at most",
+		"relics"
 	);
 	// Hunting settings
 	addHeading(huntSettingsContainer, 'Hunting');
@@ -2013,18 +2008,11 @@ function autoTrade() {
 	][game.calendar.season];
 	if (autoOptions.tradeOptions[`tradePartner${season}`]) {
 		race = game.diplomacy.get(autoOptions.tradeOptions[`tradePartner${season}`]);
-		if (!race.unlocked) {
-			autoOptions.tradeOptions[`tradePartner${season}`] = "";
-		}
 	}
 	else {
 		race = game.diplomacy.get(autoOptions.tradeOptions.tradePartner);
-		if (!race.unlocked) {
-			autoOptions.tradeOptions.tradePartner = "";
-		}
 	}
 	if (!race.unlocked) {
-		saveAutoOptions();
 		return;
 	}
 	const gold = game.resPool.get('gold');
@@ -2075,8 +2063,8 @@ function autoBlackcoin() {
 		coins.value += amt;
 		relics.value = 0;
 	}
-	else if (coins.value > 0 && (maxPrice - curPrice) < 5) {
-		const amt = relics.value * curPrice;
+	else if (coins.value > 0 && (maxPrice - curPrice) <= 1) {
+		const amt = coins.value * curPrice;
 		relics.value += amt;
 		coins.value = 0;
 	}
@@ -2297,7 +2285,6 @@ function processAutoKittens() {
 	if (!document.getElementById('timerTable')) {
 		buildUI();
 		$('.autokittens-dialog').hide();
-		rebuildOptionsPaneTrading();
 		rebuildOptionsPaneGeneralUI();
 		rebuildOptionsPaneCrafting();
 	}
