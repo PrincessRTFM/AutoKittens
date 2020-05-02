@@ -40,7 +40,7 @@ In the options box, at the very bottom, is a button to check for an update. It l
 
 ### I found a bug!
 
-If it's a game-breaker or a script-breaker, please join the [Kittens Game discord](https://discord.gg/2arBf9K) and ping me (`Lily#5459`) in the `#scripts-code` channel. If I'm awake and able, I'll respond to breaking bugs immediately; I consider these to be priority 1.
+If it's a game-breaker or a script-breaker, please join the [Kittens Game discord](https://discord.gg/2arBf9K) and ping me (`Lilith Song#7246`) in the `#scripts-code` channel. If I'm awake and able, I'll respond to breaking bugs immediately; I consider these to be priority 1.
 
 If it's something that's acting a little funky, you can either ping me there or (preferably) open an issue on the tracker here. I usually check my Github notifications at least once a day and often more.
 
@@ -58,4 +58,4 @@ You definitely have my gratitude for that, and I hope you open a pull request to
 
 ## Contact
 
-You can email me (my email is available through my Github profile), open an issue on here, or ping `Lily#5459` on discord. I don't accept friend requests from people I don't know, especially if we don't even share a server, so please don't send me any.
+You can email me (my email is available through my Github profile), open an issue on here, or ping `Lilith Song#7246` on discord. I don't accept friend requests from people I don't know, especially if we don't even share a server, so please don't send me any.
