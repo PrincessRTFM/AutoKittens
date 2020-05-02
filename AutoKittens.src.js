@@ -2064,8 +2064,8 @@ function autoBlackcoin() {
 		coins.value += amt;
 		relics.value = 0;
 	}
-	else if (coins.value > 0 && (maxPrice - curPrice) < 5) {
-		const amt = relics.value * curPrice;
+	else if (coins.value > 0 && (maxPrice - curPrice) <= 1) {
+		const amt = coins.value * curPrice;
 		relics.value += amt;
 		coins.value = 0;
 	}
