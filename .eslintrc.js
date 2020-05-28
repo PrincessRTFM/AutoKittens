@@ -376,7 +376,6 @@ const config = {
 				name: "err",
 			},
 		],
-		"unicorn/consistent-function-scoping": "warn",
 		"unicorn/custom-error-definition": "error",
 		"unicorn/error-message": "error",
 		"unicorn/escape-case": "warn",
