@@ -1676,16 +1676,28 @@ function buildUI() {
 			height: 50px;
 			position: fixed;
 			bottom: 0px;
-			background-color: #FFFFFF;
+			background-color: #000000;
+			color: #ffffff;
+		}
+		body.scheme_minimalist > #timerTableContainer {
+			background-color: #0C0D10;
+			background-image: linear-gradient(
+				90deg,
+				#0C0D10 0%,
+				#0C0D10 20%,
+				#101115 35%,
+				#181920 55%,
+				#252732 100%
+			);
 		}
 		body.scheme_sleek > #timerTableContainer {
-			background-color: #1C1917;
+			background-color: #1c1917;
 		}
 		body.scheme_dark > #timerTableContainer {
-			background-color: #201F1D;
+			background-color: #201f1d;
 		}
 		body.scheme_grassy > #timerTableContainer {
-			background-color: #C6EBA1;
+			background-color: #c6eba1;
 		}
 		html:not(.autokittens-show-timers) #timerTableContainer {
 			display: none;
