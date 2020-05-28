@@ -27,7 +27,7 @@ Version 3 is an update and minor-to-moderate rewrite of _that_, after about half
 ## How do I use it?
 You can either copy the contents of the script into your browser console on the game page (not recommended) or we can borrow a page from [ScriptKitties](https://github.com/MaPaul1977/KittensGame) and use a scriptlet bookmark - just save this as a bookmark and click on it (once!) on the game page:
 
-	javascript:(function(){var d=document,s=d.createElement('script');s.type='text/javascript';s.src='https://princessrtfm.github.io/AutoKittens/AutoKittens.js';d.body.appendChild(s);})();
+	javascript:(function(){var d=document,s=d.createElement('script');s.type='text/javascript';s.src='https://princessrtfm.github.io/AutoKittens/AutoKittens.js?nocache';d.body.appendChild(s);})();
 
 Please note, if you use a script blocker (uMatrix, NoScript, etc), you may need to allow script loading from `princessrtfm.github.io` for this to work. If you want to use the update checker feature (a button at the bottom of the options dialog) you will _definitely_ need to allow AJAX/XHR requests (or possibly "other" if those don't work or your blocker doesn't filter them quite right) or it will fail to connect.
 
