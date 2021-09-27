@@ -126,7 +126,6 @@ const config = {
 				singleValue: false,
 			},
 		],
-		"require-atomic-updates": "error",
 		"no-func-assign": "error",
 		"guard-for-in": "error",
 		"space-before-function-paren": [
@@ -408,12 +407,6 @@ const config = {
 		"unicorn/prefer-query-selector": "error",
 		"unicorn/no-abusive-eslint-disable": "error",
 		"import/no-unresolved": "error",
-		"import/named": [
-			"error",
-			{
-				commonjs: true,
-			},
-		],
 		"import/no-absolute-path": "error",
 		"import/no-dynamic-require": "warn",
 		"import/no-internal-modules": "warn",
@@ -476,6 +469,14 @@ config.overrides = [
 		},
 		env: {
 			commonjs: true,
+			node: false,
+		},
+	},
+	{
+		files: ["*.lib.js"],
+		env: {
+			commonjs: false,
+			browser: false,
 			node: false,
 		},
 	},
