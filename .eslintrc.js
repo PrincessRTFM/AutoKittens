@@ -4,7 +4,6 @@ const {
 	spawnSync,
 } = require('child_process');
 
-/* eslint-disable sonarjs/no-duplicate-string */
 const config = {
 	root: true,
 	env: {
@@ -35,7 +34,10 @@ const config = {
 		"no-new-object": "error",
 		"accessor-pairs": "error",
 		"no-else-return": "warn",
-		"dot-location": [ "error", "property" ],
+		"dot-location": [
+			"error",
+			"property",
+		],
 		"valid-typeof": "error",
 		"space-unary-ops": "error",
 		"comma-style": "error",
@@ -71,7 +73,10 @@ const config = {
 				int32Hint: true,
 			},
 		],
-		"brace-style": [ "error", "stroustrup" ],
+		"brace-style": [
+			"error",
+			"stroustrup",
+		],
 		"no-implicit-coercion": [
 			"error",
 			{
@@ -137,11 +142,17 @@ const config = {
 			},
 		],
 		"no-sparse-arrays": "error",
-		"no-mixed-spaces-and-tabs": [ "error", "smart-tabs" ],
+		"no-mixed-spaces-and-tabs": [
+			"error",
+			"smart-tabs",
+		],
 		"no-extend-native": [
 			"error",
 			{
-				exceptions: [ "Array", "String" ],
+				exceptions: [
+					"Array",
+					"String",
+				],
 			},
 		],
 		"no-delete-var": "error",
@@ -153,7 +164,10 @@ const config = {
 		"block-scoped-var": "error",
 		"yield-star-spacing": "error",
 		"space-in-parens": "error",
-		"generator-star-spacing": [ "error", "after" ],
+		"generator-star-spacing": [
+			"error",
+			"after",
+		],
 		"no-useless-constructor": "error",
 		"array-element-newline": [
 			"error",
@@ -177,10 +191,19 @@ const config = {
 		],
 		"linebreak-style": "error",
 		"no-class-assign": "error",
-		"padded-blocks": [ "error", "never" ],
+		"padded-blocks": [
+			"error",
+			"never",
+		],
 		"newline-per-chained-call": "error",
-		"lines-between-class-members": [ "error", "never" ],
-		"quote-props": [ "error", "consistent" ],
+		"lines-between-class-members": [
+			"error",
+			"never",
+		],
+		"quote-props": [
+			"error",
+			"consistent",
+		],
 		"no-compare-neg-zero": "error",
 		"no-global-assign": "error",
 		"no-floating-decimal": "error",
@@ -190,10 +213,16 @@ const config = {
 		"no-invalid-this": "error",
 		"no-inner-declarations": "error",
 		"template-tag-spacing": "error",
-		"operator-linebreak": [ "error", "before" ],
+		"operator-linebreak": [
+			"error",
+			"before",
+		],
 		"no-const-assign": "error",
 		"no-empty-character-class": "error",
-		"func-names": [ "error", "as-needed" ],
+		"func-names": [
+			"error",
+			"as-needed",
+		],
 		"indent": [
 			"error",
 			"tab",
@@ -201,13 +230,22 @@ const config = {
 				SwitchCase: 1,
 			},
 		],
-		"no-cond-assign": [ "error", "except-parens" ],
+		"no-cond-assign": [
+			"error",
+			"except-parens",
+		],
 		"no-proto": "error",
 		"no-array-constructor": "error",
-		"one-var": [ "error", "never" ],
+		"one-var": [
+			"error",
+			"never",
+		],
 		"key-spacing": "error",
 		"no-new-func": "error",
-		"multiline-ternary": [ "error", "always-multiline" ],
+		"multiline-ternary": [
+			"error",
+			"always-multiline",
+		],
 		"block-spacing": "error",
 		"no-unneeded-ternary": "error",
 		"no-whitespace-before-property": "error",
@@ -225,7 +263,10 @@ const config = {
 				before: false,
 			},
 		],
-		"object-curly-spacing": [ "error", "always" ],
+		"object-curly-spacing": [
+			"error",
+			"always",
+		],
 		"no-obj-calls": "error",
 		"for-direction": "error",
 		"prefer-template": "error",
@@ -262,7 +303,10 @@ const config = {
 		"no-undefined": "warn",
 		"no-with": "error",
 		"no-fallthrough": "error",
-		"arrow-parens": [ "error", "as-needed" ],
+		"arrow-parens": [
+			"error",
+			"as-needed",
+		],
 		"no-tabs": [
 			"error",
 			{
@@ -282,7 +326,10 @@ const config = {
 		"no-prototype-builtins": "warn",
 		"no-multi-assign": "error",
 		"no-useless-concat": "error",
-		"function-paren-newline": [ "error", "multiline-arguments" ],
+		"function-paren-newline": [
+			"error",
+			"multiline-arguments",
+		],
 		"no-redeclare": [
 			"error",
 			{
@@ -309,7 +356,10 @@ const config = {
 		"no-implied-eval": "error",
 		"no-use-before-define": "error",
 		"no-extra-semi": "warn",
-		"arrow-body-style": [ "error", "as-needed" ],
+		"arrow-body-style": [
+			"error",
+			"as-needed",
+		],
 		"prefer-rest-params": "error",
 		"no-unused-labels": "error",
 		"no-debugger": "error",
@@ -329,7 +379,10 @@ const config = {
 		"camelcase": [
 			"error",
 			{
-				allow: ["^INTERNAL_"],
+				allow: [
+					"^INTERNAL_",
+					"^[gs]et__",
+				],
 			},
 		],
 		"no-regex-spaces": "error",
@@ -431,7 +484,6 @@ const config = {
 		"sonarjs/no-use-of-empty-return-value": "error",
 		"sonarjs/no-collapsible-if": "error",
 		"sonarjs/no-collection-size-mischeck": "error",
-		"sonarjs/no-duplicate-string": "warn",
 		"sonarjs/no-duplicated-branches": "error",
 		"sonarjs/no-identical-functions": "error",
 		"sonarjs/no-inverted-boolean-check": "error",
@@ -458,7 +510,10 @@ const config = {
 		"promise/valid-params": "error",
 	},
 	settings: {
-		"import/docstyle": [ 'jsdoc', 'tomdoc' ],
+		"import/docstyle": [
+			'jsdoc',
+			'tomdoc',
+		],
 	},
 };
 config.overrides = [
@@ -504,7 +559,7 @@ config.overrides = [
 		},
 	},
 ];
-/* eslint-enable sonarjs/no-duplicate-string */
+
 config.overrides.forEach(override => {
 	if (override.env.greasemonkey) {
 		override.rules = override.rules || {};
@@ -550,7 +605,12 @@ if (!module.parent) {
 	const missingCount = Object.keys(removedPlugins).length;
 	if (missingCount && requestedInstall) {
 		console.info("Missing plugins detected, installing via npm...");
-		const subProcessArgs = [ 'install', '-D', 'eslint', ...Object.keys(removedPlugins) ];
+		const subProcessArgs = [
+			'install',
+			'-D',
+			'eslint',
+			...Object.keys(removedPlugins),
+		];
 		const npm = spawnSync('npm', subProcessArgs, {
 			stdio: 'inherit',
 		});
