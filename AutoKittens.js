@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 10:24:50 on Monday, August 29, 2022 UTC
+Last built at 11:08:04 on Monday, August 29, 2022 UTC
 
-#AULBS:1661768690#
+#AULBS:1661771284#
 */
 
 /* eslint-env browser, jquery */
@@ -329,7 +329,7 @@ if (LCstorage[savedConfigKey]) {
 }
 
 function checkUpdate() {
-	const AULBS = '1661768690';
+	const AULBS = '1661771284';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -900,20 +900,17 @@ function realignSciptDialogs() {
 function reapplyShadows() {
 	if (autoOptions.forceShadowGlobal) {
 		$('html').first()
-			.addClass('forceShadowGlobal');
-		$('html').first()
+			.addClass('forceShadowGlobal')
 			.removeClass('forceShadow');
 	}
 	else if (autoOptions.forceShadow) {
 		$('html').first()
-			.addClass('forceShadow');
-		$('html').first()
+			.addClass('forceShadow')
 			.removeClass('forceShadowGlobal');
 	}
 	else {
 		$('html').first()
-			.removeClass('forceShadow');
-		$('html').first()
+			.removeClass('forceShadow')
 			.removeClass('forceShadowGlobal');
 	}
 }
@@ -1353,6 +1350,7 @@ function buildUI() {
 		.append(tableContainer);
 	adjustColumns();
 	adjustTimerBar();
+	reapplyShadows();
 	realignSciptDialogs();
 	const akDialogClasses = 'dialog help autokittens-dialog';
 	const switchToDialog = (which, pre) => {

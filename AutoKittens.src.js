@@ -901,20 +901,17 @@ function realignSciptDialogs() {
 function reapplyShadows() {
 	if (autoOptions.forceShadowGlobal) {
 		$('html').first()
-			.addClass('forceShadowGlobal');
-		$('html').first()
+			.addClass('forceShadowGlobal')
 			.removeClass('forceShadow');
 	}
 	else if (autoOptions.forceShadow) {
 		$('html').first()
-			.addClass('forceShadow');
-		$('html').first()
+			.addClass('forceShadow')
 			.removeClass('forceShadowGlobal');
 	}
 	else {
 		$('html').first()
-			.removeClass('forceShadow');
-		$('html').first()
+			.removeClass('forceShadow')
 			.removeClass('forceShadowGlobal');
 	}
 }
@@ -1354,6 +1351,7 @@ function buildUI() {
 		.append(tableContainer);
 	adjustColumns();
 	adjustTimerBar();
+	reapplyShadows();
 	realignSciptDialogs();
 	const akDialogClasses = 'dialog help autokittens-dialog';
 	const switchToDialog = (which, pre) => {
