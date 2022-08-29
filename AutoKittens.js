@@ -3,15 +3,18 @@ AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
-Repository: https://github.princessrtfm.com/AutoKittens/
+Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 21:49:51 on Thursday, May 28, 2020 UTC
+Last built at 10:24:50 on Monday, August 29, 2022 UTC
 
-#AULBS:1590702591#
+#AULBS:1661768690#
 */
 
 /* eslint-env browser, jquery */
-/* global game, LCstorage, resetGameLogHeight, dojo, autoOptions:writable, autoKittensCache, gameData */
+/* global game, LCstorage, dojo, autoOptions:writable, autoKittensCache, gameData */
+
+const savedConfigKey = "kittensgame.autoOptions";
+const scriptDialogId = ".autokittens-dialog";
 
 const defaultTimeFormat = game.toDisplaySeconds;
 const gameTickFunc = game.tick;
@@ -261,7 +264,7 @@ function wrapCallback(trigger) {
 	if (typeof trigger == 'function') {
 		return trigger;
 	}
-	else if (typeof trigger == 'string') {
+	if (typeof trigger == 'string') {
 		trigger = trigger.replace(";", '').replace("()", '');
 		if (typeof window[trigger] == 'function') {
 			return window[trigger];
@@ -273,12 +276,12 @@ function runCallback(callback, ...args) {
 	return wrapCallback(callback)(...args);
 }
 function tryNumericSet(collection, attrName, value) {
-	const newVal = parseFloat(value);
-	if (!isNaN(newVal) && isFinite(newVal) && newVal > 0) {
+	const parsed = parseFloat(value);
+	if (!isNaN(parsed) && isFinite(parsed) && parsed > 0) {
 		setArbitrarilyDeepObject([
 			collection,
 			attrName,
-		], newVal);
+		], parsed);
 	}
 }
 function copyObject(source, target) {
@@ -321,12 +324,12 @@ function rawSecondsFormat(secondsRaw) {
 	return `${parseInt(secondsRaw, 10)}s`;
 }
 
-if (LCstorage["kittensgame.autoOptions"]) {
-	copyObject(JSON.parse(LCstorage["kittensgame.autoOptions"]), window.autoOptions);
+if (LCstorage[savedConfigKey]) {
+	copyObject(JSON.parse(LCstorage[savedConfigKey]), window.autoOptions);
 }
 
 function checkUpdate() {
-	const AULBS = '1590702591';
+	const AULBS = '1661768690';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -365,13 +368,13 @@ function checkUpdate() {
 			success: doCheck,
 		});
 	}
-	catch (e) {
-		onError(null, 'request failed', e);
+	catch (err) {
+		onError(null, 'request failed', err);
 	}
 }
 
 function saveAutoOptions() {
-	LCstorage["kittensgame.autoOptions"] = JSON.stringify(window.autoOptions);
+	LCstorage[savedConfigKey] = JSON.stringify(window.autoOptions);
 }
 function changeFurCrafts() {
 	const crafts = [
@@ -392,10 +395,10 @@ function changeFurCrafts() {
 			"craftBlueprint",
 		],
 	];
-	for (let i = 0; i < crafts.length; i++) {
+	for (const craft of crafts) {
 		// Man, I wish I could remember what the fuck I was doing here
-		window.autoOptions.huntOptions[crafts[i][1]] = !!(window.autoOptions.furOptions[crafts[i][0]] & 1);
-		window.autoOptions.craftOptions[crafts[i][1]] = !!(window.autoOptions.furOptions[crafts[i][0]] & 2);
+		window.autoOptions.huntOptions[craft[1]] = !!(window.autoOptions.furOptions[craft[0]] & 1);
+		window.autoOptions.craftOptions[craft[1]] = !!(window.autoOptions.furOptions[craft[0]] & 2);
 	}
 	saveAutoOptions();
 }
@@ -405,9 +408,9 @@ function tryCraft(craftName, amount) {
 	// If so, crafts it and returns true for success
 	const craft = game.workshop.getCraft(craftName);
 	const prices = craft.prices;
-	for (let i = 0; i < prices.length; i++) {
-		const res = game.resPool.get(prices[i].name);
-		if (res.value < prices[i].val * amount) {
+	for (const price of prices) {
+		const res = game.resPool.get(price.name);
+		if (res.value < price.val * amount) {
 			return false;
 		}
 	}
@@ -472,11 +475,11 @@ function updateOptionsUI() {
 			"craftBlueprint",
 		],
 	];
-	for (let i = 0; i < crafts.length; i++) {
-		autoOptions.furOptions[crafts[i][0]]
-			= Number(autoOptions.huntOptions[crafts[i][1]])
+	for (const craft of crafts) {
+		autoOptions.furOptions[craft[0]]
+			= Number(autoOptions.huntOptions[craft[1]])
 			+ 2
-			* autoOptions.craftOptions[crafts[i][1]];
+			* autoOptions.craftOptions[craft[1]];
 	}
 	traverseObject(autoOptions);
 	changeTimeFormat();
@@ -535,13 +538,12 @@ function addTriggerOptionMenu(container, prefix, optionName, leftCaption, option
 			saveAutoOptions();
 			runCallback(trigger);
 		});
-	for (let i = 0; i < options.length; i++) {
-		const option = options[i];
+	for (const option of options) {
 		if (Array.isArray(option)) {
-			select.append(`<option value="${options[i][1]}">${options[i][0]}</option>`);
+			select.append(`<option value="${option[1]}">${option[0]}</option>`);
 		}
 		else {
-			select.append(`<option value="${options[i].value}">${options[i].label}</option>`);
+			select.append(`<option value="${option.value}">${option.label}</option>`);
 		}
 	}
 	if (leftCaption.trim()) {
@@ -595,10 +597,10 @@ function prepareContainer(id) {
 	}
 	const containerID = result.attr('id').toLowerCase();
 	const closeLink = $('<a class="close" href="#">close</a>').on('click', () => {
-		$('.autokittens-dialog').hide();
+		$(scriptDialogId).hide();
 	});
 	const backLink = $('<a class="close" href="#">back</a>').on('click', () => {
-		$('.autokittens-dialog').hide();
+		$(scriptDialogId).hide();
 		$('#akSettingsMaster').show();
 	});
 	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
@@ -624,14 +626,15 @@ function fillTable() {
 	const resources = [];
 	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
 		const r = game.resPool.resources[resIndex];
-		const res = {};
-		res.name = r.name;
-		res.title = r.title || r.name;
-		// Is this the right property name for this? No.
-		// Am I willing to refactor all of this to do it right? Also no.
-		res.perTickUI = game.getResourcePerTick(res.name, true);
-		res.value = r.value;
-		res.maxValue = r.maxValue;
+		const res = {
+			name: r.name,
+			title: r.title || r.name,
+			// Is this the right property name for this? No.
+			// Am I willing to refactor all of this to do it right? Also no.
+			perTickUI: game.getResourcePerTick(r.name, true),
+			value: r.value,
+			maxValue: r.maxValue,
+		};
 		if (res.perTickUI !== 0) {
 			if (res.maxValue > 0) {
 				if (res.value <= 0) {
@@ -659,8 +662,7 @@ function fillTable() {
 	else if (autoOptions.displayOrder == "long") {
 		resources.sort((a, b) => b.time - a.time);
 	}
-	for (let i = 0; i < resources.length; i++) {
-		const r = resources[i];
+	for (const r of resources) {
 		const name = r.name;
 		const title = r.title;
 		if (r.perTickUI != 0) {
@@ -691,7 +693,7 @@ function fillTable() {
 		}
 	}
 	contents += '</tr>';
-	document.getElementById('timerTable').innerHTML = contents;
+	document.querySelector('#timerTable').innerHTML = contents;
 }
 
 function mintCalculator() {
@@ -871,11 +873,10 @@ function addCalculator(container, id, title, contents, calcFunc, subsectionId, s
 	}
 }
 function updateCalculators() {
-	for (let i = 0; i < calculators.length; i++) {
-		const c = calculators[i];
+	for (const c of calculators) {
 		const contents = [].concat(c[1]());
 		for (let n = 0; n < c[0].length; n++) {
-			document.getElementById(c[0][n]).innerHTML = contents[n];
+			document.querySelector(`#${c[0][n]}`).innerHTML = contents[n];
 		}
 	}
 }
@@ -1353,10 +1354,9 @@ function buildUI() {
 	adjustColumns();
 	adjustTimerBar();
 	realignSciptDialogs();
-	$(resetGameLogHeight);
 	const akDialogClasses = 'dialog help autokittens-dialog';
 	const switchToDialog = (which, pre) => {
-		$('.autokittens-dialog').hide();
+		$(scriptDialogId).hide();
 		if (typeof pre == 'function') {
 			pre();
 		}
@@ -1636,7 +1636,7 @@ function buildUI() {
 	const calcLink = $('<a id="autokittens-calclink" href="#">Calculators</a>')
 		.attr('title', "According to my catculations...")
 		.on('click', switcher(calcContainer, rebuildCalculatorUI));
-	$('#headerLinks').append(' | ', optLink, ' | ', calcLink);
+	$('#footerLinks').append(' | ', optLink, ' | ', calcLink);
 	// Inject our stylesheet, because trying to manage inline styles with
 	// this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
@@ -1733,7 +1733,7 @@ function buildUI() {
 
 function starClick() {
 	if (autoOptions.autoStar) {
-		(document.getElementById("observeBtn") || {
+		(document.querySelector("#observeBtn") || {
 			click: NOP,
 		}).click();
 	}
@@ -1934,8 +1934,7 @@ function autoCraft() {
 			game.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority,
 		],
 	];
-	AUTOCRAFT: for (let i = 0; i < resources.length; i++) {
-		const craftData = resources[i];
+	AUTOCRAFT: for (const craftData of resources) {
 		const [
 			product,
 			toggleSetting,
@@ -2294,9 +2293,9 @@ function processAutoKittens() {
 		window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
 	}
 	// Make the UI changes
-	if (!document.getElementById('timerTable')) {
+	if (!document.querySelector('#timerTable')) {
 		buildUI();
-		$('.autokittens-dialog').hide();
+		$(scriptDialogId).hide();
 		rebuildOptionsPaneGeneralUI();
 		rebuildOptionsPaneCrafting();
 	}
