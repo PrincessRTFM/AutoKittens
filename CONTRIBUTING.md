@@ -6,7 +6,7 @@
 
 - You **should** comment-sign your work so you have credit for it if you're comfortable with doing so. I prefer to always give credit to the people who actually did the work.
 
-- Code should be written consistently. You can edit it locally however you want, but this repository will not accept code that does not pass `eslint` using the `.eslintrc.yaml` file included. (TIP: use `eslint --fix` when testing!)
+- Code should be written consistently. You can edit it locally however you want, but this repository will not accept code that does not pass `eslint` using the included configuration file. (TIP: use `eslint --fix` when testing!)
 
 ## Credit
 
