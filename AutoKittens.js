@@ -1,13 +1,13 @@
 /*
-AutoKittens.js - helper script for the Kittens Game (http://bloodrizer.ru/games/kittens/)
+AutoKittens.js - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 11:08:04 on Monday, August 29, 2022 UTC
+Last built at 12:44:03 on Monday, August 29, 2022 UTC
 
-#AULBS:1661771284#
+#AULBS:1661777043#
 */
 
 /* eslint-env browser, jquery */
@@ -259,6 +259,9 @@ function setArbitrarilyDeepObject(location, value, initialTarget) {
 		target = target[nextPoint];
 	}
 	target[lastPoint] = value;
+	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		console.log(`Set ${location}=${value}`);
+	}
 }
 function wrapCallback(trigger) {
 	if (typeof trigger == 'function') {
@@ -324,12 +327,11 @@ function rawSecondsFormat(secondsRaw) {
 	return `${parseInt(secondsRaw, 10)}s`;
 }
 
-if (LCstorage[savedConfigKey]) {
-	copyObject(JSON.parse(LCstorage[savedConfigKey]), window.autoOptions);
-}
-
 function checkUpdate() {
-	const AULBS = '1661771284';
+	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		console.log("Performing update check...");
+	}
+	const AULBS = '1661777043';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -428,17 +430,18 @@ function changeTimeFormat() {
 }
 
 function handleDisplayOptions(obj) {
-	for (const o in obj) {
-		if (ownProp(obj, o)) {
-			const toggle = $(`#autoKittens_show${o}`);
-			if (toggle.length) { // The toggle might not exist yet, since the UI overhaul
-				toggle[0].checked = obj[o];
+	for (const o of Object.keys(obj)) {
+		const toggle = $(`#autoKittens_show${o}`);
+		if (toggle.length) { // The toggle might not exist yet, since the UI overhaul
+			if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+				console.log(`${toggle[0].id}.checked=${obj[o]}`);
 			}
+			toggle[0].checked = obj[o];
 		}
 	}
 }
 function traverseObject(obj) {
-	for (const o in obj) {
+	for (const o of Object.keys(obj)) {
 		if (o === "displayOptions") {
 			handleDisplayOptions(obj[o]);
 		}
@@ -448,12 +451,18 @@ function traverseObject(obj) {
 		else if (typeof obj[o] === "boolean") {
 			const elms = $(`#autoKittens_${o}`);
 			if (elms && elms[0]) {
+				if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+					console.log(`${elms[0].id}.checked=${obj[o]}`);
+				}
 				elms[0].checked = obj[o];
 			}
 		}
 		else {
 			const elms = $(`#autoKittens_${o}`);
 			if (elms && elms[0]) {
+				if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+					console.log(`${elms[0].id}.value=${obj[o]}`);
+				}
 				elms[0].value = obj[o];
 			}
 		}
@@ -476,8 +485,7 @@ function updateOptionsUI() {
 		],
 	];
 	for (const craft of crafts) {
-		autoOptions.furOptions[craft[0]]
-			= Number(autoOptions.huntOptions[craft[1]])
+		autoOptions.furOptions[craft[0]] = Number(autoOptions.huntOptions[craft[1]])
 			+ 2
 			* autoOptions.craftOptions[craft[1]];
 	}
@@ -486,6 +494,9 @@ function updateOptionsUI() {
 }
 
 function adjustColumns() {
+	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		console.log("Adjusting column widths");
+	}
 	$('#midColumn').css('width', autoOptions.widenUI ? '1000px' : '');
 	$('#leftColumn').css('max-width', autoOptions.widenUI ? '25%' : '');
 }
@@ -522,6 +533,23 @@ function addNamedCheckbox(container, prefix, optionName, controlName, caption) {
 }
 function addCheckbox(container, prefix, optionName, caption) {
 	addNamedCheckbox(container, prefix, optionName, optionName, caption);
+}
+
+function addExternCheckbox(container, controlName, caption, trigger, condition) {
+	const callback = wrapCallback(trigger);
+	const checkbox = $(`<input id="autoKittens_extern_${controlName}" type="checkbox" />`);
+	const label = $(`<label for="autoKittens_extern_${controlName}">${caption}</label>`);
+	checkbox[0].checked = typeof condition == "function" ? condition() : !!condition;
+	checkbox.on('input', () => callback(checkbox[0]));
+	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		console.log(`Creating external checkbox ${checkbox[0].id} as ${checkbox[0].checked ? "en" : "dis"}abled`);
+	}
+	container
+		.append(
+			checkbox,
+			label,
+			'<br />'
+		);
 }
 
 function addHeading(container, title) {
@@ -915,6 +943,48 @@ function reapplyShadows() {
 	}
 }
 
+function unlockGameTheme(name) {
+	if (game.ui.defaultSchemes.includes(name)) {
+		return;
+	}
+	if (game.ui.allSchemes.includes(name)) {
+		if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+			console.log(`Unlocking game theme ${name}`);
+		}
+		if (!game.unlockedSchemes.includes(name)) {
+			game.unlockedSchemes.push(name);
+		}
+		$(`#schemeToggle > option[value=${name}]`).removeAttr("disabled");
+		game.ui.updateOptions();
+	}
+}
+function lockGameTheme(name) {
+	if (game.ui.defaultSchemes.includes(name)) {
+		return;
+	}
+	if (game.ui.allSchemes.includes(name)) {
+		if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+			console.log(`Locking game theme ${name}`);
+		}
+		const idx = game.unlockedSchemes.indexOf(name);
+		if (idx >= 0) {
+			game.unlockedSchemes.splice(idx, 1);
+		}
+		$(`#schemeToggle > option[value=${name}]`).attr("disabled", "disabled");
+		game.ui.updateOptions();
+	}
+}
+function unlockAllGameThemes() {
+	for (const scheme of game.ui.allSchemes) {
+		unlockGameTheme(scheme);
+	}
+}
+function lockAllGameThemes() {
+	for (const scheme of game.ui.allSchemes) {
+		lockGameTheme(scheme);
+	}
+}
+
 function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
 	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
 	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
@@ -989,6 +1059,38 @@ function rebuildOptionsPaneGeneralUI() {
 		'autoOptions',
 		'autoStar',
 		'Automatically witness astronomical events'
+	);
+	addHeading(
+		uiContainer,
+		"Game themes"
+	);
+	addTriggerButton(
+		uiContainer,
+		'Unlock all',
+		unlockAllGameThemes
+	);
+	for (const theme of game.ui.allSchemes) {
+		if (!game.ui.defaultSchemes.includes(theme)) {
+			addExternCheckbox(
+				uiContainer,
+				`theme_${theme}`,
+				theme.slice(0, 1).toUpperCase() + theme.slice(1),
+				toggle => {
+					if (toggle.checked) {
+						unlockGameTheme(theme);
+					}
+					else {
+						lockGameTheme(theme);
+					}
+				},
+				game.unlockedSchemes.includes.bind(game.unlockedSchemes, theme)
+			);
+		}
+	}
+	addTriggerButton(
+		uiContainer,
+		'Lock all',
+		lockAllGameThemes
 	);
 	addHeading(
 		uiContainer,
@@ -2090,6 +2192,10 @@ function processAutoKittens() {
 }
 
 (() => {
+	// Load saved options, if any
+	if (LCstorage[savedConfigKey]) {
+		copyObject(JSON.parse(LCstorage[savedConfigKey]), window.autoOptions);
+	}
 	// The internal cache of things we need that WON'T change over time
 	let internalCache;
 	const rebuildAutoKittensCache = function rebuildAutoKittensCache() {
