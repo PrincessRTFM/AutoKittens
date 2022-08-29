@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 12:56:39 on Monday, August 29, 2022 UTC
+Last built at 16:08:41 on Monday, August 29, 2022 UTC
 
-#AULBS:1661777799#
+#AULBS:1661789321#
 */
 
 /* eslint-env browser, jquery */
@@ -331,7 +331,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661777799';
+	const AULBS = '1661789321';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1733,12 +1733,14 @@ function buildUI() {
 		calcContainer,
 	]);
 	// Put the links in the headers
-	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>')
+	const optLink = $('<a id="autokittens-optlink" href="#">AK</a>')
 		.on('click', switcher(masterSettingsContainer));
-	const calcLink = $('<a id="autokittens-calclink" href="#">Calculators</a>')
+	const calcLink = $('<a id="autokittens-calclink" href="#">Calcs</a>')
 		.attr('title', "According to my catculations...")
 		.on('click', switcher(calcContainer, rebuildCalculatorUI));
-	$('#footerLinks').append(' | ', optLink, ' | ', calcLink);
+	$('#devModeButton')
+		.parent()
+		.prepend(optLink, ' | ', calcLink, ' | ');
 	// Inject our stylesheet, because trying to manage inline styles with
 	// this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');

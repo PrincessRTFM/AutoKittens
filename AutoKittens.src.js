@@ -1734,12 +1734,14 @@ function buildUI() {
 		calcContainer,
 	]);
 	// Put the links in the headers
-	const optLink = $('<a id="autokittens-optlink" href="#">AutoKittens</a>')
+	const optLink = $('<a id="autokittens-optlink" href="#">AK</a>')
 		.on('click', switcher(masterSettingsContainer));
-	const calcLink = $('<a id="autokittens-calclink" href="#">Calculators</a>')
+	const calcLink = $('<a id="autokittens-calclink" href="#">Calcs</a>')
 		.attr('title', "According to my catculations...")
 		.on('click', switcher(calcContainer, rebuildCalculatorUI));
-	$('#footerLinks').append(' | ', optLink, ' | ', calcLink);
+	$('#devModeButton')
+		.parent()
+		.prepend(optLink, ' | ', calcLink, ' | ');
 	// Inject our stylesheet, because trying to manage inline styles with
 	// this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
