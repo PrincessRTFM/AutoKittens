@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 12:44:03 on Monday, August 29, 2022 UTC
+Last built at 12:56:39 on Monday, August 29, 2022 UTC
 
-#AULBS:1661777043#
+#AULBS:1661777799#
 */
 
 /* eslint-env browser, jquery */
@@ -259,7 +259,7 @@ function setArbitrarilyDeepObject(location, value, initialTarget) {
 		target = target[nextPoint];
 	}
 	target[lastPoint] = value;
-	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log(`Set ${location}=${value}`);
 	}
 }
@@ -328,10 +328,10 @@ function rawSecondsFormat(secondsRaw) {
 }
 
 function checkUpdate() {
-	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661777043';
+	const AULBS = '1661777799';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -433,7 +433,7 @@ function handleDisplayOptions(obj) {
 	for (const o of Object.keys(obj)) {
 		const toggle = $(`#autoKittens_show${o}`);
 		if (toggle.length) { // The toggle might not exist yet, since the UI overhaul
-			if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+			if (window.AUTOKITTENS_DEBUG_ENABLED) {
 				console.log(`${toggle[0].id}.checked=${obj[o]}`);
 			}
 			toggle[0].checked = obj[o];
@@ -451,7 +451,7 @@ function traverseObject(obj) {
 		else if (typeof obj[o] === "boolean") {
 			const elms = $(`#autoKittens_${o}`);
 			if (elms && elms[0]) {
-				if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+				if (window.AUTOKITTENS_DEBUG_ENABLED) {
 					console.log(`${elms[0].id}.checked=${obj[o]}`);
 				}
 				elms[0].checked = obj[o];
@@ -460,7 +460,7 @@ function traverseObject(obj) {
 		else {
 			const elms = $(`#autoKittens_${o}`);
 			if (elms && elms[0]) {
-				if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+				if (window.AUTOKITTENS_DEBUG_ENABLED) {
 					console.log(`${elms[0].id}.value=${obj[o]}`);
 				}
 				elms[0].value = obj[o];
@@ -494,7 +494,7 @@ function updateOptionsUI() {
 }
 
 function adjustColumns() {
-	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Adjusting column widths");
 	}
 	$('#midColumn').css('width', autoOptions.widenUI ? '1000px' : '');
@@ -541,7 +541,7 @@ function addExternCheckbox(container, controlName, caption, trigger, condition) 
 	const label = $(`<label for="autoKittens_extern_${controlName}">${caption}</label>`);
 	checkbox[0].checked = typeof condition == "function" ? condition() : !!condition;
 	checkbox.on('input', () => callback(checkbox[0]));
-	if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log(`Creating external checkbox ${checkbox[0].id} as ${checkbox[0].checked ? "en" : "dis"}abled`);
 	}
 	container
@@ -948,13 +948,14 @@ function unlockGameTheme(name) {
 		return;
 	}
 	if (game.ui.allSchemes.includes(name)) {
-		if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		if (window.AUTOKITTENS_DEBUG_ENABLED) {
 			console.log(`Unlocking game theme ${name}`);
 		}
 		if (!game.unlockedSchemes.includes(name)) {
 			game.unlockedSchemes.push(name);
 		}
 		$(`#schemeToggle > option[value=${name}]`).removeAttr("disabled");
+		(document.querySelector(`input#autoKittens_extern_theme_${name}`) || {}).checked = true;
 		game.ui.updateOptions();
 	}
 }
@@ -963,7 +964,7 @@ function lockGameTheme(name) {
 		return;
 	}
 	if (game.ui.allSchemes.includes(name)) {
-		if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
+		if (window.AUTOKITTENS_DEBUG_ENABLED) {
 			console.log(`Locking game theme ${name}`);
 		}
 		const idx = game.unlockedSchemes.indexOf(name);
@@ -971,6 +972,7 @@ function lockGameTheme(name) {
 			game.unlockedSchemes.splice(idx, 1);
 		}
 		$(`#schemeToggle > option[value=${name}]`).attr("disabled", "disabled");
+		(document.querySelector(`#autoKittens_extern_theme_${name}`) || {}).checked = false;
 		game.ui.updateOptions();
 	}
 }
