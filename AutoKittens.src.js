@@ -1355,7 +1355,6 @@ function rebuildOptionsPaneCrafting() {
 		'Only craft manuscripts on full storage every',
 		'game tick(s)'
 	);
-	addIndent(uiContainer);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',

@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 16:08:41 on Monday, August 29, 2022 UTC
+Last built at 17:44:32 on Monday, August 29, 2022 UTC
 
-#AULBS:1661789321#
+#AULBS:1661795072#
 */
 
 /* eslint-env browser, jquery */
@@ -331,7 +331,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661789321';
+	const AULBS = '1661795072';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1354,7 +1354,6 @@ function rebuildOptionsPaneCrafting() {
 		'Only craft manuscripts on full storage every',
 		'game tick(s)'
 	);
-	addIndent(uiContainer);
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
