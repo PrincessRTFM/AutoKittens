@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 17:44:32 on Monday, August 29, 2022 UTC
+Last built at 09:35:53 on Tuesday, August 30, 2022 UTC
 
-#AULBS:1661795072#
+#AULBS:1661852153#
 */
 
 /* eslint-env browser, jquery */
@@ -197,7 +197,8 @@ const defaultOptions = {
 		huntLimit: 0.99,
 		suppressHuntLog: false,
 		huntEarly: true,
-		singleHunts: false,
+		singleHunts: false, // name is a misnomer since this was updated to a configurable limit
+		huntCount: 1,
 		craftParchment: false,
 		craftManuscript: false,
 		craftCompendium: false,
@@ -331,7 +332,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661795072';
+	const AULBS = '1661852153';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1449,7 +1450,8 @@ function rebuildOptionsPaneCrafting() {
 function buildUI() {
 	const tableContainer = $('<div id="timerTableContainer"></div>');
 	tableContainer.html('<table id="timerTable" style="width: 100%; table-layout: fixed;"></table>');
-	$('body').first()
+	$('body')
+		.first()
 		.append(tableContainer);
 	adjustColumns();
 	adjustTimerBar();
@@ -1702,7 +1704,15 @@ function buildUI() {
 		huntSettingsContainer,
 		'autoOptions.huntOptions',
 		'singleHunts',
-		'Only send one hunt at a time'
+		'Limit the number of hunts sent out at once'
+	);
+	addIndent(huntSettingsContainer);
+	addInputField(
+		huntSettingsContainer,
+		'autoOptions.huntOptions',
+		'huntCount',
+		"Send out",
+		"hunts at once"
 	);
 	addCheckbox(
 		huntSettingsContainer,
@@ -1853,8 +1863,9 @@ function autoHunt() {
 	const leftBeforeCap = (1 - autoOptions.huntOptions.huntLimit) * catpower.maxValue;
 	if (
 		catpower.value / catpower.maxValue >= autoOptions.huntOptions.huntLimit
-		|| autoOptions.huntOptions.huntEarly
-		&& catpower.value >= catpower.maxValue - leftBeforeCap - (catpower.maxValue - leftBeforeCap) % 100
+		|| (autoOptions.huntOptions.huntEarly
+			&& catpower.value >= catpower.maxValue - leftBeforeCap - (catpower.maxValue - leftBeforeCap) % 100
+		)
 	) {
 		if (autoOptions.huntOptions.craftParchment && game.workshop.getCraft('parchment').unlocked) {
 			game.craftAll('parchment');
@@ -1869,7 +1880,14 @@ function autoHunt() {
 			game.craftAll('blueprint');
 		}
 		if (autoOptions.huntOptions.singleHunts) {
-			game.village.huntMultiple(1);
+			const squads = Math.floor(autoOptions.huntOptions.huntCount);
+			if (squads >= 1) {
+				const cost = squads * 100;
+				if (game.resPool.get("manpower").value >= cost) {
+					game.resPool.addResEvent("manpower", -cost);
+					game.village.gainHuntRes(squads);
+				}
+			}
 		}
 		else {
 			game.village.huntAll();
