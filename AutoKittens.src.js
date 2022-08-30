@@ -1730,11 +1730,21 @@ function buildUI() {
 		'perfectLeadership',
 		"Pretend that your leader is perfect at everything"
 	);
+	addHeading(miscSettingsContainer, "Pollution");
 	addCheckbox(
 		miscSettingsContainer,
 		'autoOptions',
 		'disablePollution',
 		"Actually disable pollution, for real"
+	);
+	addTriggerButton(
+		miscSettingsContainer,
+		"Reset pollution level",
+		() => {
+			game.bld.cathPollution = 0;
+		},
+		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more."
+			+ " For some reason."
 	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here

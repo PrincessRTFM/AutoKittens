@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 10:06:55 on Tuesday, August 30, 2022 UTC
+Last built at 10:11:30 on Tuesday, August 30, 2022 UTC
 
-#AULBS:1661854015#
+#AULBS:1661854290#
 */
 
 /* eslint-env browser, jquery */
@@ -333,7 +333,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661854015';
+	const AULBS = '1661854290';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1729,11 +1729,21 @@ function buildUI() {
 		'perfectLeadership',
 		"Pretend that your leader is perfect at everything"
 	);
+	addHeading(miscSettingsContainer, "Pollution");
 	addCheckbox(
 		miscSettingsContainer,
 		'autoOptions',
 		'disablePollution',
 		"Actually disable pollution, for real"
+	);
+	addTriggerButton(
+		miscSettingsContainer,
+		"Reset pollution level",
+		() => {
+			game.bld.cathPollution = 0;
+		},
+		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more."
+			+ " For some reason."
 	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here
