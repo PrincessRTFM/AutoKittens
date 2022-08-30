@@ -2140,7 +2140,7 @@ function autoPray() {
 	const faith = game.resPool.get('faith');
 	if (faith.value / faith.maxValue >= autoOptions.prayLimit && faith.value > 0.01) {
 		if (autoOptions.autoResetFaith) {
-			game.religionTab.resetFaithInternal(1);
+			game.religion._resetFaithInternal(1.01); // dunno why the source uses 1.01, but it does
 		}
 		game.religion.praise();
 	}
