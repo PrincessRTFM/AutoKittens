@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 09:35:53 on Tuesday, August 30, 2022 UTC
+Last built at 10:06:55 on Tuesday, August 30, 2022 UTC
 
-#AULBS:1661852153#
+#AULBS:1661854015#
 */
 
 /* eslint-env browser, jquery */
@@ -227,6 +227,7 @@ const defaultOptions = {
 		buyBlackcoinBelow: 900,
 	},
 	showTimerDisplays: true,
+	disablePollution: false,
 };
 const craftingTickTracker = Object.create(null);
 window.autoOptions = defaultOptions;
@@ -332,7 +333,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661852153';
+	const AULBS = '1661854015';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
@@ -1728,6 +1729,12 @@ function buildUI() {
 		'perfectLeadership',
 		"Pretend that your leader is perfect at everything"
 	);
+	addCheckbox(
+		miscSettingsContainer,
+		'autoOptions',
+		'disablePollution',
+		"Actually disable pollution, for real"
+	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here
 	const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
@@ -2348,6 +2355,12 @@ function processAutoKittens() {
 		hashesToNextLevel: {
 			get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
 		},
+		pollution: {
+			get: () => game.bld.cathPollution,
+			set: value => {
+				game.bld.cathPollution = value;
+			},
+		},
 	}, descrip => {
 		descrip.enumerable = true;
 	}));
@@ -2406,6 +2419,15 @@ function processAutoKittens() {
 		this.leader = realLeader;
 		return value;
 	};
+	// Hijack the pollution level
+	let pollution = game.bld.cathPollution;
+	Object.defineProperty(game.bld, 'cathPollution', {
+		enumerable: true,
+		get: () => (autoOptions.disablePollution ? 0 : pollution),
+		set: value => {
+			pollution = autoOptions.disablePollution ? 0 : value;
+		},
+	});
 	// Inject the script's core function
 	if (game.worker) {
 		const runOriginalGameTick = dojo.hitch(game, gameTickFunc);
