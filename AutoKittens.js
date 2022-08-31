@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 03:11:40 on Wednesday, August 31, 2022 UTC
+Last built at 03:50:44 on Wednesday, August 31, 2022 UTC
 
-#AULBS:1661915500#
+#AULBS:1661917844#
 */
 
 /* eslint-env browser, jquery */
@@ -340,7 +340,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661915500';
+	const AULBS = '1661917844';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const onError = (xhr, stat, err) => {
 		button.val('Update check failed!');
@@ -2290,7 +2290,7 @@ function manageOutposts() {
 	// ceil because we can overflow by less than one outpost's full output in order to cap
 	const supportedByOutput = Math.ceil((output.maxValue - output.value) / produced);
 	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
-	const supported = Math.min(supportedByPower, supportedByInput, supportedByOutput, count);
+	const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
 
 	// case 1: too many outposts active
 	// case 2: not enough outposts active, input above threshold

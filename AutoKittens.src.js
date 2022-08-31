@@ -2298,7 +2298,7 @@ function manageOutposts() {
 	// ceil because we can overflow by less than one outpost's full output in order to cap
 	const supportedByOutput = Math.ceil((output.maxValue - output.value) / produced);
 	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
-	const supported = Math.min(supportedByPower, supportedByInput, supportedByOutput, count);
+	const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
 
 	// case 1: too many outposts active
 	// case 2: not enough outposts active, input above threshold
