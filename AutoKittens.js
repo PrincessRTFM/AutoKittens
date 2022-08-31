@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 03:50:44 on Wednesday, August 31, 2022 UTC
+Last built at 05:29:09 on Wednesday, August 31, 2022 UTC
 
-#AULBS:1661917844#
+#AULBS:1661923749#
 */
 
 /* eslint-env browser, jquery */
@@ -233,6 +233,7 @@ const defaultOptions = {
 		useMinimumPowerProd: true,
 		activationLimit: 0.9,
 		reservedUranium: 0.1,
+		active: true, // not user-configurable
 	},
 };
 const craftingTickTracker = Object.create(null);
@@ -340,7 +341,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661917844';
+	const AULBS = '1661923749';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const onError = (xhr, stat, err) => {
 		button.val('Update check failed!');
@@ -2292,10 +2293,22 @@ function manageOutposts() {
 	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
 	const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
 
-	// case 1: too many outposts active
-	// case 2: not enough outposts active, input above threshold
-	if (supported < active || (supported > active && fullness >= threshold)) {
+	// if we've passed the UPPER limit, enable outpost activation
+	if (fullness >= threshold) {
+		autoOptions.lunarOutpostOptions.active = true;
+	}
+	// if we've passed the LOWER limit, disable outposts
+	else if (!supportedByInput) {
+		autoOptions.lunarOutpostOptions.active = false;
+	}
+
+	// if outposts are enabled, set the active number
+	if (autoOptions.lunarOutpostOptions.active) {
 		bld.on = supported;
+	}
+	// otherwise, turn them all off
+	else {
+		bld.on = 0;
 	}
 }
 function processAutoKittens() {

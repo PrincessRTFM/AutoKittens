@@ -234,6 +234,7 @@ const defaultOptions = {
 		useMinimumPowerProd: true,
 		activationLimit: 0.9,
 		reservedUranium: 0.1,
+		active: true, // not user-configurable
 	},
 };
 const craftingTickTracker = Object.create(null);
@@ -2300,10 +2301,22 @@ function manageOutposts() {
 	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
 	const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
 
-	// case 1: too many outposts active
-	// case 2: not enough outposts active, input above threshold
-	if (supported < active || (supported > active && fullness >= threshold)) {
+	// if we've passed the UPPER limit, enable outpost activation
+	if (fullness >= threshold) {
+		autoOptions.lunarOutpostOptions.active = true;
+	}
+	// if we've passed the LOWER limit, disable outposts
+	else if (!supportedByInput) {
+		autoOptions.lunarOutpostOptions.active = false;
+	}
+
+	// if outposts are enabled, set the active number
+	if (autoOptions.lunarOutpostOptions.active) {
 		bld.on = supported;
+	}
+	// otherwise, turn them all off
+	else {
+		bld.on = 0;
 	}
 }
 function processAutoKittens() {
