@@ -2264,6 +2264,18 @@ function manageOutposts() {
 		return;
 	}
 
+	// bad hack to handle a bug I can't figure out
+	// game.resPool.energyCons is updated every tick, in the original game tick function
+	// the replacement tick function we inject calls the original before AK's own functions run, including this one
+	// however, sometimes we end up getting the wrong (previous tick's) value, which causes trouble
+	// if it stabilised and we had just a tick or two of running an extra outpost, it wouldn't matter
+	// unfortunately, something in the timing causes it to flip back and forth indefinitely
+	// sadly, there's no discernible reason for this, so I can't fix it
+	// instead, here's a workaround: only update every five ticks
+	if (game.ticks % 5) {
+		return;
+	}
+
 	const consumed = 0.35;
 	const produced = 0.007;
 
