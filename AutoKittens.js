@@ -5,13 +5,13 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 07:08:43 on Wednesday, August 31, 2022 UTC
+Last built at 09:58:03 on Wednesday, August 31, 2022 UTC
 
-#AULBS:1661929723#
+#AULBS:1661939883#
 */
 
 /* eslint-env browser, jquery */
-/* global game, LCstorage, dojo, autoOptions:writable, autoKittensCache, gameData */
+/* global game, LCstorage, autoOptions:writable, autoKittensCache, gameData */
 
 const savedConfigKey = "kittensgame.autoOptions";
 const scriptDialogId = ".autokittens-dialog";
@@ -21,92 +21,29 @@ const gameTickFunc = game.tick;
 const checkInterval = 200;
 let calculators = [];
 const percentages = [
-	[
-		"1%",
-		0.01,
-	],
-	[
-		"5%",
-		0.05,
-	],
-	[
-		"10%",
-		0.1,
-	],
-	[
-		"20%",
-		0.2,
-	],
-	[
-		"25%",
-		0.25,
-	],
-	[
-		"30%",
-		0.3,
-	],
-	[
-		"40%",
-		0.4,
-	],
-	[
-		"50%",
-		0.5,
-	],
-	[
-		"60%",
-		0.6,
-	],
-	[
-		"70%",
-		0.7,
-	],
-	[
-		"75%",
-		0.75,
-	],
-	[
-		"80%",
-		0.8,
-	],
-	[
-		"90%",
-		0.9,
-	],
-	[
-		"95%",
-		0.95,
-	],
-	[
-		"98%",
-		0.98,
-	],
-	[
-		"99%",
-		0.99,
-	],
-	[
-		"99.5%",
-		0.995,
-	],
-	[
-		"99.9%",
-		0.999,
-	],
-	[
-		"100%",
-		1,
-	],
+	[ "1%", 0.01 ],
+	[ "5%", 0.05 ],
+	[ "10%", 0.1 ],
+	[ "20%", 0.2 ],
+	[ "25%", 0.25 ],
+	[ "30%", 0.3 ],
+	[ "40%", 0.4 ],
+	[ "50%", 0.5 ],
+	[ "60%", 0.6 ],
+	[ "70%", 0.7 ],
+	[ "75%", 0.75 ],
+	[ "80%", 0.8 ],
+	[ "90%", 0.9 ],
+	[ "95%", 0.95 ],
+	[ "98%", 0.98 ],
+	[ "99%", 0.99 ],
+	[ "99.5%", 0.995 ],
+	[ "99.9%", 0.999 ],
+	[ "100%", 1 ],
 ];
 const faithPercentages = [
-	[
-		"0%",
-		0,
-	],
-	[
-		"0.1%",
-		0.001,
-	],
+	[ "0%", 0 ],
+	[ "0.1%", 0.001 ],
 ].concat(percentages);
 // More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
 const gigaflopSafeMax = Math.exp(14.5) - 0.1;
@@ -249,20 +186,18 @@ function iterateObject(obj, callback) {
 	return obj;
 }
 
-const NOP = () => {
-	// no-op
-};
+const NOP = () => {}; // eslint-disable-line no-empty-function
 
 function setArbitrarilyDeepObject(location, value, initialTarget) {
 	let target = initialTarget || window;
 	if (Array.isArray(location)) {
-		location = location.join('.');
+		location = location.join(".");
 	}
-	const segments = location.split('.');
+	const segments = location.split(".");
 	const lastPoint = segments.pop();
 	let nextPoint;
 	while ((nextPoint = segments.shift())) {
-		if (typeof target[nextPoint] == 'undefined' || target[nextPoint] === null) {
+		if (typeof target[nextPoint] == "undefined" || target[nextPoint] === null) {
 			target[nextPoint] = {};
 		}
 		target = target[nextPoint];
@@ -273,12 +208,12 @@ function setArbitrarilyDeepObject(location, value, initialTarget) {
 	}
 }
 function wrapCallback(trigger) {
-	if (typeof trigger == 'function') {
+	if (typeof trigger == "function") {
 		return trigger;
 	}
-	if (typeof trigger == 'string') {
-		trigger = trigger.replace(";", '').replace("()", '');
-		if (typeof window[trigger] == 'function') {
+	if (typeof trigger == "string") {
+		trigger = trigger.replace(";", "").replace("()", "");
+		if (typeof window[trigger] == "function") {
 			return window[trigger];
 		}
 	}
@@ -287,13 +222,10 @@ function wrapCallback(trigger) {
 function runCallback(callback, ...args) {
 	return wrapCallback(callback)(...args);
 }
-function tryNumericSet(collection, attrName, value) {
+function tryNumericSet(optionName, value) {
 	const parsed = parseFloat(value);
 	if (!isNaN(parsed) && isFinite(parsed) && parsed > 0) {
-		setArbitrarilyDeepObject([
-			collection,
-			attrName,
-		], parsed);
+		setArbitrarilyDeepObject(optionName, parsed);
 	}
 }
 function copyObject(source, target) {
@@ -304,7 +236,8 @@ function copyObject(source, target) {
 			}
 			copyObject(source[attrname], target[attrname]);
 		}
-		else if (attrname == 'supressHuntLog') { // Fixing a typo
+		else if (attrname == "supressHuntLog") {
+			// Fixing a typo
 			target.suppressHuntLog = source[attrname];
 		}
 		else {
@@ -316,8 +249,8 @@ function copyObject(source, target) {
 function shortTimeFormat(secondsRaw) {
 	const secondsNumeric = parseInt(secondsRaw, 10); // don't forget the second param
 	const days = Math.floor(secondsNumeric / 86400);
-	const hours = Math.floor(secondsNumeric % 86400 / 3600);
-	const minutes = Math.floor(secondsNumeric % 3600 / 60);
+	const hours = Math.floor((secondsNumeric % 86400) / 3600);
+	const minutes = Math.floor((secondsNumeric % 3600) / 60);
 	const seconds = secondsNumeric % 60;
 	let timeFormated = "";
 	if (days) {
@@ -337,50 +270,50 @@ function rawSecondsFormat(secondsRaw) {
 }
 
 function checkUpdate() {
-	const button = $('#autokittens-checkupdate');
+	const button = $("#autokittens-checkupdate");
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661929723';
-	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
+	const AULBS = "1661939883";
+	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
-		button.val('Update check failed!');
+		button.val("Update check failed!");
 		console.group("AK Update Check (failure)");
-		console.info('Status value:', stat);
-		console.info('Error value:', err);
+		console.info("Status value:", stat);
+		console.info("Error value:", err);
 		console.groupEnd();
 	};
 	const doCheck = (data, stat, xhr) => {
-		if (typeof data != 'string') {
+		if (typeof data != "string") {
 			return void onError(xhr, stat, data);
 		}
 		const liveVersion = data.match(/#AULBS:(\d+)#/u);
 		if (!liveVersion) {
-			return void onError(xhr, 'no version string', data);
+			return void onError(xhr, "no version string", data);
 		}
 		const liveStamp = parseInt(liveVersion[1], 10);
 		if (liveStamp > parseInt(AULBS, 10)) {
-			button.val('Update found!');
+			button.val("Update found!");
 		}
 		else if (liveStamp < AULBS) {
-			button.val('Release behind live');
+			button.val("Release behind live");
 		}
 		else {
-			button.val('No update available');
+			button.val("No update available");
 		}
 	};
 	try {
-		button.val('Checking...');
+		button.val("Checking...");
 		$.ajax(SOURCE, {
-			method: 'GET',
+			method: "GET",
 			cache: false,
-			dataType: 'text',
+			dataType: "text",
 			error: onError,
 			success: doCheck,
 		});
 	}
 	catch (err) {
-		onError(null, 'request failed', err);
+		onError(null, "request failed", err);
 	}
 }
 
@@ -390,20 +323,16 @@ function saveAutoOptions() {
 function changeFurCrafts() {
 	const crafts = [
 		[
-			"parchmentMode",
-			"craftParchment",
+			"parchmentMode", "craftParchment",
 		],
 		[
-			"manuscriptMode",
-			"craftManuscript",
+			"manuscriptMode", "craftManuscript",
 		],
 		[
-			"compendiumMode",
-			"craftCompendium",
+			"compendiumMode", "craftCompendium",
 		],
 		[
-			"blueprintMode",
-			"craftBlueprint",
+			"blueprintMode", "craftBlueprint",
 		],
 	];
 	for (const craft of crafts) {
@@ -441,7 +370,8 @@ function changeTimeFormat() {
 function handleDisplayOptions(obj) {
 	for (const o of Object.keys(obj)) {
 		const toggle = $(`#autoKittens_show${o}`);
-		if (toggle.length) { // The toggle might not exist yet, since the UI overhaul
+		if (toggle.length) {
+			// The toggle might not exist yet, since the UI overhaul
 			if (window.AUTOKITTENS_DEBUG_ENABLED) {
 				console.log(`${toggle[0].id}.checked=${obj[o]}`);
 			}
@@ -481,22 +411,18 @@ function traverseObject(obj) {
 function updateOptionsUI() {
 	const crafts = [
 		[
-			"manuscriptMode",
-			"craftManuscript",
+			"manuscriptMode", "craftManuscript",
 		],
 		[
-			"compendiumMode",
-			"craftCompendium",
+			"compendiumMode", "craftCompendium",
 		],
 		[
-			"blueprintMode",
-			"craftBlueprint",
+			"blueprintMode", "craftBlueprint",
 		],
 	];
 	for (const craft of crafts) {
-		autoOptions.furOptions[craft[0]] = Number(autoOptions.huntOptions[craft[1]])
-			+ 2
-			* autoOptions.craftOptions[craft[1]];
+		autoOptions.furOptions[craft[0]]
+			= Number(autoOptions.huntOptions[craft[1]]) + 2 * autoOptions.craftOptions[craft[1]];
 	}
 	traverseObject(autoOptions);
 	changeTimeFormat();
@@ -506,42 +432,33 @@ function adjustColumns() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Adjusting column widths");
 	}
-	$('#midColumn').css('width', autoOptions.widenUI ? '1000px' : '');
-	$('#leftColumn').css('max-width', autoOptions.widenUI ? '25%' : '');
+	$("#midColumn").css("width", autoOptions.widenUI ? "1000px" : "");
+	$("#leftColumn").css("max-width", autoOptions.widenUI ? "25%" : "");
 }
 function adjustTimerBar() {
 	if (autoOptions.showTimerDisplays) {
-		$('html')
-			.first()
-			.addClass('autokittens-show-timers');
+		$("html").first()
+			.addClass("autokittens-show-timers");
 	}
 	else {
-		$('html')
-			.first()
-			.removeClass('autokittens-show-timers');
+		$("html").first()
+			.removeClass("autokittens-show-timers");
 	}
 }
 
-function addTriggerNamedCheckbox(container, prefix, optionName, controlName, caption, trigger) {
-	container
-		.append($(`<input id="autoKittens_${controlName}" type="checkbox" />`)
-			.on('input', function updateAutoKittensCheckboxSettingOnValueChange() {
-				setArbitrarilyDeepObject([
-					prefix,
-					optionName,
-				], this.checked);
+function addCheckbox(container, optionName, caption, trigger = NOP) {
+	container.append(
+		$(`<input id="autoKittens_${optionName}" type="checkbox" />`).on(
+			"input",
+			function updateAutoKittensCheckboxSettingOnValueChange() {
+				setArbitrarilyDeepObject(optionName, this.checked);
 				saveAutoOptions();
 				runCallback(trigger);
-			}), $(`<label for="autoKittens_${controlName}">${caption}</label>`), '<br />');
-}
-function addTriggerCheckbox(container, prefix, optionName, caption, trigger) {
-	addTriggerNamedCheckbox(container, prefix, optionName, optionName, caption, trigger);
-}
-function addNamedCheckbox(container, prefix, optionName, controlName, caption) {
-	addTriggerNamedCheckbox(container, prefix, optionName, controlName, caption, NOP);
-}
-function addCheckbox(container, prefix, optionName, caption) {
-	addNamedCheckbox(container, prefix, optionName, optionName, caption);
+			}
+		),
+		$(`<label for="autoKittens_${optionName}">${caption}</label>`),
+		"<br />"
+	);
 }
 
 function addExternCheckbox(container, controlName, caption, trigger, condition) {
@@ -549,32 +466,26 @@ function addExternCheckbox(container, controlName, caption, trigger, condition) 
 	const checkbox = $(`<input id="autoKittens_extern_${controlName}" type="checkbox" />`);
 	const label = $(`<label for="autoKittens_extern_${controlName}">${caption}</label>`);
 	checkbox[0].checked = typeof condition == "function" ? condition() : !!condition;
-	checkbox.on('input', () => callback(checkbox[0]));
+	checkbox.on("input", () => callback(checkbox[0]));
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log(`Creating external checkbox ${checkbox[0].id} as ${checkbox[0].checked ? "en" : "dis"}abled`);
 	}
-	container
-		.append(
-			checkbox,
-			label,
-			'<br />'
-		);
+	container.append(checkbox, label, "<br />");
 }
 
 function addHeading(container, title) {
 	container.append(`<h3>${title}</h3>`);
 }
 
-function addTriggerOptionMenu(container, prefix, optionName, leftCaption, options, rightCaption, trigger) {
-	const select = $(`<select id="autoKittens_${optionName}"></select>`)
-		.on('input', function updateAutoKittensDropdownSettingOnValueChange() {
-			setArbitrarilyDeepObject([
-				prefix,
-				optionName,
-			], $(this).val());
+function addOptionMenu(container, optionName, leftCaption, options, rightCaption, trigger = NOP) {
+	const select = $(`<select id="autoKittens_${optionName}"></select>`).on(
+		"input",
+		function updateAutoKittensDropdownSettingOnValueChange() {
+			setArbitrarilyDeepObject(optionName, $(this).val());
 			saveAutoOptions();
 			runCallback(trigger);
-		});
+		}
+	);
 	for (const option of options) {
 		if (Array.isArray(option)) {
 			select.append(`<option value="${option[1]}">${option[0]}</option>`);
@@ -589,19 +500,16 @@ function addTriggerOptionMenu(container, prefix, optionName, leftCaption, option
 	if (rightCaption.trim()) {
 		rightCaption = ` ${rightCaption.trim()}`;
 	}
-	container.append(leftCaption, select, rightCaption, '<br />');
-}
-function addOptionMenu(container, prefix, optionName, leftCaption, options, rightCaption) {
-	addTriggerOptionMenu(container, prefix, optionName, leftCaption, options, rightCaption, NOP);
+	container.append(leftCaption, select, rightCaption, "<br />");
 }
 
-function addTriggerButton(container, caption, trigger, hint) {
-	const button = $('<input type="button" />').attr('value', caption)
-		.on('click', wrapCallback(trigger));
+function addButton(container, caption, trigger, hint) {
+	const button = $('<input type="button" />').attr("value", caption)
+		.on("click", wrapCallback(trigger));
 	if (hint) {
-		button.attr('title', hint);
+		button.attr("title", hint);
 	}
-	container.append(button, '<br />');
+	container.append(button, "<br />");
 	return button;
 }
 
@@ -609,19 +517,21 @@ function addIndent(container) {
 	container.append('<span style="width:20px; display:inline-block;"></span>');
 }
 
-function addInputField(container, prefix, optionName, leftCaption, rightCaption) {
-	const field = $(`<input id="autoKittens_${optionName}" size="6" type="text" />`)
-		.on('input', function updateAutoKittensTextSettingOnValueChanged() {
-			tryNumericSet(prefix, optionName, this.value);
+function addInputField(container, optionName, leftCaption, rightCaption) {
+	const field = $(`<input id="autoKittens_${optionName}" size="6" type="text" />`).on(
+		"input",
+		function updateAutoKittensTextSettingOnValueChanged() {
+			tryNumericSet(optionName, this.value);
 			saveAutoOptions();
-		});
+		}
+	);
 	if (leftCaption.trim()) {
 		leftCaption = `${leftCaption.trim()} `;
 	}
 	if (rightCaption.trim()) {
 		rightCaption = ` ${rightCaption.trim()}`;
 	}
-	container.append(leftCaption, field, rightCaption, '<br />');
+	container.append(leftCaption, field, rightCaption, "<br />");
 }
 
 function prepareContainer(id) {
@@ -632,33 +542,33 @@ function prepareContainer(id) {
 	else {
 		result = $(`#${id}`);
 	}
-	const containerID = result.attr('id').toLowerCase();
-	const closeLink = $('<a class="close" href="#">close</a>').on('click', () => {
+	const containerID = result.attr("id").toLowerCase();
+	const closeLink = $('<a class="close" href="#">close</a>').on("click", () => {
 		$(scriptDialogId).hide();
 	});
-	const backLink = $('<a class="close" href="#">back</a>').on('click', () => {
+	const backLink = $('<a class="close" href="#">back</a>').on("click", () => {
 		$(scriptDialogId).hide();
-		$('#akSettingsMaster').show();
+		$("#akSettingsMaster").show();
 	});
 	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
-	if (containerID.startsWith('aksettings') && !containerID.endsWith('master')) {
-		linkContainer.prepend(backLink, ' | ');
+	if (containerID.startsWith("aksettings") && !containerID.endsWith("master")) {
+		linkContainer.prepend(backLink, " | ");
 	}
 	result.empty().append(linkContainer);
 	return result;
 }
 
 function formatTableRow(name, title, value) {
-	if (typeof autoOptions.displayOptions[name] === 'undefined') {
+	if (typeof autoOptions.displayOptions[name] === "undefined") {
 		autoOptions.displayOptions[name] = true;
 	}
 	if (autoOptions.displayOptions[name]) {
 		return `<td style="text-align:center">${title}<br />${value}</td>`;
 	}
-	return '';
+	return "";
 }
 function fillTable() {
-	let contents = '<tr>';
+	let contents = "<tr>";
 	const tickRate = game.getTicksPerSecondUI();
 	const resources = [];
 	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
@@ -703,34 +613,37 @@ function fillTable() {
 		const name = r.name;
 		const title = r.title;
 		if (r.perTickUI != 0) {
-			if (r.value > 0 && r.perTickUI < 0) { // not empty, falling - needs time-to-empty
+			if (r.value > 0 && r.perTickUI < 0) {
+				// not empty, falling - needs time-to-empty
 				contents += formatTableRow(
 					name,
 					title,
 					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
 				);
 			}
-			else if (r.maxValue > 0) { // not (falling + non-empty) - may be rising, may be empty
-				if (r.value >= r.maxValue) { // full, rising - no timer
-					contents += formatTableRow(name, title, 'Full');
+			else if (r.maxValue > 0) {
+				// not (falling + non-empty) - may be rising, may be empty
+				if (r.value >= r.maxValue) {
+					// full, rising - no timer
+					contents += formatTableRow(name, title, "Full");
 				}
-				else if (r.perTickUI > 0) { // not full, rising - needs time-to-cap
+				else if (r.perTickUI > 0) {
+					// not full, rising - needs time-to-cap
 					contents += formatTableRow(
 						name,
 						title,
-						game.toDisplaySeconds(
-							(r.maxValue - r.value) / (r.perTickUI * tickRate)
-						)
+						game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate))
 					);
 				}
-				else if (r.value <= 0) { // empty, falling - no timer
-					contents += formatTableRow(name, title, 'Empty');
+				else if (r.value <= 0) {
+					// empty, falling - no timer
+					contents += formatTableRow(name, title, "Empty");
 				}
 			}
 		}
 	}
-	contents += '</tr>';
-	document.querySelector('#timerTable').innerHTML = contents;
+	contents += "</tr>";
+	document.querySelector("#timerTable").innerHTML = contents;
 }
 
 function mintCalculator() {
@@ -740,16 +653,13 @@ function mintCalculator() {
 	if (2 * hunterRatio < 55) {
 		expectedIvoryFromHunts *= 1 - (55 - 2 * hunterRatio) / 100;
 	}
-	const mintBuildingData = game.bld.getBuildingExt('mint');
-	const mintsRunning = mintBuildingData.get('on');
+	const mintBuildingData = game.bld.getBuildingExt("mint");
+	const mintsRunning = mintBuildingData.get("on");
 	const catpower = game.resPool.get("manpower");
 	const catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
 	const catpowerRateWithMints
-		= (
-			(catpower.perTickUI || catpower.perTickCached)
-			+ mintBuildingData.get('effects').manpowerPerTickCon
-			* mintsRunning
-		)
+		= ((catpower.perTickUI || catpower.perTickCached)
+			+ mintBuildingData.get("effects").manpowerPerTickCon * mintsRunning)
 		* game.ticksPerSecond;
 	const huntTimeWithoutMint = 100 / catpowerRateBase;
 	const huntTimeWithMint = 100 / catpowerRateWithMints;
@@ -757,16 +667,16 @@ function mintCalculator() {
 	const ipsHuntsNoMints = expectedIvoryFromHunts / huntTimeWithoutMint;
 	let fpsHuntsWithMint = expectedFursFromHunts / huntTimeWithMint;
 	let ipsHuntsWithMint = expectedIvoryFromHunts / huntTimeWithMint;
-	const fpsFromMint = mintBuildingData.get('effects').fursPerTickProd * mintsRunning * game.ticksPerSecond;
-	const ipsFromMint = mintBuildingData.get('effects').ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
+	const fpsFromMint = mintBuildingData.get("effects").fursPerTickProd * mintsRunning * game.ticksPerSecond;
+	const ipsFromMint = mintBuildingData.get("effects").ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
 	fpsHuntsWithMint += fpsFromMint;
 	ipsHuntsWithMint += ipsFromMint;
 	const fpsProfitWithMints = fpsFromMint + fpsHuntsWithMint - fpsHuntsNoMints;
 	const ipsProfitWithMints = ipsFromMint + ipsHuntsWithMint - ipsHuntsNoMints;
-	const mintNoun = `mint${mintsRunning == 1 ? '' : 's'}`;
+	const mintNoun = `mint${mintsRunning == 1 ? "" : "s"}`;
 	const mintString = `${mintsRunning} ${mintNoun}`;
-	const fpsLossTag = fpsProfitWithMints < 0 ? ' (LOSS)' : '';
-	const ipsLossTag = ipsProfitWithMints < 0 ? ' (LOSS)' : '';
+	const fpsLossTag = fpsProfitWithMints < 0 ? " (LOSS)" : "";
+	const ipsLossTag = ipsProfitWithMints < 0 ? " (LOSS)" : "";
 	const totalFursPerSecond = game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
 	const totalIvoryPerSecond = game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
 	const result = [];
@@ -787,8 +697,8 @@ function mintCalculator() {
 function aiCalculator() {
 	const gflopsRes = gameData.gigaflops;
 	const hashRes = gameData.hashes;
-	const aiCoreData = game.bld.get('aiCore');
-	const entanglerData = game.space.getBuilding('entangler');
+	const aiCoreData = game.bld.get("aiCore");
+	const entanglerData = game.space.getBuilding("entangler");
 	const gigaflops = gflopsRes.value;
 	const hashes = hashRes.value;
 	const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
@@ -803,15 +713,16 @@ function aiCalculator() {
 	const hashesNeeded = gameData.hashesToNextLevel;
 	const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
 	const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
-	const internalCheckTag = gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick
-		? "checks out"
-		: "<b>INTERNAL MATH ERROR!</b>";
+	const internalCheckTag
+		= gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick
+			? "checks out"
+			: "<b>INTERNAL MATH ERROR!</b>";
 	const timeToNextLevelOfAI = isFinite(timeToNextAiLevel)
 		? game.toDisplaySeconds(timeToNextAiLevel)
-		: '<i>no gigaflops being produced</i>';
+		: "<i>no gigaflops being produced</i>";
 	const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
 		? game.toDisplaySeconds(timeToNextHashLevel)
-		: '<i>no hashes being produced</i>';
+		: "<i>no hashes being produced</i>";
 	const result = [
 		`Current gigaflops: ${gigaflops}`,
 		`Net gigaflops per tick: ${gigaflopsPerTick} - ${internalCheckTag}`,
@@ -819,9 +730,8 @@ function aiCalculator() {
 	];
 	if (aiLevel > 14) {
 		const gigaflopsToLose = gigaflops - gigaflopSafeMax;
-		const timeUntilSafetyFromSkynet = game.toDisplaySeconds(
-			Math.abs(gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond))
-		) || 'now';
+		const timeUntilSafetyFromSkynet
+			= game.toDisplaySeconds(Math.abs(gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
 		result.push(
 			'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
 			`Gigaflops beyond safe limit: ${gigaflopsToLose}`
@@ -838,21 +748,20 @@ function aiCalculator() {
 	}
 	else {
 		const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
-		const timeUntilDangerFromSkynet = game.toDisplaySeconds(
-			Math.abs(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond))
-		) || 'now';
+		const timeUntilDangerFromSkynet
+			= game.toDisplaySeconds(Math.abs(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
 		result.push(
-			'The AI apocalypse will not occur yet',
+			"The AI apocalypse will not occur yet",
 			`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax}`
 		);
 		if (gigaflopsPerTick > 0) {
 			result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
 		}
 		else if (gigaflopsPerTick == 0) {
-			result.push('AI Level is steady - AI apocalypse is not possible');
+			result.push("AI Level is steady - AI apocalypse is not possible");
 		}
 		else {
-			result.push('AI Level is falling - AI apocalypse is not possible');
+			result.push("AI Level is falling - AI apocalypse is not possible");
 		}
 	}
 	result.push(
@@ -869,16 +778,15 @@ function aiCalculator() {
 
 function addCalculator(container, id, title, contents, calcFunc, subsectionId, subsectionTitle) {
 	if (subsectionId) {
-		container
-			.append($(`<h3 class="fakelink">${title} (click to show/hide)</h3>`)
-				.on('click', () => {
-					$(`#${id}_container`).toggle();
-				}));
+		container.append(
+			$(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on("click", () => {
+				$(`#${id}_container`).toggle();
+			})
+		);
 		if (calcFunc) {
 			calculators.push([
 				[
-					id,
-					subsectionId,
+					id, subsectionId,
 				],
 				calcFunc,
 			]);
@@ -886,24 +794,24 @@ function addCalculator(container, id, title, contents, calcFunc, subsectionId, s
 		const outerDiv = $(`<div id="${id}_container"></div>`).hide();
 		const innerDiv = $(`<div id="${id}"></div>`);
 		const subDiv = $(`<div id="${subsectionId}"></div>`).hide();
-		const subToggle = $(`<h4 class="fakelink">${subsectionTitle} (click to show/hide)</h4>`)
-			.on('click', () => {
+		const subToggle = $(`<h4 class="fakelink">${subsectionTitle} (click to show/hide)</h4>`).on(
+			"click",
+			() => {
 				subDiv.toggle();
-			});
+			}
+		);
 		outerDiv.append(contents, innerDiv, subToggle, subDiv);
 		container.append(outerDiv);
 	}
 	else {
 		const sect = $(`<div id="${id}">${contents}</div>`).hide();
-		const toggle = $(`<h3 class="fakelink">${title} (click to show/hide)</h3>`)
-			.on('click', () => {
-				sect.toggle();
-			});
+		const toggle = $(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on("click", () => {
+			sect.toggle();
+		});
 		container.append(toggle);
 		if (calcFunc) {
 			calculators.push([
-				[id],
-				calcFunc,
+				[ id ], calcFunc,
 			]);
 		}
 		container.append(sect);
@@ -918,37 +826,35 @@ function updateCalculators() {
 	}
 }
 function rebuildCalculatorUI() {
-	const calcContainer = prepareContainer('kittenCalcs');
+	const calcContainer = prepareContainer("kittenCalcs");
 	calculators = [];
-	addCalculator(calcContainer, 'mintCalc', 'Mint efficiency calculator', '', mintCalculator);
-	addCalculator(calcContainer, 'aiCalc', 'AI, gigaflops, and hashes', '', aiCalculator);
+	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", "", mintCalculator);
+	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", "", aiCalculator);
 }
 
 function realignSciptDialogs() {
 	if (autoOptions.dialogRight) {
-		$('html').first()
-			.addClass('autokittensRight');
+		$("html").addClass("autokittensRight");
 	}
 	else {
-		$('html').first()
-			.removeClass('autokittensRight');
+		$("html").removeClass("autokittensRight");
 	}
 }
 function reapplyShadows() {
 	if (autoOptions.forceShadowGlobal) {
-		$('html').first()
-			.addClass('forceShadowGlobal')
-			.removeClass('forceShadow');
+		$("html")
+			.addClass("forceShadowGlobal")
+			.removeClass("forceShadow");
 	}
 	else if (autoOptions.forceShadow) {
-		$('html').first()
-			.addClass('forceShadow')
-			.removeClass('forceShadowGlobal');
+		$("html")
+			.addClass("forceShadow")
+			.removeClass("forceShadowGlobal");
 	}
 	else {
-		$('html').first()
-			.removeClass('forceShadow')
-			.removeClass('forceShadowGlobal');
+		$("html")
+			.removeClass("forceShadow")
+			.removeClass("forceShadowGlobal");
 	}
 }
 
@@ -998,95 +904,68 @@ function lockAllGameThemes() {
 
 function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
 	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
-	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, l => ` ${l.toLowerCase()}`);
-	const questioningSuffix = needsPluralising ? '(s)' : '';
-	const certainSuffix = needsPluralising ? 's' : '';
+	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, (l) => ` ${l.toLowerCase()}`);
+	const questioningSuffix = needsPluralising ? "(s)" : "";
+	const certainSuffix = needsPluralising ? "s" : "";
 	addCheckbox(
 		uiContainer,
-		'autoOptions.craftOptions',
-		`craft${internalTo.replace(/^[a-z]/u, l => l.toUpperCase())}`,
+		`autoOptions.craftOptions.craft${internalTo.replace(/^[a-z]/u, (l) => l.toUpperCase())}`,
 		`Automatically convert ${from} to ${labelTo + certainSuffix}`
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		`${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Amount`,
-		'Craft',
+		`autoOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Amount`,
+		"Craft",
 		`${labelTo + questioningSuffix} at a time`
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		`${internalTo.replace(/^[a-z]/u, l => l.toLowerCase())}Interval`,
+		`autoOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Interval`,
 		`Craft ${labelTo + certainSuffix} every`,
 		"game tick(s)"
 	);
 }
 
 function rebuildOptionsPaneGeneralUI() {
-	const uiContainer = prepareContainer('akSettingsUi');
-	addHeading(uiContainer, 'Timer displays');
-	addTriggerCheckbox(
+	const uiContainer = prepareContainer("akSettingsUi");
+	addHeading(uiContainer, "Timer displays");
+	addCheckbox(uiContainer, "autoOptions.showTimerDisplays", "Show timer displays below", adjustTimerBar);
+	uiContainer.append("Note: Ordering by time may cause elements near cap to frequently switch places.<br />");
+	addOptionMenu(
 		uiContainer,
-		'autoOptions',
-		'showTimerDisplays',
-		'Show timer displays below',
-		'adjustTimerBar()'
+		"autoOptions.displayOrder",
+		"Order time displays by",
+		[
+			[
+				"default order", "standard",
+			],
+			[
+				"shortest first", "short",
+			],
+			[
+				"longest first", "long",
+			],
+		],
+		""
 	);
-	uiContainer.append('Note: Ordering by time may cause elements near cap to frequently switch places.<br />');
-	addOptionMenu(uiContainer, 'autoOptions', 'displayOrder', 'Order time displays by', [
-		[
-			'default order',
-			'standard',
-		],
-		[
-			'shortest first',
-			'short',
-		],
-		[
-			'longest first',
-			'long',
-		],
-	], '');
-	game.resPool.resources.forEach(r => {
-		if (typeof autoOptions.displayOptions[r.name] !== 'undefined') {
-			addNamedCheckbox(
-				uiContainer,
-				'autoOptions.displayOptions',
-				r.name,
-				`show${r.name}`,
-				`Show ${r.title || r.name}`
-			);
+	game.resPool.resources.forEach((r) => {
+		if (typeof autoOptions.displayOptions[r.name] !== "undefined") {
+			addCheckbox(uiContainer, `autoOptions.displayOptions.${r.name}`, `Show ${r.title || r.name}`);
 		}
 	});
-	addHeading(
-		uiContainer,
-		'Game options'
-	);
-	addCheckbox(
-		uiContainer,
-		'autoOptions',
-		'autoStar',
-		'Automatically witness astronomical events'
-	);
-	addHeading(
-		uiContainer,
-		"Game themes"
-	);
-	addTriggerButton(
-		uiContainer,
-		'Unlock all',
-		unlockAllGameThemes
-	);
+	addHeading(uiContainer, "Game options");
+	addCheckbox(uiContainer, "autoOptions.autoStar", "Automatically witness astronomical events");
+	addHeading(uiContainer, "Game themes");
+	addButton(uiContainer, "Unlock all", unlockAllGameThemes);
 	for (const theme of game.ui.allSchemes) {
 		if (!game.ui.defaultSchemes.includes(theme)) {
 			addExternCheckbox(
 				uiContainer,
 				`theme_${theme}`,
 				theme.slice(0, 1).toUpperCase() + theme.slice(1),
-				toggle => {
+				(toggle) => {
 					if (toggle.checked) {
 						unlockGameTheme(theme);
 					}
@@ -1098,210 +977,113 @@ function rebuildOptionsPaneGeneralUI() {
 			);
 		}
 	}
-	addTriggerButton(
+	addButton(uiContainer, "Lock all", lockAllGameThemes);
+	addHeading(uiContainer, "UI options");
+	addCheckbox(uiContainer, "autoOptions.warnOnLeave", "Warn before leaving the page");
+	addCheckbox(
 		uiContainer,
-		'Lock all',
-		lockAllGameThemes
-	);
-	addHeading(
-		uiContainer,
-		'UI options'
+		"autoOptions.widenUI",
+		"Make the game use more horizontal space (particularly useful for Grassy theme)",
+		adjustColumns
 	);
 	addCheckbox(
 		uiContainer,
-		'autoOptions',
-		'warnOnLeave',
-		'Warn before leaving the page'
-	);
-	addTriggerCheckbox(
-		uiContainer,
-		'autoOptions',
-		'widenUI',
-		'Make the game use more horizontal space (particularly useful for Grassy theme)',
-		adjustColumns
-	);
-	addTriggerCheckbox(
-		uiContainer,
-		'autoOptions',
-		'dialogRight',
+		"autoOptions.dialogRight",
 		"Move AK dialogs to the right of the window to improve playability",
 		realignSciptDialogs
 	);
-	addTriggerCheckbox(
+	addCheckbox(
 		uiContainer,
-		'autoOptions',
-		'forceShadow',
+		"autoOptions.forceShadow",
 		"Enable a light shadow on AK dialogs",
 		reapplyShadows
 	);
-	addTriggerCheckbox(
+	addCheckbox(
 		uiContainer,
-		'autoOptions',
-		'forceShadowGlobal',
+		"autoOptions.forceShadowGlobal",
 		"Enable a light shadow on ALL dialogs (overrides the above option!)",
 		reapplyShadows
 	);
-	addTriggerOptionMenu(uiContainer, 'autoOptions', 'timeDisplay', 'Format time displays as', [
+	addOptionMenu(
+		uiContainer,
+		"autoOptions.timeDisplay",
+		"Format time displays as",
 		[
-			"default",
-			"standard",
+			[
+				"default", "standard",
+			],
+			[
+				"short", "short",
+			],
+			[
+				"seconds", "seconds",
+			],
 		],
-		[
-			"short",
-			"short",
-		],
-		[
-			"seconds",
-			"seconds",
-		],
-	], '', changeTimeFormat);
+		"",
+		changeTimeFormat
+	);
 	updateOptionsUI();
 }
 function rebuildOptionsPaneCrafting() {
-	const uiContainer = prepareContainer('akSettingsCraft');
-	addHeading(uiContainer, 'Crafting');
-	addCheckbox(
-		uiContainer,
-		'autoOptions',
-		'autoCraft',
-		'Craft materials when storage is near limit'
-	);
+	const uiContainer = prepareContainer("akSettingsCraft");
+	addHeading(uiContainer, "Crafting");
+	addCheckbox(uiContainer, "autoOptions.autoCraft", "Craft materials when storage is near limit");
 	addOptionMenu(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'craftLimit',
-		'Craft when storage is',
+		"autoOptions.craftOptions.craftLimit",
+		"Craft when storage is",
 		percentages,
-		'full'
+		"full"
 	);
 	addOptionMenu(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'secondaryCraftLimit',
+		"autoOptions.craftOptions.secondaryCraftLimit",
 		"Keep secondary crafting outputs at least",
 		percentages,
-		'the amount of the inputs'
+		"the amount of the inputs"
 	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'catnip',
-		'wood'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'wood',
-		'beam',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'minerals',
-		'slab',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'iron',
-		'plate',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'iron and coal',
-		'steel'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'slabs and steel',
-		'concrete',
-		false
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'steel',
-		'gear',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'steel and titanium',
-		'alloy'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'alloy and unobtainium',
-		'eludium'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'beams',
-		'scaffold',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'scaffolds, plates, and starcharts',
-		'ship',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'ships, alloy, and blueprints',
-		'tanker',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'oil',
-		'kerosene'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'uranium',
-		'thorium'
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'slabs, beams, and plates',
-		'megalith',
-		true
-	);
-	addAutocraftConfigLine(
-		uiContainer,
-		'time crystals and relics',
-		'bloodstone',
-		true
-	);
+	addAutocraftConfigLine(uiContainer, "catnip", "wood");
+	addAutocraftConfigLine(uiContainer, "wood", "beam", true);
+	addAutocraftConfigLine(uiContainer, "minerals", "slab", true);
+	addAutocraftConfigLine(uiContainer, "iron", "plate", true);
+	addAutocraftConfigLine(uiContainer, "iron and coal", "steel");
+	addAutocraftConfigLine(uiContainer, "slabs and steel", "concrete", false);
+	addAutocraftConfigLine(uiContainer, "steel", "gear", true);
+	addAutocraftConfigLine(uiContainer, "steel and titanium", "alloy");
+	addAutocraftConfigLine(uiContainer, "alloy and unobtainium", "eludium");
+	addAutocraftConfigLine(uiContainer, "beams", "scaffold", true);
+	addAutocraftConfigLine(uiContainer, "scaffolds, plates, and starcharts", "ship", true);
+	addAutocraftConfigLine(uiContainer, "ships, alloy, and blueprints", "tanker", true);
+	addAutocraftConfigLine(uiContainer, "oil", "kerosene");
+	addAutocraftConfigLine(uiContainer, "uranium", "thorium");
+	addAutocraftConfigLine(uiContainer, "slabs, beams, and plates", "megalith", true);
+	addAutocraftConfigLine(uiContainer, "time crystals and relics", "bloodstone", true);
 	addHeading(uiContainer, "Lunar Outposts");
 	addCheckbox(
 		uiContainer,
-		'autoOptions.lunarOutpostOptions',
-		'automate',
+		"autoOptions.lunarOutpostOptions.automate",
 		"Automatically manage Lunar Outposts according to power and uranium supply"
 	);
 	addCheckbox(
 		uiContainer,
-		'autoOptions.lunarOutpostOptions',
-		'useMinimumPowerProd',
+		"autoOptions.lunarOutpostOptions.useMinimumPowerProd",
 		"Calculate power according to winter (lowest solar output)"
 	);
 	addOptionMenu(
 		uiContainer,
-		'autoOptions.lunarOutpostOptions',
-		'activationLimit',
-		'Activate outposts when uranium storage above',
+		"autoOptions.lunarOutpostOptions.activationLimit",
+		"Activate outposts when uranium storage above",
 		percentages,
-		'full'
+		"full"
 	);
 	addOptionMenu(
 		uiContainer,
-		'autoOptions.lunarOutpostOptions',
-		'reservedUranium',
-		'Stop all outposts when uranium below',
+		"autoOptions.lunarOutpostOptions.reservedUranium",
+		"Stop all outposts when uranium below",
 		faithPercentages,
-		'storage capacity'
+		"storage capacity"
 	);
-	addTriggerButton(
+	addButton(
 		uiContainer,
 		"Recalculate",
 		() => {
@@ -1309,205 +1091,175 @@ function rebuildOptionsPaneCrafting() {
 		},
 		"Recheck input storage and shut off outposts if under the threshold. You probably won't ever need this."
 	);
-	addHeading(uiContainer, 'Fur product crafting');
-	addTriggerOptionMenu(
+	addHeading(uiContainer, "Fur product crafting");
+	addOptionMenu(
 		uiContainer,
-		'autoOptions.furOptions',
-		'parchmentMode',
-		'Auto-craft parchment',
+		"autoOptions.furOptions.parchmentMode",
+		"Auto-craft parchment",
 		[
 			[
-				'never',
-				0,
+				"never", 0,
 			],
 			[
-				'all, before hunting',
-				1,
+				"all, before hunting", 1,
 			],
 			[
-				'on full culture storage',
-				2,
+				"on full culture storage", 2,
 			],
 			[
-				'both',
-				3,
+				"both", 3,
 			],
 		],
-		'',
+		"",
 		changeFurCrafts
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'parchmentAmount',
-		'When storage full, craft',
-		'parchment at a time'
+		"autoOptions.craftOptions.parchmentAmount",
+		"When storage full, craft",
+		"parchment at a time"
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'parchmentInterval',
-		'Only craft parchment on full storage every',
-		'game tick(s)'
+		"autoOptions.craftOptions.parchmentInterval",
+		"Only craft parchment on full storage every",
+		"game tick(s)"
 	);
-	addTriggerOptionMenu(
+	addOptionMenu(
 		uiContainer,
-		'autoOptions.furOptions',
-		'manuscriptMode',
-		'Auto-craft manuscripts',
+		"autoOptions.furOptions.manuscriptMode",
+		"Auto-craft manuscripts",
 		[
 			[
-				'never',
-				0,
+				"never", 0,
 			],
 			[
-				'all, before hunting',
-				1,
+				"all, before hunting", 1,
 			],
 			[
-				'on full culture storage',
-				2,
+				"on full culture storage", 2,
 			],
 			[
-				'both',
-				3,
+				"both", 3,
 			],
 		],
-		'',
+		"",
 		changeFurCrafts
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'manuscriptAmount',
-		'When storage full, craft',
-		'manuscript(s) at a time'
+		"autoOptions.craftOptions.manuscriptAmount",
+		"When storage full, craft",
+		"manuscript(s) at a time"
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'manuscriptInterval',
-		'Only craft manuscripts on full storage every',
-		'game tick(s)'
+		"autoOptions.craftOptions.manuscriptInterval",
+		"Only craft manuscripts on full storage every",
+		"game tick(s)"
 	);
-	addTriggerOptionMenu(
+	addOptionMenu(
 		uiContainer,
-		'autoOptions.furOptions',
-		'compendiumMode',
-		'Auto-craft compendiums',
+		"autoOptions.furOptions.compendiumMode",
+		"Auto-craft compendiums",
 		[
 			[
-				'never',
-				0,
+				"never", 0,
 			],
 			[
-				'all, before hunting',
-				1,
+				"all, before hunting", 1,
 			],
 			[
-				'on full science storage',
-				2,
+				"on full science storage", 2,
 			],
 			[
-				'both',
-				3,
+				"both", 3,
 			],
 		],
-		'',
+		"",
 		changeFurCrafts
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'compendiumAmount',
-		'When storage full, craft',
-		'compendium(s) at a time'
+		"autoOptions.craftOptions.compendiumAmount",
+		"When storage full, craft",
+		"compendium(s) at a time"
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'compendiumInterval',
-		'Only craft compendiums on full storage every',
-		'game tick(s)'
+		"autoOptions.craftOptions.compendiumInterval",
+		"Only craft compendiums on full storage every",
+		"game tick(s)"
 	);
-	addTriggerOptionMenu(
+	addOptionMenu(
 		uiContainer,
-		'autoOptions.furOptions',
-		'blueprintMode',
-		'Auto-craft blueprints',
+		"autoOptions.furOptions.blueprintMode",
+		"Auto-craft blueprints",
 		[
 			[
-				'never',
-				0,
+				"never", 0,
 			],
 			[
-				'all, before hunting',
-				1,
+				"all, before hunting", 1,
 			],
 			[
-				'on full science storage',
-				2,
+				"on full science storage", 2,
 			],
 			[
-				'both',
-				3,
+				"both", 3,
 			],
 		],
-		'',
+		"",
 		changeFurCrafts
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'blueprintAmount',
-		'When storage full, craft',
-		'blueprints(s) at a time'
+		"autoOptions.craftOptions.blueprintAmount",
+		"When storage full, craft",
+		"blueprints(s) at a time"
 	);
 	addIndent(uiContainer);
 	addInputField(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'blueprintInterval',
-		'Only craft blueprints on full storage every',
-		'game tick(s)'
+		"autoOptions.craftOptions.blueprintInterval",
+		"Only craft blueprints on full storage every",
+		"game tick(s)"
 	);
 	addCheckbox(
 		uiContainer,
-		'autoOptions.craftOptions',
-		'blueprintPriority',
-		'When crafting both from full storage, check blueprints before compendiums'
+		"autoOptions.craftOptions.blueprintPriority",
+		"When crafting both from full storage, check blueprints before compendiums"
 	);
 	updateOptionsUI();
 }
 function buildUI() {
 	const tableContainer = $('<div id="timerTableContainer"></div>');
 	tableContainer.html('<table id="timerTable" style="width: 100%; table-layout: fixed;"></table>');
-	$('body')
-		.first()
-		.append(tableContainer);
+	$("body").append(tableContainer);
 	adjustColumns();
 	adjustTimerBar();
 	reapplyShadows();
 	realignSciptDialogs();
-	const akDialogClasses = 'dialog help autokittens-dialog';
+	const akDialogClasses = "dialog help autokittens-dialog";
 	const switchToDialog = (which, pre) => {
 		$(scriptDialogId).hide();
-		if (typeof pre == 'function') {
+		if (typeof pre == "function") {
 			pre();
 		}
 		which.show();
 	};
 	const switcher = (...pass) => switchToDialog.bind(null, ...pass);
-	const makeContainer = id => prepareContainer(
-		$(`<div class="${akDialogClasses}" id="akSettings${id.replace(/^[a-z]/u, c => c.toUpperCase())}"></div>`)
-			.hide()
+	const makeContainer = (id) => prepareContainer(
+		$(
+			`<div class="${akDialogClasses}" id="akSettings${id.replace(/^[a-z]/u, (c) => c.toUpperCase())}"></div>`
+		).hide()
 	);
 	const masterSettingsContainer = makeContainer("master");
 	const prayerSettingsContainer = makeContainer("prayer");
@@ -1517,276 +1269,183 @@ function buildUI() {
 	const uiSettingsContainer = makeContainer("ui");
 	const miscSettingsContainer = makeContainer("misc");
 	// The master panel, from here you have override toggles and the other panels
-	addTriggerButton(
+	addButton(masterSettingsContainer, "Prayer Settings", switcher(prayerSettingsContainer))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "Trading Settings", switcher(tradeSettingsContainer))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "Crafting Settings", switcher(craftSettingsContainer, rebuildOptionsPaneCrafting))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "Hunting Settings", switcher(huntSettingsContainer))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "UI Settings", switcher(uiSettingsContainer, rebuildOptionsPaneGeneralUI))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "Miscellaneous Settings", switcher(miscSettingsContainer))
+		.addClass("autokittens-dispatch-button");
+	addButton(masterSettingsContainer, "Check for update", checkUpdate)
+		.addClass("autokittens-dispatch-button")
+		.attr("id", "autokittens-checkupdate");
+	addButton(
 		masterSettingsContainer,
-		'Prayer Settings',
-		switcher(prayerSettingsContainer)
+		"Reset options",
+		() => {
+			autoOptions = defaultOptions;
+			saveAutoOptions();
+			updateOptionsUI();
+		},
+		"DANGER! This CANNOT be undone!"
 	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		'Trading Settings',
-		switcher(tradeSettingsContainer)
-	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		'Crafting Settings',
-		switcher(craftSettingsContainer, rebuildOptionsPaneCrafting)
-	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		'Hunting Settings',
-		switcher(huntSettingsContainer)
-	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		'UI Settings',
-		switcher(uiSettingsContainer, rebuildOptionsPaneGeneralUI)
-	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		'Miscellaneous Settings',
-		switcher(miscSettingsContainer)
-	)
-		.addClass('autokittens-dispatch-button');
-	addTriggerButton(
-		masterSettingsContainer,
-		"Check for update",
-		checkUpdate
-	)
-		.addClass('autokittens-dispatch-button')
-		.attr('id', 'autokittens-checkupdate');
-	addTriggerButton(masterSettingsContainer, 'Reset options', () => {
-		autoOptions = defaultOptions;
-		saveAutoOptions();
-		updateOptionsUI();
-	}, 'DANGER! This CANNOT be undone!')
-		.addClass('autokittens-dispatch-button')
-		.attr('id', 'autokittens-reset-options');
+		.addClass("autokittens-dispatch-button")
+		.attr("id", "autokittens-reset-options");
 	// Prayer settings
-	addHeading(prayerSettingsContainer, 'Prayer');
-	addCheckbox(
-		prayerSettingsContainer,
-		'autoOptions',
-		'autoPray',
-		'Praise the sun when faith is near limit'
-	);
+	addHeading(prayerSettingsContainer, "Prayer");
+	addCheckbox(prayerSettingsContainer, "autoOptions.autoPray", "Praise the sun when faith is near limit");
 	addIndent(prayerSettingsContainer);
 	addOptionMenu(
 		prayerSettingsContainer,
-		'autoOptions',
-		'prayLimit',
-		'Pray when faith is',
+		"autoOptions.prayLimit",
+		"Pray when faith is",
 		faithPercentages,
-		'full'
+		"full"
 	);
 	addIndent(prayerSettingsContainer);
 	addCheckbox(
 		prayerSettingsContainer,
-		'autoOptions',
-		'autoResetFaith',
-		'Perform an apocrypha reset just before praising the sun'
+		"autoOptions.autoResetFaith",
+		"Perform an apocrypha reset just before praising the sun"
 	);
 	// Trading settings
-	addHeading(tradeSettingsContainer, 'Trading');
+	addHeading(tradeSettingsContainer, "Trading");
 	const races = [
 		[
-			"No one",
-			"",
+			"No one", "",
 		],
 	];
-	game.diplomacy.races.forEach(r => {
+	game.diplomacy.races.forEach((r) => {
 		races.push([
-			r.title || r.name,
-			r.name,
+			r.title || r.name, r.name,
 		]);
 	});
-	addCheckbox(
-		tradeSettingsContainer,
-		'autoOptions',
-		'autoTrade',
-		'Trade when gold is near limit'
-	);
+	addCheckbox(tradeSettingsContainer, "autoOptions.autoTrade", "Trade when gold is near limit");
 	addIndent(tradeSettingsContainer);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeLimit',
-		'Trade when gold is',
+		"autoOptions.tradeOptions.tradeLimit",
+		"Trade when gold is",
 		percentages,
-		'full'
+		"full"
 	);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradePartner',
-		'Trade with',
+		"autoOptions.tradeOptions.tradePartner",
+		"Trade with",
 		races,
-		'by default'
+		"by default"
 	);
 	addCheckbox(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'suppressTradeLog',
-		'Hide log messages when auto-trading'
+		"autoOptions.tradeOptions.suppressTradeLog",
+		"Hide log messages when auto-trading"
 	);
 	races[0][0] = "Default selection";
 	addIndent(tradeSettingsContainer);
-	addInputField(
-		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeCount',
-		'Send',
-		'caravans at a time'
-	);
-	addCheckbox(
-		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeSpring',
-		'Allow trading in spring'
-	);
+	addInputField(tradeSettingsContainer, "autoOptions.tradeOptions.tradeCount", "Send", "caravans at a time");
+	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeSpring", "Allow trading in spring");
 	addIndent(tradeSettingsContainer);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerSpring',
-		'Trade with',
+		"autoOptions.tradeOptions.tradePartnerSpring",
+		"Trade with",
 		races,
-		' in spring'
+		" in spring"
 	);
-	addCheckbox(
-		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeSummer',
-		'Allow trading in summer'
-	);
+	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeSummer", "Allow trading in summer");
 	addIndent(tradeSettingsContainer);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerSummer',
-		'Trade with',
+		"autoOptions.tradeOptions.tradePartnerSummer",
+		"Trade with",
 		races,
-		' in summer'
+		" in summer"
 	);
-	addCheckbox(
-		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeAutumn',
-		'Allow trading in autumn'
-	);
+	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeAutumn", "Allow trading in autumn");
 	addIndent(tradeSettingsContainer);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerAutumn',
-		'Trade with',
+		"autoOptions.tradeOptions.tradePartnerAutumn",
+		"Trade with",
 		races,
-		' in autumn'
+		" in autumn"
 	);
-	addCheckbox(
-		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradeWinter',
-		'Allow trading in winter'
-	);
+	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeWinter", "Allow trading in winter");
 	addIndent(tradeSettingsContainer);
 	addOptionMenu(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'tradePartnerWinter',
-		'Trade with',
+		"autoOptions.tradeOptions.tradePartnerWinter",
+		"Trade with",
 		races,
-		' in winter'
+		" in winter"
 	);
 	addCheckbox(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'playMarket',
-		'Play the blackcoin market like a cheap fiddle'
+		"autoOptions.tradeOptions.playMarket",
+		"Play the blackcoin market like a cheap fiddle"
 	);
 	addIndent(tradeSettingsContainer);
 	addInputField(
 		tradeSettingsContainer,
-		'autoOptions.tradeOptions',
-		'buyBlackcoinBelow',
+		"autoOptions.tradeOptions.buyBlackcoinBelow",
 		"Buy blackcoin for at most",
 		"relics"
 	);
 	// Hunting settings
-	addHeading(huntSettingsContainer, 'Hunting');
-	addCheckbox(
-		huntSettingsContainer,
-		'autoOptions',
-		'autoHunt',
-		'Hunt when catpower is near limit'
-	);
+	addHeading(huntSettingsContainer, "Hunting");
+	addCheckbox(huntSettingsContainer, "autoOptions.autoHunt", "Hunt when catpower is near limit");
 	addOptionMenu(
 		huntSettingsContainer,
-		'autoOptions.huntOptions',
-		'huntLimit',
-		'Hunt when catpower is',
+		"autoOptions.huntOptions.huntLimit",
+		"Hunt when catpower is",
 		percentages,
-		'full'
+		"full"
 	);
 	addCheckbox(
 		huntSettingsContainer,
-		'autoOptions.huntOptions',
-		'suppressHuntLog',
-		'Hide log messages when auto-hunting (includes hunt-triggered crafts)'
+		"autoOptions.huntOptions.suppressHuntLog",
+		"Hide log messages when auto-hunting (includes hunt-triggered crafts)"
 	);
 	addCheckbox(
 		huntSettingsContainer,
-		'autoOptions.huntOptions',
-		'singleHunts',
-		'Limit the number of hunts sent out at once'
+		"autoOptions.huntOptions.singleHunts",
+		"Limit the number of hunts sent out at once"
 	);
 	addIndent(huntSettingsContainer);
-	addInputField(
-		huntSettingsContainer,
-		'autoOptions.huntOptions',
-		'huntCount',
-		"Send out",
-		"hunts at once"
-	);
+	addInputField(huntSettingsContainer, "autoOptions.huntOptions.huntCount", "Send out", "hunts at once");
 	addCheckbox(
 		huntSettingsContainer,
-		'autoOptions.huntOptions',
-		'huntEarly',
-		'Hunt as soon as the maximum number of hunts is reached (relative to the limit)'
+		"autoOptions.huntOptions.huntEarly",
+		"Hunt as soon as the maximum number of hunts is reached (relative to the limit)"
 	);
 	// Miscellaneous settings
-	addHeading(miscSettingsContainer, 'Miscellaneous');
+	addHeading(miscSettingsContainer, "Miscellaneous");
 	addCheckbox(
 		miscSettingsContainer,
-		'autoOptions',
-		'perfectLeadership',
-		"Pretend that your leader is perfect at everything"
+		"autoOptions.perfectLeadership",
+		"Pretend that your leader is perfect at everything",
+		"If only we could do this in the real world..."
 	);
 	addHeading(miscSettingsContainer, "Pollution");
-	addCheckbox(
-		miscSettingsContainer,
-		'autoOptions',
-		'disablePollution',
-		"Actually disable pollution, for real"
-	);
-	addTriggerButton(
+	addCheckbox(miscSettingsContainer, "autoOptions.disablePollution", "Actually disable pollution, for real");
+	addButton(
 		miscSettingsContainer,
 		"Reset pollution level",
 		() => {
 			game.bld.cathPollution = 0;
 		},
-		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more."
-		+ " For some reason."
+		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more. For some reason."
 	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here
 	const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
-	$('#gamePageContainer').append([
+	$("#gamePageContainer").append([
 		masterSettingsContainer,
 		prayerSettingsContainer,
 		tradeSettingsContainer,
@@ -1798,13 +1457,12 @@ function buildUI() {
 	]);
 	// Put the links in the headers
 	const optLink = $('<a id="autokittens-optlink" href="#">AK</a>')
-		.on('click', switcher(masterSettingsContainer));
+		.on("click", switcher(masterSettingsContainer));
 	const calcLink = $('<a id="autokittens-calclink" href="#">Calcs</a>')
-		.attr('title', "According to my catculations...")
-		.on('click', switcher(calcContainer, rebuildCalculatorUI));
-	$('#devModeButton')
-		.parent()
-		.prepend(optLink, ' | ', calcLink, ' | ');
+		.attr("title", "According to my catculations...")
+		.on("click", switcher(calcContainer, rebuildCalculatorUI));
+	$("#devModeButton").parent()
+		.prepend(optLink, " | ", calcLink, " | ");
 	// Inject our stylesheet, because trying to manage inline styles with
 	// this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
@@ -1897,9 +1555,7 @@ function buildUI() {
 			content: " ⚠";
 		}
 	`.trim());
-	$('head')
-		.first()
-		.append(inlineStylesheet);
+	$("head").append(inlineStylesheet);
 }
 
 function starClick() {
@@ -1917,25 +1573,26 @@ function autoHunt() {
 	if (autoOptions.huntOptions.suppressHuntLog) {
 		game.msg = NOP;
 	}
-	const catpower = game.resPool.get('manpower');
+	const catpower = game.resPool.get("manpower");
 	const leftBeforeCap = (1 - autoOptions.huntOptions.huntLimit) * catpower.maxValue;
 	if (
 		catpower.value / catpower.maxValue >= autoOptions.huntOptions.huntLimit
-		|| (autoOptions.huntOptions.huntEarly
-			&& catpower.value >= catpower.maxValue - leftBeforeCap - (catpower.maxValue - leftBeforeCap) % 100
+		|| (
+			autoOptions.huntOptions.huntEarly
+			&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
 		)
 	) {
-		if (autoOptions.huntOptions.craftParchment && game.workshop.getCraft('parchment').unlocked) {
-			game.craftAll('parchment');
+		if (autoOptions.huntOptions.craftParchment && game.workshop.getCraft("parchment").unlocked) {
+			game.craftAll("parchment");
 		}
-		if (autoOptions.huntOptions.craftManuscript && game.workshop.getCraft('manuscript').unlocked) {
-			game.craftAll('manuscript');
+		if (autoOptions.huntOptions.craftManuscript && game.workshop.getCraft("manuscript").unlocked) {
+			game.craftAll("manuscript");
 		}
-		if (autoOptions.huntOptions.craftCompendium && game.workshop.getCraft('compedium').unlocked) {
-			game.craftAll('compedium');
+		if (autoOptions.huntOptions.craftCompendium && game.workshop.getCraft("compedium").unlocked) {
+			game.craftAll("compedium");
 		}
-		if (autoOptions.huntOptions.craftBlueprint && game.workshop.getCraft('blueprint').unlocked) {
-			game.craftAll('blueprint');
+		if (autoOptions.huntOptions.craftBlueprint && game.workshop.getCraft("blueprint").unlocked) {
+			game.craftAll("blueprint");
 		}
 		if (autoOptions.huntOptions.singleHunts) {
 			const squads = Math.floor(autoOptions.huntOptions.huntCount);
@@ -1970,105 +1627,105 @@ function autoCraft() {
 			"craftBloodstone",
 			"bloodstoneAmount",
 			"bloodstoneInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"tanker",
 			"craftTanker",
 			"tankerAmount",
 			"tankerInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"ship",
 			"craftShip",
 			"shipAmount",
 			"shipInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"concrate",
 			"craftConcrete",
 			"concreteAmount",
 			"concreteInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"megalith",
 			"craftMegalith",
 			"megalithAmount",
 			"megalithInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"slab",
 			"craftSlab",
 			"slabAmount",
 			"slabInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"gear",
 			"craftGear",
 			"gearAmount",
 			"gearInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"alloy",
 			"craftAlloy",
 			"alloyAmount",
 			"alloyInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"steel",
 			"craftSteel",
 			"steelAmount",
 			"steelInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"plate",
 			"craftPlate",
 			"plateAmount",
 			"plateInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"eludium",
 			"craftEludium",
 			"eludiumAmount",
 			"eludiumInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"kerosene",
 			"craftKerosene",
 			"keroseneAmount",
 			"keroseneInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"thorium",
 			"craftThorium",
 			"thoriumAmount",
 			"thoriumInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"scaffold",
 			"craftScaffold",
 			"scaffoldAmount",
 			"scaffoldInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"beam",
 			"craftBeam",
 			"beamAmount",
 			"beamInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"wood",
@@ -2082,35 +1739,35 @@ function autoCraft() {
 			"craftParchment",
 			"parchmentAmount",
 			"parchmentInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"manuscript",
 			"craftManuscript",
 			"manuscriptAmount",
 			"manuscriptInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"blueprint",
 			"craftBlueprint",
 			"blueprintAmount",
 			"blueprintInterval",
-			game.science.get('construction').researched && autoOptions.craftOptions.blueprintPriority,
+			game.science.get("construction").researched && autoOptions.craftOptions.blueprintPriority,
 		],
 		[
 			"compedium",
 			"craftCompendium",
 			"compendiumAmount",
 			"compendiumInterval",
-			game.science.get('construction').researched,
+			game.science.get("construction").researched,
 		],
 		[
 			"blueprint",
 			"craftBlueprint",
 			"blueprintAmount",
 			"blueprintInterval",
-			game.science.get('construction').researched && !autoOptions.craftOptions.blueprintPriority,
+			game.science.get("construction").researched && !autoOptions.craftOptions.blueprintPriority,
 		],
 	];
 	AUTOCRAFT: for (const craftData of resources) {
@@ -2136,21 +1793,25 @@ function autoCraft() {
 			const output = game.resPool.get(product);
 			for (const resource in costs) {
 				if (ownProp(costs, resource)) {
-					if (product == 'steel' && resource == 'iron') {
-						continue; // It's a monkey patch, I know - I'm working on a proper fix
+					if (product == "steel" && resource == "iron") {
+						// It's a monkey patch, I know - I'm working on a proper fix
+						// update 2022-08-31: how long has it even been?
+						continue;
 					}
 					const input = game.resPool.get(resource);
 					if (input.value < costs[resource]) {
 						continue AUTOCRAFT;
 					}
-					if (input.maxValue > 0) { // Check by percentage of max value - the original method
+					if (input.maxValue > 0) {
+						// Check by percentage of max value - the original method
 						const percentage = input.value / input.maxValue;
 						if (percentage < autoOptions.craftOptions.craftLimit) {
 							continue AUTOCRAFT;
 						}
 						continue;
 					}
-					if (input.value > 0) { // Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
+					if (input.value > 0) {
+						// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
 						const percentage = output.value / input.value;
 						// If we have MORE of the OUTPUT than the threshold, skip this entirely
 						if (percentage > autoOptions.craftOptions.secondaryCraftLimit) {
@@ -2165,10 +1826,12 @@ function autoCraft() {
 			tryCraft(product, autoOptions.craftOptions[amountSetting]);
 		}
 		else if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
-			console.log([
-				`Haven't crafted ${product} in ${ticksSinceLastCraft} ticks,`,
-				`crafting every ${autoOptions.craftOptions[intervalSetting]} ticks`,
-			].join(' '));
+			console.log(
+				[
+					`Haven't crafted ${product} in ${ticksSinceLastCraft} ticks,`,
+					`crafting every ${autoOptions.craftOptions[intervalSetting]} ticks`,
+				].join(" ")
+			);
 		}
 		craftingTickTracker[product] = ticksSinceLastCraft + 1;
 	}
@@ -2177,7 +1840,7 @@ function autoPray() {
 	if (!autoOptions.autoPray) {
 		return;
 	}
-	const faith = game.resPool.get('faith');
+	const faith = game.resPool.get("faith");
 	if (faith.value / faith.maxValue >= autoOptions.prayLimit && faith.value > 0.01) {
 		if (autoOptions.autoResetFaith) {
 			game.religion._resetFaithInternal(1.01); // dunno why the source uses 1.01, but it does
@@ -2205,7 +1868,7 @@ function autoTrade() {
 	if (!race.unlocked) {
 		return;
 	}
-	const gold = game.resPool.get('gold');
+	const gold = game.resPool.get("gold");
 	if (
 		game.resPool.get(race.buys[0].name).value < race.buys[0].val
 		|| game.resPool.get("manpower").value < 50
@@ -2233,15 +1896,12 @@ function autoBlackcoin() {
 	// > Once you've researched Blackchain (or if you already have blackcoins),
 	// > blackcoins can be bought with relics.
 	if (
-		!game.science.get('antimatter').researched
-		|| !(
-			game.resPool.resourceMap.blackcoin.unlocked
-			|| game.science.get('blackchain').researched
-		)
+		!game.science.get("antimatter").researched
+		|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
 	) {
 		return;
 	}
-	if (!game.diplomacy.get('leviathans').unlocked) {
+	if (!game.diplomacy.get("leviathans").unlocked) {
 		return;
 	}
 	const curPrice = game.calendar.cryptoPrice;
@@ -2253,7 +1913,7 @@ function autoBlackcoin() {
 		coins.value += amt;
 		relics.value = 0;
 	}
-	else if (coins.value > 0 && (maxPrice - curPrice) <= 1) {
+	else if (coins.value > 0 && maxPrice - curPrice <= 1) {
 		const amt = coins.value * curPrice;
 		relics.value += amt;
 		coins.value = 0;
@@ -2299,7 +1959,7 @@ function manageOutposts() {
 		? game.resPool.energyWinterProd
 		: game.resPool.energyProd;
 	const usage = bld.effects.energyConsumption;
-	const basePowerDraw = game.resPool.energyCons - (usage * active);
+	const basePowerDraw = game.resPool.energyCons - usage * active;
 	const leftover = maxPower - basePowerDraw;
 
 	const available = Math.max(input.value - reserved, 0);
@@ -2357,7 +2017,7 @@ function processAutoKittens() {
 			craftingInputs: {},
 		};
 		for (let i = 0; i < game.workshop.upgrades.length; i++) {
-			if ('unicornsGlobalRatio' in (game.workshop.upgrades[i].effects || {})) {
+			if ("unicornsGlobalRatio" in (game.workshop.upgrades[i].effects || {})) {
 				temporaryCache.unicornUpgrades.push(game.workshop.upgrades[i]);
 			}
 		}
@@ -2365,7 +2025,7 @@ function processAutoKittens() {
 		for (let i = 0; i < game.workshop.crafts.length; i++) {
 			const product = game.workshop.crafts[i].name;
 			const costs = {};
-			game.workshop.crafts[i].prices.forEach(price => {
+			game.workshop.crafts[i].prices.forEach((price) => {
 				costs[price.name] = price.val;
 			});
 			temporaryCache.craftingInputs[product] = Object.freeze(costs);
@@ -2379,140 +2039,152 @@ function processAutoKittens() {
 	// The magic "cache" of commonly desired game data
 	const gameDataMap = Object.create(null);
 	[
-		'catnip',
-		'wood',
-		'minerals',
-		'coal',
-		'iron',
-		'titanium',
-		'gold',
-		'oil',
-		'uranium',
-		'unobtainium',
-		'antimatter',
-		'science',
-		'culture',
-		'faith',
-		'kittens',
-		'zebras',
-		'temporalFlux',
-		'gflops',
-		'hashrates',
-		'furs',
-		'ivory',
-		'spice',
-		'unicorns',
-		'tears',
-		'karma',
-		'paragon',
-		'burnedParagon',
-		'sorrow',
-		'void',
-		'elderBox',
-		'wrappingPaper',
-		'blackcoin',
-		'steel',
-		'alloy',
-		'eludium',
-		'kerosene',
-		'parchment',
-		'thorium',
-	].forEach(id => {
+		"catnip",
+		"wood",
+		"minerals",
+		"coal",
+		"iron",
+		"titanium",
+		"gold",
+		"oil",
+		"uranium",
+		"unobtainium",
+		"antimatter",
+		"science",
+		"culture",
+		"faith",
+		"kittens",
+		"zebras",
+		"temporalFlux",
+		"gflops",
+		"hashrates",
+		"furs",
+		"ivory",
+		"spice",
+		"unicorns",
+		"tears",
+		"karma",
+		"paragon",
+		"burnedParagon",
+		"sorrow",
+		"void",
+		"elderBox",
+		"wrappingPaper",
+		"blackcoin",
+		"steel",
+		"alloy",
+		"eludium",
+		"kerosene",
+		"parchment",
+		"thorium",
+	].forEach((id) => {
 		Object.defineProperty(gameDataMap, id, {
 			enumerable: true,
 			get: () => game.resPool.get(id),
 		});
 	});
 	[
-		'starchart',
-		'alicorn',
-		'necrocorn',
-		'timeCrystal',
-		'relic',
-		'bloodstone',
-		'beam',
-		'slab',
-		'plate',
-		'gear',
-		'scaffold',
-		'ship',
-		'tanker',
-		'manuscript',
-		'blueprint',
-		'megalith',
-	].forEach(id => {
+		"starchart",
+		"alicorn",
+		"necrocorn",
+		"timeCrystal",
+		"relic",
+		"bloodstone",
+		"beam",
+		"slab",
+		"plate",
+		"gear",
+		"scaffold",
+		"ship",
+		"tanker",
+		"manuscript",
+		"blueprint",
+		"megalith",
+	].forEach((id) => {
 		Object.defineProperty(gameDataMap, `${id}s`, {
 			enumerable: true,
 			get: () => game.resPool.get(id),
 		});
 	});
-	Object.defineProperties(gameDataMap, iterateObject({
-		flux: {
-			get: () => gameDataMap.temporalFlux,
-		},
-		gigaflops: {
-			get: () => gameDataMap.gflops,
-		},
-		hashes: {
-			get: () => gameDataMap.hashrates,
-		},
-		elderBoxes: {
-			get: () => gameDataMap.elderBox,
-		},
-		boxes: {
-			get: () => gameDataMap.elderBox,
-		},
-		concrete: {
-			get: () => game.resPool.get('concrate'),
-		},
-		compendiums: {
-			get: () => game.resPool.get('compedium'),
-		},
-		aiLevel: {
-			get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
-		},
-		gigaflopsToNextLevel: {
-			get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
-		},
-		hashLevel: {
-			get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
-		},
-		hashesToNextLevel: {
-			get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
-		},
-		pollution: {
-			get: () => game.bld.cathPollution,
-			set: value => {
-				game.bld.cathPollution = value;
+	Object.defineProperties(
+		gameDataMap,
+		iterateObject(
+			{
+				flux: {
+					get: () => gameDataMap.temporalFlux,
+				},
+				gigaflops: {
+					get: () => gameDataMap.gflops,
+				},
+				hashes: {
+					get: () => gameDataMap.hashrates,
+				},
+				elderBoxes: {
+					get: () => gameDataMap.elderBox,
+				},
+				boxes: {
+					get: () => gameDataMap.elderBox,
+				},
+				concrete: {
+					get: () => game.resPool.get("concrate"),
+				},
+				compendiums: {
+					get: () => game.resPool.get("compedium"),
+				},
+				aiLevel: {
+					get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
+				},
+				gigaflopsToNextLevel: {
+					get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
+				},
+				hashLevel: {
+					get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
+				},
+				hashesToNextLevel: {
+					get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
+				},
+				pollution: {
+					get: () => game.bld.cathPollution,
+					set: (value) => {
+						game.bld.cathPollution = value;
+					},
+				},
 			},
-		},
-	}, descrip => {
-		descrip.enumerable = true;
-	}));
+			(descrip) => {
+				descrip.enumerable = true;
+			}
+		)
+	);
 	// Inject things into the global namespace as read-only values
-	Object.defineProperties(window, iterateObject({
-		gameData: {
-			value: Object.freeze(gameDataMap),
-		},
-		autoKittensCache: {
-			get: () => internalCache,
-		},
-		rebuildAutoKittensCache: {
-			value: rebuildAutoKittensCache,
-		},
-	}, descrip => {
-		descrip.enumerable = true;
-	}));
+	Object.defineProperties(
+		window,
+		iterateObject(
+			{
+				gameData: {
+					value: Object.freeze(gameDataMap),
+				},
+				autoKittensCache: {
+					get: () => internalCache,
+				},
+				rebuildAutoKittensCache: {
+					value: rebuildAutoKittensCache,
+				},
+			},
+			(descrip) => {
+				descrip.enumerable = true;
+			}
+		)
+	);
 	// Set the unload-guard
 	const unloadGuard = function unloadGuard(evt) { // eslint-disable-line consistent-return
 		if (autoOptions.warnOnLeave) {
-			const warning = 'Are you sure you want to leave?';
+			const warning = "Are you sure you want to leave?";
 			evt.preventDefault();
 			evt.returnValue = warning;
 			return warning;
 		}
 	};
-	window.addEventListener('beforeunload', unloadGuard, {
+	window.addEventListener("beforeunload", unloadGuard, {
 		capture: true,
 		once: false,
 	});
@@ -2521,15 +2193,14 @@ function processAutoKittens() {
 	// Practical differences: doesn't care if you even HAVE a leader, doesn't care about the current leader's trait
 	// Internal differences: uses Reflect.apply instead of relying on Function.prototype.apply
 	const realGetEffectLeader = game.village.getEffectLeader;
-	// eslint-disable-next-line func-name-matching
 	game.village.getEffectLeader = function cheesyGetEffectLeader(trait, ...rest) {
 		const realLeader = this.leader;
 		if (
 			autoOptions.perfectLeadership
-			&& game.challenges.currentChallenge != 'anarchy'
-			&& game.science.get('civil').researched
+			&& game.challenges.currentChallenge != "anarchy"
+			&& game.science.get("civil").researched
 			&& this.traits
-			&& this.traits.some(t => t.name == trait)
+			&& this.traits.some((t) => t.name == trait)
 		) {
 			this.leader = {
 				trait: {
@@ -2538,25 +2209,24 @@ function processAutoKittens() {
 			};
 		}
 		const value = Reflect.apply(realGetEffectLeader, this, [
-			trait,
-			...rest,
+			trait, ...rest,
 		]);
 		this.leader = realLeader;
 		return value;
 	};
 	// Hijack the pollution level
 	let pollution = game.bld.cathPollution;
-	Object.defineProperty(game.bld, 'cathPollution', {
+	Object.defineProperty(game.bld, "cathPollution", {
 		enumerable: true,
 		get: () => (autoOptions.disablePollution ? 0 : pollution),
-		set: value => {
+		set: (value) => {
 			pollution = autoOptions.disablePollution ? 0 : value;
 		},
 	});
 	// Inject the script's core function
 	if (game.worker) {
 		const runOriginalGameTick = gameTickFunc.bind(game);
-		game.tick = function runAutoKittensHijackedGameTick() { // eslint-disable-line func-name-matching
+		game.tick = function runAutoKittensHijackedGameTick() {
 			runOriginalGameTick();
 			processAutoKittens();
 		};
@@ -2565,7 +2235,7 @@ function processAutoKittens() {
 		window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
 	}
 	// Make the UI changes
-	if (!document.querySelector('#timerTable')) {
+	if (!document.querySelector("#timerTable")) {
 		buildUI();
 		$(scriptDialogId).hide();
 		rebuildOptionsPaneGeneralUI();
