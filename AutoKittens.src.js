@@ -234,7 +234,7 @@ const defaultOptions = {
 		useMinimumPowerProd: true,
 		activationLimit: 0.9,
 		reservedUranium: 0.1,
-		active: true, // not user-configurable
+		active: true, // semi-hidden
 	},
 };
 const craftingTickTracker = Object.create(null);
@@ -1306,6 +1306,14 @@ function rebuildOptionsPaneCrafting() {
 		faithPercentages,
 		'of max uranium for reactors'
 	);
+	addTriggerButton(
+		uiContainer,
+		"Recalculate",
+		() => {
+			autoOptions.lunarOutpostOptions.active = false;
+		},
+		"Recheck input storage and shut off outposts if under the threshold. You probably won't ever need this."
+	);
 	addHeading(uiContainer, 'Fur product crafting');
 	addTriggerOptionMenu(
 		uiContainer,
@@ -2264,13 +2272,14 @@ function manageOutposts() {
 		return;
 	}
 
-	// bad hack to handle a bug I can't figure out
+	// bad hack to handle a caching bug
 	// game.resPool.energyCons is updated every tick, in the original game tick function
 	// the replacement tick function we inject calls the original before AK's own functions run, including this one
-	// however, sometimes we end up getting the wrong (previous tick's) value, which causes trouble
+	// however, sometimes the energy consumption effects that are used in that calculation are out of date
+	// it's only by a tick or two, but it's still enough to introduce problems
 	// if it stabilised and we had just a tick or two of running an extra outpost, it wouldn't matter
 	// unfortunately, something in the timing causes it to flip back and forth indefinitely
-	// sadly, there's no discernible reason for this, so I can't fix it
+	// sadly, there's no discernible reason for that occasional timing glitch, so I can't fix it
 	// instead, here's a workaround: only update every five ticks
 	if (game.ticks % 5) {
 		return;
