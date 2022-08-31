@@ -229,6 +229,12 @@ const defaultOptions = {
 	},
 	showTimerDisplays: true,
 	disablePollution: false,
+	lunarOutpostOptions: {
+		automate: false,
+		useMinimumPowerProd: true,
+		activationLimit: 0.9,
+		reservedUranium: 0.1,
+	},
 };
 const craftingTickTracker = Object.create(null);
 window.autoOptions = defaultOptions;
@@ -331,12 +337,15 @@ function rawSecondsFormat(secondsRaw) {
 }
 
 function checkUpdate() {
+	const button = $('#autokittens-checkupdate');
+	// #ifdef NO_UPDATE_CHECK
+	button.val("$CASE_UPPER($UPDATE_CHECK_LABEL)");
+	// #else
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
 	const AULBS = '$__UNIXTIME__';
 	const SOURCE = '$UPDATE_URL';
-	const button = $('#autokittens-checkupdate');
 	const onError = (xhr, stat, err) => {
 		button.val('Update check failed!');
 		console.group("AK Update Check (failure)");
@@ -376,6 +385,7 @@ function checkUpdate() {
 	catch (err) {
 		onError(null, 'request failed', err);
 	}
+	// #endif
 }
 
 function saveAutoOptions() {
@@ -1153,10 +1163,7 @@ function rebuildOptionsPaneGeneralUI() {
 }
 function rebuildOptionsPaneCrafting() {
 	const uiContainer = prepareContainer('akSettingsCraft');
-	addHeading(
-		uiContainer,
-		'Crafting'
-	);
+	addHeading(uiContainer, 'Crafting');
 	addCheckbox(
 		uiContainer,
 		'autoOptions',
@@ -1269,10 +1276,36 @@ function rebuildOptionsPaneCrafting() {
 		'bloodstone',
 		true
 	);
-	addHeading(
+	addHeading(uiContainer, "Lunar Outposts");
+	addCheckbox(
 		uiContainer,
-		'Fur product crafting'
+		'autoOptions.lunarOutpostOptions',
+		'automate',
+		"Automatically manage Lunar Outposts according to power and uranium supply"
 	);
+	addCheckbox(
+		uiContainer,
+		'autoOptions.lunarOutpostOptions',
+		'useMinimumPowerProd',
+		"Calculate power according to winter (lowest solar output)"
+	);
+	addOptionMenu(
+		uiContainer,
+		'autoOptions.lunarOutpostOptions',
+		'activationLimit',
+		'Activate outposts when uranium storage above',
+		percentages,
+		'full'
+	);
+	addOptionMenu(
+		uiContainer,
+		'autoOptions.lunarOutpostOptions',
+		'reservedUranium',
+		'Reserve',
+		faithPercentages,
+		'of max uranium for reactors'
+	);
+	addHeading(uiContainer, 'Fur product crafting');
 	addTriggerOptionMenu(
 		uiContainer,
 		'autoOptions.furOptions',
@@ -1518,7 +1551,7 @@ function buildUI() {
 		.addClass('autokittens-dispatch-button');
 	addTriggerButton(
 		masterSettingsContainer,
-		'Check for update',
+		"$UPDATE_CHECK_LABEL",
 		checkUpdate
 	)
 		.addClass('autokittens-dispatch-button')
@@ -1744,7 +1777,7 @@ function buildUI() {
 			game.bld.cathPollution = 0;
 		},
 		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more."
-			+ " For some reason."
+		+ " For some reason."
 	);
 	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
 	// functions above instead of being in here
@@ -1772,6 +1805,9 @@ function buildUI() {
 	// this sort of logic/selection criteria is /not/ happening
 	const inlineStylesheet = $('<style type="text/css"></style>');
 	inlineStylesheet.text(`
+		html.autokittensUpdateCheckDisabled #autokittens-checkupdate {
+			color: red;
+		}
 		#gamePageContainer > div.dialog.help.autokittens-dialog {
 			top: 24% !important;
 			bottom: 14% !important;
@@ -1860,6 +1896,9 @@ function buildUI() {
 	$('head')
 		.first()
 		.append(inlineStylesheet);
+	// #ifdef NO_UPDATE_CHECK
+	$('html').addClass("autokittensUpdateCheckDisabled");
+	// #endif
 }
 
 function starClick() {
@@ -2219,6 +2258,54 @@ function autoBlackcoin() {
 		coins.value = 0;
 	}
 }
+function manageOutposts() {
+	if (!autoOptions.lunarOutpostOptions.automate) {
+		return;
+	}
+
+	const consumed = 0.35;
+	const produced = 0.007;
+
+	const bld = game.space.getBuilding("moonOutpost");
+	const input = game.resPool.get("uranium");
+	const output = game.resPool.get("unobtainium");
+
+	if (input.maxValue <= 0) {
+		bld.on = 0;
+		return;
+	}
+
+	const count = bld.val;
+	const active = bld.on;
+
+	const threshold = autoOptions.lunarOutpostOptions.activationLimit;
+	const reserved = autoOptions.lunarOutpostOptions.reservedUranium * input.maxValue;
+
+	const maxPower = autoOptions.lunarOutpostOptions.useMinimumPowerProd
+		? game.resPool.energyWinterProd
+		: game.resPool.energyProd;
+	const usage = bld.effects.energyConsumption;
+	const basePowerDraw = game.resPool.energyCons - (usage * active);
+	const leftover = maxPower - basePowerDraw;
+
+	const available = Math.max(input.value - reserved, 0);
+	const fullness = available / input.maxValue;
+
+	// this is the most that can be run according to power limitations, and will probably be the limiting factor
+	const supportedByPower = Math.floor(leftover / usage);
+	// this many outposts can be active for one tick - it's probably vastly higher than we need in MOST cases
+	const supportedByInput = Math.floor(available / consumed);
+	// ceil because we can overflow by less than one outpost's full output in order to cap
+	const supportedByOutput = Math.ceil((output.maxValue - output.value) / produced);
+	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
+	const supported = Math.min(supportedByPower, supportedByInput, supportedByOutput, count);
+
+	// case 1: too many outposts active
+	// case 2: not enough outposts active, input above threshold
+	if (supported < active || (supported > active && fullness >= threshold)) {
+		bld.on = supported;
+	}
+}
 function processAutoKittens() {
 	starClick();
 	autoHunt();
@@ -2226,6 +2313,7 @@ function processAutoKittens() {
 	autoTrade();
 	autoPray();
 	autoBlackcoin();
+	manageOutposts();
 	fillTable();
 	updateCalculators();
 }
@@ -2441,7 +2529,7 @@ function processAutoKittens() {
 	});
 	// Inject the script's core function
 	if (game.worker) {
-		const runOriginalGameTick = dojo.hitch(game, gameTickFunc);
+		const runOriginalGameTick = gameTickFunc.bind(game);
 		game.tick = function runAutoKittensHijackedGameTick() { // eslint-disable-line func-name-matching
 			runOriginalGameTick();
 			processAutoKittens();
@@ -2458,4 +2546,3 @@ function processAutoKittens() {
 		rebuildOptionsPaneCrafting();
 	}
 })();
-
