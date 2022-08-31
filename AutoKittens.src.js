@@ -1302,9 +1302,9 @@ function rebuildOptionsPaneCrafting() {
 		uiContainer,
 		'autoOptions.lunarOutpostOptions',
 		'reservedUranium',
-		'Reserve',
+		'Stop all outposts when uranium below',
 		faithPercentages,
-		'of max uranium for reactors'
+		'storage capacity'
 	);
 	addTriggerButton(
 		uiContainer,

@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 06:17:14 on Wednesday, August 31, 2022 UTC
+Last built at 07:08:43 on Wednesday, August 31, 2022 UTC
 
-#AULBS:1661926634#
+#AULBS:1661929723#
 */
 
 /* eslint-env browser, jquery */
@@ -341,7 +341,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = '1661926634';
+	const AULBS = '1661929723';
 	const SOURCE = 'https://princessrtfm.github.io/AutoKittens/AutoKittens.js';
 	const onError = (xhr, stat, err) => {
 		button.val('Update check failed!');
@@ -1297,9 +1297,9 @@ function rebuildOptionsPaneCrafting() {
 		uiContainer,
 		'autoOptions.lunarOutpostOptions',
 		'reservedUranium',
-		'Reserve',
+		'Stop all outposts when uranium below',
 		faithPercentages,
-		'of max uranium for reactors'
+		'storage capacity'
 	);
 	addTriggerButton(
 		uiContainer,
