@@ -797,18 +797,19 @@ function powerCalculator() {
 		if (typeof effects == "object" && count > 0) {
 			const prod = effects.energyProduction || 0;
 			const cons = effects.energyProduction || 0;
-			const amount = prod || cons;
-			const total = amount * count;
-			totalProd += prod * count;
-			totalCons += cons * count;
-			if (total) {
-				(prod ? generation : consumption).push(`${name}: ${total.toFixed(2)} (${amount.toFixed(2)} x ${count})`);
+			if (prod) {
+				totalProd += prod * count;
+				generation.push(`${name}: ${(prod * count).toFixed(2)} (${prod.toFixed(2)} x ${count})`);
+			}
+			if (cons) {
+				totalCons += cons * count;
+				generation.push(`${name}: ${(cons * count).toFixed(2)} (${cons.toFixed(2)} x ${count})`);
 			}
 		}
 	}
 	return [
-		consumption.concat("", `Total: ${totalCons}`).join("<br/>\n"),
-		generation.concat("", `Total: ${totalProd}`).join("<br/>\n"),
+		consumption.concat("", `Total consumption: ${totalCons}`).join("<br/>\n"),
+		generation.concat("", `Total production: ${totalProd}`).join("<br/>\n"),
 	];
 }
 
