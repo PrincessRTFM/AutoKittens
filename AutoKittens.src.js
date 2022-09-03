@@ -1,6 +1,6 @@
 /*
 #include common.h
-$__OUTPUT_FILE__ - helper script for the Kittens Game (https://kittensgame.com/web/)
+$PROJECT_NAME - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: $SIGNATURE
@@ -781,60 +781,72 @@ function aiCalculator() {
 	return result.join("<br />\n");
 }
 
-function addCalculator(container, id, title, contents, calcFunc, subsectionId, subsectionTitle) {
-	if (subsectionId) {
-		container.append(
-			$(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on("click", () => {
-				$(`#${id}_container`).toggle();
-			})
-		);
-		if (calcFunc) {
-			calculators.push([
-				[
-					id, subsectionId,
-				],
-				calcFunc,
-			]);
-		}
-		const outerDiv = $(`<div id="${id}_container"></div>`).hide();
-		const innerDiv = $(`<div id="${id}"></div>`);
-		const subDiv = $(`<div id="${subsectionId}"></div>`).hide();
-		const subToggle = $(`<h4 class="fakelink">${subsectionTitle} (click to show/hide)</h4>`).on(
-			"click",
-			() => {
-				subDiv.toggle();
+function powerCalculator() {
+	const structures = []
+		.concat(game.bld.buildingsData)
+		.concat(...game.space.planets.map((p) => p.buildings))
+		.concat(...game.time.meta.map((m) => m.meta));
+	const generation = [];
+	const consumption = [];
+	let totalProd = 0;
+	let totalCons = 0;
+	for (const struct of structures) {
+		const name = struct.label || struct.stages[struct.stage].label;
+		const count = struct.on;
+		const effects = struct.effects;
+		if (typeof effects == "object" && count > 0) {
+			const prod = effects.energyProduction || 0;
+			const cons = effects.energyProduction || 0;
+			const amount = prod || cons;
+			const total = amount * count;
+			totalProd += prod * count;
+			totalCons += cons * count;
+			if (total) {
+				(prod ? generation : consumption).push(`${name}: ${total.toFixed(2)} (${amount.toFixed(2)} x ${count})`);
 			}
-		);
-		outerDiv.append(contents, innerDiv, subToggle, subDiv);
-		container.append(outerDiv);
-	}
-	else {
-		const sect = $(`<div id="${id}">${contents}</div>`).hide();
-		const toggle = $(`<h3 class="fakelink">${title} (click to show/hide)</h3>`).on("click", () => {
-			sect.toggle();
-		});
-		container.append(toggle);
-		if (calcFunc) {
-			calculators.push([
-				[ id ], calcFunc,
-			]);
 		}
-		container.append(sect);
 	}
+	return [
+		consumption.concat("", `Total: ${totalCons}`).join("<br/>\n"),
+		generation.concat("", `Total: ${totalProd}`).join("<br/>\n"),
+	];
+}
+
+function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
+	const container = $(`<div id="${id}_container" class="calculator container"></div>`).hide();
+	const mainSection = $(`<div id="${id}" class="calculator section"></div>`);
+	const mainToggle = $(`<h3 class="fakelink">${title}</h3>`).on("click", () => {
+		container.toggle();
+	});
+	const ids = [ id ];
+	container.append(mainToggle, mainSection);
+	if (subsectionId && subsectionTitle) {
+		const subSection = $(`<div id="${subsectionId}" class="calculator subsection"></div>`).hide();
+		const subToggle = $(`<h4 class="fakelink">${subsectionTitle}</h4>`).on("click", () => {
+			subSection.toggle();
+		});
+		container.append(subToggle, subSection);
+		ids.push(subsectionId);
+	}
+	calculators.push([
+		ids, calcFunc,
+	]);
+	wnd.append(container);
 }
 function updateCalculators() {
 	for (const c of calculators) {
 		const contents = [].concat(c[1]());
 		for (let n = 0; n < c[0].length; n++) {
-			document.querySelector(`#${c[0][n]}`).innerHTML = contents[n];
+			document.querySelector(`#kittenCalcs #${c[0][n]}`).innerHTML = contents[n];
 		}
 	}
 }
 function rebuildCalculatorUI() {
 	const calcContainer = prepareContainer("kittenCalcs");
 	calculators = [];
-	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", "", mintCalculator);
-	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", "", aiCalculator);
+	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", mintCalculator);
+	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", aiCalculator);
+	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator, "powerGenerationCalc", "Generation");
 }
 
 function realignSciptDialogs() {
