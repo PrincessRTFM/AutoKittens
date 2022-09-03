@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 17:30:05 on Saturday, September 03, 2022 UTC
+Last built at 17:54:02 on Saturday, September 03, 2022 UTC
 
-#AULBS:1662226205#
+#AULBS:1662227642#
 */
 
 /* eslint-env browser, jquery */
@@ -274,7 +274,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = "1662226205";
+	const AULBS = "1662227642";
 	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
 		button.val("Update check failed!");
@@ -781,8 +781,12 @@ function powerCalculator() {
 		.concat(game.bld.buildingsData)
 		.concat(...game.space.planets.map((p) => p.buildings))
 		.concat(...game.time.meta.map((m) => m.meta));
-	const generation = [];
-	const consumption = [];
+	const generation = [
+		"<table>", "<tbody>",
+	];
+	const consumption = [
+		"<table>", "<tbody>",
+	];
 	let totalProd = 0;
 	let totalCons = 0;
 	for (const struct of structures) {
@@ -794,17 +798,49 @@ function powerCalculator() {
 			const cons = effects.energyConsumption || 0;
 			if (prod) {
 				totalProd += prod * count;
-				generation.push(`${name}: ${(prod * count).toFixed(2)} (${prod.toFixed(2)} x ${count})`);
+				generation.push(
+					"<tr>",
+					`<td>${name}</td>`,
+					`<td>${(prod * count).toFixed(2)}</td>`,
+					`<td>(${prod.toFixed(2)} x ${count})</td>`,
+					"</tr>"
+				);
 			}
 			if (cons) {
 				totalCons += cons * count;
-				consumption.push(`${name}: ${(cons * count).toFixed(2)} (${cons.toFixed(2)} x ${count})`);
+				consumption.push(
+					"<tr>",
+					`<td>${name}</td>`,
+					`<td>${(cons * count).toFixed(2)}</td>`,
+					`<td>(${cons.toFixed(2)} x ${count})</td>`,
+					"</tr>"
+				);
 			}
 		}
 	}
 	return [
-		consumption.concat("", `Total consumption: ${totalCons}`).join("<br/>\n"),
-		generation.concat("", `Total production: ${totalProd}`).join("<br/>\n"),
+		consumption.concat(
+			"<tr class=\"spacer\">",
+			"<td colspan=\"3\"></td>",
+			"</tr",
+			"<tr>",
+			"<td>Total consumption</td>",
+			`<td colspan="2">${totalCons}</td>`,
+			"</tr>",
+			"</tbody>",
+			"</table>"
+		).join("\n"),
+		generation.concat(
+			"<tr class=\"spacer\">",
+			"<td colspan=\"3\"></td>",
+			"</tr",
+			"<tr>",
+			"<td>Total production</td>",
+			`<td colspan="2">${totalProd}</td>`,
+			"</tr>",
+			"</tbody>",
+			"</table>"
+		).join("\n"),
 	];
 }
 
@@ -1527,6 +1563,25 @@ function buildUI() {
 			bottom: 0px;
 			background-color: #000000;
 			color: #ffffff;
+		}
+		#powerCalc_content > .calculator > table {
+			table-layout: fixed;
+			width: 100%;
+		}
+		#powerCalc_content > .calculator > table td {
+			padding: 2px;
+		}
+		#powerCalc_content > .calculator > table tr.spacer {
+			height: 10px;
+		}
+		#powerCalc_content > .calculator > table td:nth-child(1) {
+			width: 40%;
+		}
+		#powerCalc_content > .calculator > table td:nth-child(2) {
+			width: 25%;
+		}
+		#powerCalc_content > .calculator > table td:nth-child(3) {
+			width: 35%;
 		}
 		body.scheme_minimalist > #timerTableContainer {
 			background-color: #0C0D10;
