@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 17:28:35 on Saturday, September 03, 2022 UTC
+Last built at 17:30:05 on Saturday, September 03, 2022 UTC
 
-#AULBS:1662226115#
+#AULBS:1662226205#
 */
 
 /* eslint-env browser, jquery */
@@ -274,7 +274,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = "1662226115";
+	const AULBS = "1662226205";
 	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
 		button.val("Update check failed!");
@@ -791,7 +791,7 @@ function powerCalculator() {
 		const effects = struct.effects;
 		if (typeof effects == "object" && count > 0) {
 			const prod = effects.energyProduction || 0;
-			const cons = effects.energyProduction || 0;
+			const cons = effects.energyConsumption || 0;
 			if (prod) {
 				totalProd += prod * count;
 				generation.push(`${name}: ${(prod * count).toFixed(2)} (${prod.toFixed(2)} x ${count})`);

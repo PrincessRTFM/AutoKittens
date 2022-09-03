@@ -796,7 +796,7 @@ function powerCalculator() {
 		const effects = struct.effects;
 		if (typeof effects == "object" && count > 0) {
 			const prod = effects.energyProduction || 0;
-			const cons = effects.energyProduction || 0;
+			const cons = effects.energyConsumption || 0;
 			if (prod) {
 				totalProd += prod * count;
 				generation.push(`${name}: ${(prod * count).toFixed(2)} (${prod.toFixed(2)} x ${count})`);
