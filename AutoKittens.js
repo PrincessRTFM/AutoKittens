@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 17:04:43 on Saturday, September 03, 2022 UTC
+Last built at 17:15:59 on Saturday, September 03, 2022 UTC
 
-#AULBS:1662224683#
+#AULBS:1662225359#
 */
 
 /* eslint-env browser, jquery */
@@ -274,7 +274,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = "1662224683";
+	const AULBS = "1662225359";
 	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
 		button.val("Update check failed!");
@@ -808,10 +808,10 @@ function powerCalculator() {
 }
 
 function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
-	const container = $(`<div id="${id}_container" class="calculator container"></div>`).hide();
-	const mainSection = $(`<div id="${id}" class="calculator section"></div>`);
+	const container = $(`<div id="${id}_container" class="calculator container"></div>`);
+	const mainSection = $(`<div id="${id}" class="calculator section"></div>`).hide();
 	const mainToggle = $(`<h3 class="fakelink">${title}</h3>`).on("click", () => {
-		container.toggle();
+		mainSection.toggle();
 	});
 	const ids = [ id ];
 	container.append(mainToggle, mainSection);
