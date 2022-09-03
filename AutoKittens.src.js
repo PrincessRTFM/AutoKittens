@@ -1,5 +1,6 @@
 /*
 #include common.h
+#comment The power stats calculator is hella broken because the game's a mess. Define CALC_POWER if you want it included anyway.
 $PROJECT_NAME - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
@@ -782,6 +783,8 @@ function aiCalculator() {
 }
 
 function powerCalculator() {
+	const sections = [];
+	// #ifdef CALC_POWER
 	const structures = []
 		.concat(game.bld.buildingsData)
 		.concat(...game.space.planets.map((p) => p.buildings))
@@ -823,7 +826,7 @@ function powerCalculator() {
 			}
 		}
 	}
-	return [
+	sections.push(
 		consumption.concat(
 			"<tr class=\"spacer\">",
 			"<td colspan=\"3\"></td>",
@@ -834,7 +837,9 @@ function powerCalculator() {
 			"</tr>",
 			"</tbody>",
 			"</table>"
-		).join("\n"),
+		).join("\n")
+	);
+	sections.push(
 		generation.concat(
 			"<tr class=\"spacer\">",
 			"<td colspan=\"3\"></td>",
@@ -845,8 +850,33 @@ function powerCalculator() {
 			"</tr>",
 			"</tbody>",
 			"</table>"
-		).join("\n"),
-	];
+		).join("\n")
+	);
+	// #else
+	const lines = [];
+	const currentProd = game.resPool.energyProd;
+	const safeUsage = game.resPool.energyWinterProd;
+	const currentUsage = game.resPool.energyCons;
+	lines.push(`Power production: ${currentProd}`);
+	if (game.calendar.season != 3) {
+		lines.push(`Minimum power production: ${safeUsage}`);
+	}
+	lines.push(`Power consumption: ${currentUsage}`);
+	if (currentUsage < safeUsage) {
+		lines.push(`Maximum safe additional usage: ${safeUsage - currentUsage}`);
+	}
+	else if (currentUsage > currentProd) {
+		lines.push(`<b>Usage exceeds current limit by ${currentUsage - currentProd}!</b>`);
+	}
+	else if (currentUsage > safeUsage) {
+		lines.push(`</b>Usage exceeds safe limit by ${currentUsage - safeUsage}!<b>`);
+	}
+	else {
+		lines.push("Power usage is at capacity. Do not draw additional energy.");
+	}
+	sections.push(lines.join("<br/>\n"));
+	// #endif
+	return sections;
 }
 
 function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
@@ -891,7 +921,11 @@ function rebuildCalculatorUI() {
 	calculators = [];
 	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", mintCalculator);
 	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", aiCalculator);
+	// #ifdef CALC_POWER
 	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator, "powerGenerationCalc", "Generation");
+	// #else
+	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator);
+	// #endif
 }
 
 function realignSciptDialogs() {

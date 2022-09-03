@@ -1,13 +1,14 @@
 /*
+#comment The power stats calculator is hella broken because the game's a mess. Define CALC_POWER if you want it included anyway.
 AutoKittens - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 17:54:02 on Saturday, September 03, 2022 UTC
+Last built at 18:27:54 on Saturday, September 03, 2022 UTC
 
-#AULBS:1662227642#
+#AULBS:1662229674#
 */
 
 /* eslint-env browser, jquery */
@@ -274,7 +275,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = "1662227642";
+	const AULBS = "1662229674";
 	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
 		button.val("Update check failed!");
@@ -777,71 +778,30 @@ function aiCalculator() {
 }
 
 function powerCalculator() {
-	const structures = []
-		.concat(game.bld.buildingsData)
-		.concat(...game.space.planets.map((p) => p.buildings))
-		.concat(...game.time.meta.map((m) => m.meta));
-	const generation = [
-		"<table>", "<tbody>",
-	];
-	const consumption = [
-		"<table>", "<tbody>",
-	];
-	let totalProd = 0;
-	let totalCons = 0;
-	for (const struct of structures) {
-		const name = struct.label || struct.stages[struct.stage].label;
-		const count = struct.on;
-		const effects = struct.effects;
-		if (typeof effects == "object" && count > 0) {
-			const prod = effects.energyProduction || 0;
-			const cons = effects.energyConsumption || 0;
-			if (prod) {
-				totalProd += prod * count;
-				generation.push(
-					"<tr>",
-					`<td>${name}</td>`,
-					`<td>${(prod * count).toFixed(2)}</td>`,
-					`<td>(${prod.toFixed(2)} x ${count})</td>`,
-					"</tr>"
-				);
-			}
-			if (cons) {
-				totalCons += cons * count;
-				consumption.push(
-					"<tr>",
-					`<td>${name}</td>`,
-					`<td>${(cons * count).toFixed(2)}</td>`,
-					`<td>(${cons.toFixed(2)} x ${count})</td>`,
-					"</tr>"
-				);
-			}
-		}
+	const sections = [];
+	const lines = [];
+	const currentProd = game.resPool.energyProd;
+	const safeUsage = game.resPool.energyWinterProd;
+	const currentUsage = game.resPool.energyCons;
+	lines.push(`Power production: ${currentProd}`);
+	if (game.calendar.season != 3) {
+		lines.push(`Minimum power production: ${safeUsage}`);
 	}
-	return [
-		consumption.concat(
-			"<tr class=\"spacer\">",
-			"<td colspan=\"3\"></td>",
-			"</tr",
-			"<tr>",
-			"<td>Total consumption</td>",
-			`<td colspan="2">${totalCons}</td>`,
-			"</tr>",
-			"</tbody>",
-			"</table>"
-		).join("\n"),
-		generation.concat(
-			"<tr class=\"spacer\">",
-			"<td colspan=\"3\"></td>",
-			"</tr",
-			"<tr>",
-			"<td>Total production</td>",
-			`<td colspan="2">${totalProd}</td>`,
-			"</tr>",
-			"</tbody>",
-			"</table>"
-		).join("\n"),
-	];
+	lines.push(`Power consumption: ${currentUsage}`);
+	if (currentUsage < safeUsage) {
+		lines.push(`Maximum safe additional usage: ${safeUsage - currentUsage}`);
+	}
+	else if (currentUsage > currentProd) {
+		lines.push(`<b>Usage exceeds current limit by ${currentUsage - currentProd}!</b>`);
+	}
+	else if (currentUsage > safeUsage) {
+		lines.push(`</b>Usage exceeds safe limit by ${currentUsage - safeUsage}!<b>`);
+	}
+	else {
+		lines.push("Power usage is at capacity. Do not draw additional energy.");
+	}
+	sections.push(lines.join("<br/>\n"));
+	return sections;
 }
 
 function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
@@ -886,7 +846,7 @@ function rebuildCalculatorUI() {
 	calculators = [];
 	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", mintCalculator);
 	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", aiCalculator);
-	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator, "powerGenerationCalc", "Generation");
+	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator);
 }
 
 function realignSciptDialogs() {
