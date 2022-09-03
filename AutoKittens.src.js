@@ -803,7 +803,7 @@ function powerCalculator() {
 			}
 			if (cons) {
 				totalCons += cons * count;
-				generation.push(`${name}: ${(cons * count).toFixed(2)} (${cons.toFixed(2)} x ${count})`);
+				consumption.push(`${name}: ${(cons * count).toFixed(2)} (${cons.toFixed(2)} x ${count})`);
 			}
 		}
 	}
@@ -814,19 +814,27 @@ function powerCalculator() {
 }
 
 function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
+	// container
+	// > mainToggle
+	// > contents
+	// > > mainSection
+	// ? > subToggle
+	// ? > subSection
 	const container = $(`<div id="${id}_container" class="calculator container"></div>`);
-	const mainSection = $(`<div id="${id}" class="calculator section"></div>`).hide();
+	const contents = $(`<div id="${id}_content" class="calculator container"></div>`).hide();
 	const mainToggle = $(`<h3 class="fakelink">${title}</h3>`).on("click", () => {
-		mainSection.toggle();
+		contents.toggle();
 	});
+	const mainSection = $(`<div id="${id}" class="calculator section"></div>`);
 	const ids = [ id ];
-	container.append(mainToggle, mainSection);
+	contents.append(mainSection);
+	container.append(mainToggle, contents);
 	if (subsectionId && subsectionTitle) {
 		const subSection = $(`<div id="${subsectionId}" class="calculator subsection"></div>`).hide();
 		const subToggle = $(`<h4 class="fakelink">${subsectionTitle}</h4>`).on("click", () => {
 			subSection.toggle();
 		});
-		container.append(subToggle, subSection);
+		contents.append(subToggle, subSection);
 		ids.push(subsectionId);
 	}
 	calculators.push([
