@@ -854,22 +854,22 @@ function powerCalculator() {
 	);
 	// #else
 	const lines = [];
-	const currentProd = game.resPool.energyProd;
-	const safeUsage = game.resPool.energyWinterProd;
-	const currentUsage = game.resPool.energyCons;
+	const currentProd = parseFloat(game.resPool.energyProd.toFixed(2));
+	const safeUsage = parseFloat(game.resPool.energyWinterProd.toFixed(2));
+	const currentUsage = parseFloat(game.resPool.energyCons.toFixed(2));
 	lines.push(`Power production: ${currentProd}`);
 	if (game.calendar.season != 3) {
 		lines.push(`Minimum power production: ${safeUsage}`);
 	}
 	lines.push(`Power consumption: ${currentUsage}`);
 	if (currentUsage < safeUsage) {
-		lines.push(`Maximum safe additional usage: ${safeUsage - currentUsage}`);
+		lines.push(`Maximum safe additional usage: ${(safeUsage - currentUsage).toFixed(2)}`);
 	}
 	else if (currentUsage > currentProd) {
-		lines.push(`<b>Usage exceeds current limit by ${currentUsage - currentProd}!</b>`);
+		lines.push(`<b>Usage exceeds current limit by ${(currentUsage - currentProd).toFixed(2)}!</b>`);
 	}
 	else if (currentUsage > safeUsage) {
-		lines.push(`</b>Usage exceeds safe limit by ${currentUsage - safeUsage}!<b>`);
+		lines.push(`</b>Usage exceeds safe limit by ${(currentUsage - safeUsage).toFixed(2)}!<b>`);
 	}
 	else {
 		lines.push("Power usage is at capacity. Do not draw additional energy.");

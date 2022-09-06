@@ -6,9 +6,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 18:27:54 on Saturday, September 03, 2022 UTC
+Last built at 12:40:30 on Tuesday, September 06, 2022 UTC
 
-#AULBS:1662229674#
+#AULBS:1662468030#
 */
 
 /* eslint-env browser, jquery */
@@ -275,7 +275,7 @@ function checkUpdate() {
 	if (window.AUTOKITTENS_DEBUG_ENABLED) {
 		console.log("Performing update check...");
 	}
-	const AULBS = "1662229674";
+	const AULBS = "1662468030";
 	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 	const onError = (xhr, stat, err) => {
 		button.val("Update check failed!");
@@ -780,22 +780,22 @@ function aiCalculator() {
 function powerCalculator() {
 	const sections = [];
 	const lines = [];
-	const currentProd = game.resPool.energyProd;
-	const safeUsage = game.resPool.energyWinterProd;
-	const currentUsage = game.resPool.energyCons;
+	const currentProd = parseFloat(game.resPool.energyProd.toFixed(2));
+	const safeUsage = parseFloat(game.resPool.energyWinterProd.toFixed(2));
+	const currentUsage = parseFloat(game.resPool.energyCons.toFixed(2));
 	lines.push(`Power production: ${currentProd}`);
 	if (game.calendar.season != 3) {
 		lines.push(`Minimum power production: ${safeUsage}`);
 	}
 	lines.push(`Power consumption: ${currentUsage}`);
 	if (currentUsage < safeUsage) {
-		lines.push(`Maximum safe additional usage: ${safeUsage - currentUsage}`);
+		lines.push(`Maximum safe additional usage: ${(safeUsage - currentUsage).toFixed(2)}`);
 	}
 	else if (currentUsage > currentProd) {
-		lines.push(`<b>Usage exceeds current limit by ${currentUsage - currentProd}!</b>`);
+		lines.push(`<b>Usage exceeds current limit by ${(currentUsage - currentProd).toFixed(2)}!</b>`);
 	}
 	else if (currentUsage > safeUsage) {
-		lines.push(`</b>Usage exceeds safe limit by ${currentUsage - safeUsage}!<b>`);
+		lines.push(`</b>Usage exceeds safe limit by ${(currentUsage - safeUsage).toFixed(2)}!<b>`);
 	}
 	else {
 		lines.push("Power usage is at capacity. Do not draw additional energy.");
