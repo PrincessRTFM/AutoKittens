@@ -76,12 +76,16 @@ $BUILD_STAMP
 	const TIMERVIS_NEVER = "never";
 	const TIMERVIS_ALWAYS = "always";
 	const TIMERVIS_FALLING = "falling";
+	const TIMERVIS_RISING = "rising";
 	const TIMERVIS_NOTFULL = "nonfull";
+	const TIMERVIS_NOTEMPTY = "nonempty";
 	const timerVisibility = [
 		[ "Never", TIMERVIS_NEVER ],
 		[ "Always", TIMERVIS_ALWAYS ],
 		[ "When falling,", TIMERVIS_FALLING ],
+		[ "When rising,", TIMERVIS_RISING ],
 		[ "When not full,", TIMERVIS_NOTFULL ],
+		[ "When not empty,", TIMERVIS_NOTEMPTY ],
 	];
 
 	// Resources that should never show up in the timers (internal names)

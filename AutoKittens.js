@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 22:44:12 on Wednesday, September 14, 2022 UTC
+Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663195452#
+#AULBS:1663195750#
 */
 
 /* eslint-env browser, jquery */
@@ -73,12 +73,16 @@ Last built at 22:44:12 on Wednesday, September 14, 2022 UTC
 	const TIMERVIS_NEVER = "never";
 	const TIMERVIS_ALWAYS = "always";
 	const TIMERVIS_FALLING = "falling";
+	const TIMERVIS_RISING = "rising";
 	const TIMERVIS_NOTFULL = "nonfull";
+	const TIMERVIS_NOTEMPTY = "nonempty";
 	const timerVisibility = [
 		[ "Never", TIMERVIS_NEVER ],
 		[ "Always", TIMERVIS_ALWAYS ],
 		[ "When falling,", TIMERVIS_FALLING ],
+		[ "When rising,", TIMERVIS_RISING ],
 		[ "When not full,", TIMERVIS_NOTFULL ],
+		[ "When not empty,", TIMERVIS_NOTEMPTY ],
 	];
 
 	// Resources that should never show up in the timers (internal names)
@@ -383,7 +387,7 @@ Last built at 22:44:12 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663195452";
+		const AULBS = "1663195750";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
