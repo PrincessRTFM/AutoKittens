@@ -520,7 +520,7 @@ $BUILD_STAMP
 	// When toggled, update the live settings and then run the optional callback.
 	function addCheckbox(container, optionName, caption, trigger = NOP) {
 		container.append(
-			$(`<input id="$ID_PREFIX${optionName.replace(".", "_")}" type="checkbox" />`).on(
+			$(`<input id="$ID_PREFIX${optionName.replace(/\./gu, "_")}" type="checkbox" />`).on(
 				"input",
 				function updateAutoKittensCheckboxSettingOnValueChange() {
 					setArbitrarilyDeepObject(optionName, this.checked);
@@ -528,7 +528,7 @@ $BUILD_STAMP
 					runCallback(trigger);
 				}
 			),
-			$(`<label for="$ID_PREFIX${optionName.replace(".", "_")}">${caption}</label>`),
+			$(`<label for="$ID_PREFIX${optionName.replace(/\./gu, "_")}">${caption}</label>`),
 			"<br />"
 		);
 	}
@@ -554,7 +554,7 @@ $BUILD_STAMP
 	// Add a dropdown option menu to a container node. Left and right captions may be empty but must be strings.
 	// The options should be an array of either two-element arrays as [label, value] or objects with keys `label` and `value`.
 	function addOptionMenu(container, optionName, leftCaption, options, rightCaption, trigger = NOP) {
-		const select = $(`<select id="$ID_PREFIX${optionName.replace(".", "_")}"></select>`).on(
+		const select = $(`<select id="$ID_PREFIX${optionName.replace(/\./gu, "_")}"></select>`).on(
 			"input",
 			function updateAutoKittensDropdownSettingOnValueChange() {
 				setArbitrarilyDeepObject(optionName, $(this).val());
@@ -598,7 +598,7 @@ $BUILD_STAMP
 
 	// Add a numeric (floating point, finite, positive non-zero) input box to a container node
 	function addInputField(container, optionName, leftCaption, rightCaption) {
-		const field = $(`<input id="$ID_PREFIX${optionName.replace(".", "_")}" size="6" type="text" />`).on(
+		const field = $(`<input id="$ID_PREFIX${optionName.replace(/\./gu, "_")}" size="6" type="text" />`).on(
 			"input",
 			function updateAutoKittensTextSettingOnValueChanged() {
 				tryNumericSet(optionName, this.value);

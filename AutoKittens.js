@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
+Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663189280#
+#AULBS:1663189509#
 */
 
 /* eslint-env browser, jquery */
@@ -324,7 +324,7 @@ Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663189280";
+		const AULBS = "1663189509";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -513,7 +513,7 @@ Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 	// When toggled, update the live settings and then run the optional callback.
 	function addCheckbox(container, optionName, caption, trigger = NOP) {
 		container.append(
-			$(`<input id="AutoKittens_${optionName.replace(".", "_")}" type="checkbox" />`).on(
+			$(`<input id="AutoKittens_${optionName.replace(/\./gu, "_")}" type="checkbox" />`).on(
 				"input",
 				function updateAutoKittensCheckboxSettingOnValueChange() {
 					setArbitrarilyDeepObject(optionName, this.checked);
@@ -521,7 +521,7 @@ Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 					runCallback(trigger);
 				}
 			),
-			$(`<label for="AutoKittens_${optionName.replace(".", "_")}">${caption}</label>`),
+			$(`<label for="AutoKittens_${optionName.replace(/\./gu, "_")}">${caption}</label>`),
 			"<br />"
 		);
 	}
@@ -547,7 +547,7 @@ Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 	// Add a dropdown option menu to a container node. Left and right captions may be empty but must be strings.
 	// The options should be an array of either two-element arrays as [label, value] or objects with keys `label` and `value`.
 	function addOptionMenu(container, optionName, leftCaption, options, rightCaption, trigger = NOP) {
-		const select = $(`<select id="AutoKittens_${optionName.replace(".", "_")}"></select>`).on(
+		const select = $(`<select id="AutoKittens_${optionName.replace(/\./gu, "_")}"></select>`).on(
 			"input",
 			function updateAutoKittensDropdownSettingOnValueChange() {
 				setArbitrarilyDeepObject(optionName, $(this).val());
@@ -591,7 +591,7 @@ Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 
 	// Add a numeric (floating point, finite, positive non-zero) input box to a container node
 	function addInputField(container, optionName, leftCaption, rightCaption) {
-		const field = $(`<input id="AutoKittens_${optionName.replace(".", "_")}" size="6" type="text" />`).on(
+		const field = $(`<input id="AutoKittens_${optionName.replace(/\./gu, "_")}" size="6" type="text" />`).on(
 			"input",
 			function updateAutoKittensTextSettingOnValueChanged() {
 				tryNumericSet(optionName, this.value);
