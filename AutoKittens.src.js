@@ -464,7 +464,7 @@ $BUILD_STAMP
 					}
 					elms[0].checked = obj[o];
 				}
-				else {
+				else if (window.$BASIC_DEBUG_TOGGLE) {
 					console.warn(`Couldn't find a node with ID "${id}"`);
 				}
 			}
@@ -477,7 +477,7 @@ $BUILD_STAMP
 					}
 					elms[0].value = obj[o];
 				}
-				else {
+				else if (window.$BASIC_DEBUG_TOGGLE) {
 					console.warn(`Couldn't find a node with ID "${id}"`);
 				}
 			}

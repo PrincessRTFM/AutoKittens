@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 21:00:21 on Wednesday, September 14, 2022 UTC
+Last built at 21:01:20 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663189221#
+#AULBS:1663189280#
 */
 
 /* eslint-env browser, jquery */
@@ -324,7 +324,7 @@ Last built at 21:00:21 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663189221";
+		const AULBS = "1663189280";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -457,7 +457,7 @@ Last built at 21:00:21 on Wednesday, September 14, 2022 UTC
 					}
 					elms[0].checked = obj[o];
 				}
-				else {
+				else if (window.AUTOKITTENS_ENABLE_DEBUG) {
 					console.warn(`Couldn't find a node with ID "${id}"`);
 				}
 			}
@@ -470,7 +470,7 @@ Last built at 21:00:21 on Wednesday, September 14, 2022 UTC
 					}
 					elms[0].value = obj[o];
 				}
-				else {
+				else if (window.AUTOKITTENS_ENABLE_DEBUG) {
 					console.warn(`Couldn't find a node with ID "${id}"`);
 				}
 			}
