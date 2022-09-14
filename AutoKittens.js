@@ -1,1489 +1,1571 @@
 /*
-#comment The power stats calculator is hella broken because the game's a mess. Define CALC_POWER if you want it included anyway.
 AutoKittens - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 12:40:30 on Tuesday, September 06, 2022 UTC
+Last built at 21:00:21 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1662468030#
+#AULBS:1663189221#
 */
 
 /* eslint-env browser, jquery */
-/* global game, LCstorage, autoOptions:writable, autoKittensCache, gameData */
+/* global game, LCstorage, AutoKittensOptions:writable, AutoKittensCache, resmap */
 
-const savedConfigKey = "kittensgame.autoOptions";
-const scriptDialogId = ".autokittens-dialog";
+/* eslint-disable max-len */
 
-const defaultTimeFormat = game.toDisplaySeconds;
-const gameTickFunc = game.tick;
-const checkInterval = 200;
-let calculators = [];
-const percentages = [
-	[ "1%", 0.01 ],
-	[ "5%", 0.05 ],
-	[ "10%", 0.1 ],
-	[ "20%", 0.2 ],
-	[ "25%", 0.25 ],
-	[ "30%", 0.3 ],
-	[ "40%", 0.4 ],
-	[ "50%", 0.5 ],
-	[ "60%", 0.6 ],
-	[ "70%", 0.7 ],
-	[ "75%", 0.75 ],
-	[ "80%", 0.8 ],
-	[ "90%", 0.9 ],
-	[ "95%", 0.95 ],
-	[ "98%", 0.98 ],
-	[ "99%", 0.99 ],
-	[ "99.5%", 0.995 ],
-	[ "99.9%", 0.999 ],
-	[ "100%", 1 ],
-];
-const faithPercentages = [
-	[ "0%", 0 ],
-	[ "0.1%", 0.001 ],
-].concat(percentages);
-// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
-const gigaflopSafeMax = Math.exp(14.5) - 0.1;
+(function setupAutoKittens() {
+	// The localstorage key for our saved settings
+	const savedConfigKey = "kittensgame.AutoKittensOptions";
 
-const defaultOptions = {
-	warnOnLeave: true,
-	autoStar: true,
-	autoCraft: false,
-	autoHunt: false,
-	autoPray: false,
-	autoResetFaith: false,
-	autoTrade: false,
-	craftOptions: {
-		craftLimit: 0.99,
-		secondaryCraftLimit: 0.6,
-		craftWood: false,
-		woodAmount: 10,
-		woodInterval: 15,
-		craftBeam: false,
-		beamAmount: 1,
-		beamInterval: 20,
-		craftSlab: false,
-		slabAmount: 1,
-		slabInterval: 20,
-		craftPlate: false,
-		plateAmount: 1,
-		plateInterval: 20,
-		craftSteel: false,
-		steelAmount: 1,
-		steelInterval: 5,
-		craftConcrete: false,
-		concreteAmount: 1,
-		concreteInterval: 100,
-		craftGear: false,
-		gearAmount: 1,
-		gearInterval: 50,
-		craftAlloy: false,
-		alloyAmount: 1,
-		alloyInterval: 200,
-		craftEludium: false,
-		eludiumAmount: 1,
-		eludiumInterval: 500,
-		craftScaffold: false,
-		scaffoldAmount: 1,
-		scaffoldInterval: 50,
-		craftShip: false,
-		shipAmount: 1,
-		shipInterval: 100,
-		craftTanker: false,
-		tankerAmount: 1,
-		tankerInterval: 200,
-		craftKerosene: false,
-		keroseneAmount: 1,
-		keroseneInterval: 20,
-		craftThorium: false,
-		thoriumAmount: 1,
-		thoriumInterval: 50,
-		craftMegalith: false,
-		megalithAmount: 1,
-		megalithInterval: 20,
-		craftBloodstone: false,
-		bloodstoneAmount: 1,
-		bloodstoneInterval: 100,
-		craftParchment: false,
-		parchmentAmount: 1,
-		parchmentInterval: 30,
-		craftManuscript: false,
-		manuscriptAmount: 1,
-		manuscriptInterval: 80,
-		craftCompendium: false,
-		compendiumAmount: 1,
-		compendiumInterval: 250,
-		craftBlueprint: false,
-		blueprintAmount: 1,
-		blueprintInterval: 500,
-		blueprintPriority: false,
-	},
-	dialogRight: false,
-	forceShadow: false,
-	forceShadowGlobal: false,
-	furOptions: {
-		parchmentMode: 0,
-		manuscriptMode: 0,
-		compendiumMode: 0,
-		blueprintMode: 0,
-	},
-	huntOptions: {
-		huntLimit: 0.99,
-		suppressHuntLog: false,
-		huntEarly: true,
-		singleHunts: false, // name is a misnomer since this was updated to a configurable limit
-		huntCount: 1,
-		craftParchment: false,
-		craftManuscript: false,
-		craftCompendium: false,
-		craftBlueprint: false,
-	},
-	prayLimit: 0.99,
-	widenUI: false,
-	displayOptions: {},
-	displayOrder: "standard",
-	timeDisplay: "standard",
-	perfectLeadership: false,
-	tradeOptions: {
-		tradeCount: 1,
-		tradeLimit: 0.99,
-		suppressTradeLog: false,
-		tradePartner: "",
-		tradeSpring: false,
-		tradePartnerSpring: "",
-		tradeSummer: false,
-		tradePartnerSummer: "",
-		tradeAutumn: false,
-		tradePartnerAutumn: "",
-		tradeWinter: false,
-		tradePartnerWinter: "",
-		playMarket: true,
-		buyBlackcoinBelow: 900,
-	},
-	showTimerDisplays: true,
-	disablePollution: false,
-	lunarOutpostOptions: {
-		automate: false,
-		useMinimumPowerProd: true,
-		activationLimit: 0.9,
-		reservedUranium: 0.1,
-		active: true, // semi-hidden
-	},
-};
-const craftingTickTracker = Object.create(null);
-window.autoOptions = defaultOptions;
+	// The class that's applied to all of our dialog popups
+	const scriptDialogClass = ".autokittens-dialog";
 
-function ownProp(target, prop) {
-	return Object.prototype.hasOwnProperty.call(target, prop);
-}
-function iterateObject(obj, callback) {
-	for (const key of Object.keys(obj)) {
-		callback.call(obj, obj[key], key, obj);
-	}
-	return obj;
-}
+	// The game's own time formatter, for the UI feature to change how durations are rendered
+	const defaultTimeFormat = game.toDisplaySeconds;
 
-const NOP = () => {}; // eslint-disable-line no-empty-function
+	// The original tick function, because we have to call it ourselves after overriding the normal ticker
+	const gameTickFunc = game.tick;
 
-function setArbitrarilyDeepObject(location, value, initialTarget) {
-	let target = initialTarget || window;
-	if (Array.isArray(location)) {
-		location = location.join(".");
-	}
-	const segments = location.split(".");
-	const lastPoint = segments.pop();
-	let nextPoint;
-	while ((nextPoint = segments.shift())) {
-		if (typeof target[nextPoint] == "undefined" || target[nextPoint] === null) {
-			target[nextPoint] = {};
-		}
-		target = target[nextPoint];
-	}
-	target[lastPoint] = value;
-	if (window.AUTOKITTENS_DEBUG_ENABLED) {
-		console.log(`Set ${location}=${value}`);
-	}
-}
-function wrapCallback(trigger) {
-	if (typeof trigger == "function") {
-		return trigger;
-	}
-	if (typeof trigger == "string") {
-		trigger = trigger.replace(";", "").replace("()", "");
-		if (typeof window[trigger] == "function") {
-			return window[trigger];
-		}
-	}
-	return NOP;
-}
-function runCallback(callback, ...args) {
-	return wrapCallback(callback)(...args);
-}
-function tryNumericSet(optionName, value) {
-	const parsed = parseFloat(value);
-	if (!isNaN(parsed) && isFinite(parsed) && parsed > 0) {
-		setArbitrarilyDeepObject(optionName, parsed);
-	}
-}
-function copyObject(source, target) {
-	for (const attrname in source) {
-		if (typeof source[attrname] === "object") {
-			if (typeof target[attrname] === "undefined") {
-				target[attrname] = {};
-			}
-			copyObject(source[attrname], target[attrname]);
-		}
-		else if (attrname == "supressHuntLog") {
-			// Fixing a typo
-			target.suppressHuntLog = source[attrname];
-		}
-		else {
-			target[attrname] = source[attrname];
-		}
-	}
-}
+	// XXX totally forgot what this is for
+	const checkInterval = 200;
 
-function shortTimeFormat(secondsRaw) {
-	const secondsNumeric = parseInt(secondsRaw, 10); // don't forget the second param
-	const days = Math.floor(secondsNumeric / 86400);
-	const hours = Math.floor((secondsNumeric % 86400) / 3600);
-	const minutes = Math.floor((secondsNumeric % 3600) / 60);
-	const seconds = secondsNumeric % 60;
-	let timeFormated = "";
-	if (days) {
-		timeFormated += `${days}:`;
-	}
-	if (timeFormated) {
-		timeFormated += `${String(hours).padStart(2, 0)}:`;
-	}
-	else if (hours) {
-		timeFormated += `${hours}:`;
-	}
-	timeFormated += `${String(minutes).padStart(2, 0)}:${String(seconds).padStart(2, 0)}`;
-	return timeFormated;
-}
-function rawSecondsFormat(secondsRaw) {
-	return `${parseInt(secondsRaw, 10)}s`;
-}
+	// The calculators that are available in a specific dialog popup
+	let calculators = [];
 
-function checkUpdate() {
-	const button = $("#autokittens-checkupdate");
-	if (window.AUTOKITTENS_DEBUG_ENABLED) {
-		console.log("Performing update check...");
-	}
-	const AULBS = "1662468030";
-	const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
-	const onError = (xhr, stat, err) => {
-		button.val("Update check failed!");
-		console.group("AK Update Check (failure)");
-		console.info("Status value:", stat);
-		console.info("Error value:", err);
-		console.groupEnd();
-	};
-	const doCheck = (data, stat, xhr) => {
-		if (typeof data != "string") {
-			return void onError(xhr, stat, data);
-		}
-		const liveVersion = data.match(/#AULBS:(\d+)#/u);
-		if (!liveVersion) {
-			return void onError(xhr, "no version string", data);
-		}
-		const liveStamp = parseInt(liveVersion[1], 10);
-		if (liveStamp > parseInt(AULBS, 10)) {
-			button.val("Update found!");
-		}
-		else if (liveStamp < AULBS) {
-			button.val("Release behind live");
-		}
-		else {
-			button.val("No update available");
-		}
-	};
-	try {
-		button.val("Checking...");
-		$.ajax(SOURCE, {
-			method: "GET",
-			cache: false,
-			dataType: "text",
-			error: onError,
-			success: doCheck,
-		});
-	}
-	catch (err) {
-		onError(null, "request failed", err);
-	}
-}
+	// The internal cache of things we need that WON'T change (much) over time
+	let internalCache;
 
-function saveAutoOptions() {
-	LCstorage[savedConfigKey] = JSON.stringify(window.autoOptions);
-}
-function changeFurCrafts() {
-	const crafts = [
-		[
-			"parchmentMode", "craftParchment",
-		],
-		[
-			"manuscriptMode", "craftManuscript",
-		],
-		[
-			"compendiumMode", "craftCompendium",
-		],
-		[
-			"blueprintMode", "craftBlueprint",
-		],
+	// The magic "cache" of commonly desired game data. This is made available in the global window for ease of reference.
+	const gameDataMap = Object.create(null);
+
+	// Percentages as labels and values for select options, starting from 1%
+	const percentages = [
+		[ "1%", 0.01 ],
+		[ "5%", 0.05 ],
+		[ "10%", 0.1 ],
+		[ "20%", 0.2 ],
+		[ "25%", 0.25 ],
+		[ "30%", 0.3 ],
+		[ "40%", 0.4 ],
+		[ "50%", 0.5 ],
+		[ "60%", 0.6 ],
+		[ "70%", 0.7 ],
+		[ "75%", 0.75 ],
+		[ "80%", 0.8 ],
+		[ "90%", 0.9 ],
+		[ "95%", 0.95 ],
+		[ "98%", 0.98 ],
+		[ "99%", 0.99 ],
+		[ "99.5%", 0.995 ],
+		[ "99.9%", 0.999 ],
+		[ "100%", 1 ],
 	];
-	for (const craft of crafts) {
-		// Man, I wish I could remember what the fuck I was doing here
-		window.autoOptions.huntOptions[craft[1]] = !!(window.autoOptions.furOptions[craft[0]] & 1);
-		window.autoOptions.craftOptions[craft[1]] = !!(window.autoOptions.furOptions[craft[0]] & 2);
-	}
-	saveAutoOptions();
-}
 
-function tryCraft(craftName, amount) {
-	// Really rudimentary "do we have enough stuff to craft this?" check
-	// If so, crafts it and returns true for success
-	const craft = game.workshop.getCraft(craftName);
-	const prices = craft.prices;
-	for (const price of prices) {
-		const res = game.resPool.get(price.name);
-		if (res.value < price.val * amount) {
+	// Percentages starting from 0% (initially for prayer, now for other things too - TODO rename?)
+	const faithPercentages = [
+		[ "0%", 0 ],
+		[ "0.1%", 0.001 ],
+	].concat(percentages);
+
+	// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
+	const gigaflopSafeMax = Math.exp(14.5) - 0.1;
+
+	// The default options for a fresh start, tuned to be viable at the beginning of the game
+	const defaultOptions = {
+		warnOnLeave: true,
+		autoStar: true,
+		autoCraft: false,
+		autoHunt: false,
+		autoPray: false,
+		autoResetFaith: false,
+		autoTrade: false,
+		craftOptions: {
+			craftLimit: 0.99,
+			secondaryCraftLimit: 0.6,
+			craftWood: false,
+			woodAmount: 10,
+			woodInterval: 15,
+			craftBeam: false,
+			beamAmount: 1,
+			beamInterval: 20,
+			craftSlab: false,
+			slabAmount: 1,
+			slabInterval: 20,
+			craftPlate: false,
+			plateAmount: 1,
+			plateInterval: 20,
+			craftSteel: false,
+			steelAmount: 1,
+			steelInterval: 5,
+			craftConcrete: false,
+			concreteAmount: 1,
+			concreteInterval: 100,
+			craftGear: false,
+			gearAmount: 1,
+			gearInterval: 50,
+			craftAlloy: false,
+			alloyAmount: 1,
+			alloyInterval: 200,
+			craftEludium: false,
+			eludiumAmount: 1,
+			eludiumInterval: 500,
+			craftScaffold: false,
+			scaffoldAmount: 1,
+			scaffoldInterval: 50,
+			craftShip: false,
+			shipAmount: 1,
+			shipInterval: 100,
+			craftTanker: false,
+			tankerAmount: 1,
+			tankerInterval: 200,
+			craftKerosene: false,
+			keroseneAmount: 1,
+			keroseneInterval: 20,
+			craftThorium: false,
+			thoriumAmount: 1,
+			thoriumInterval: 50,
+			craftMegalith: false,
+			megalithAmount: 1,
+			megalithInterval: 20,
+			craftBloodstone: false,
+			bloodstoneAmount: 1,
+			bloodstoneInterval: 100,
+			craftParchment: false,
+			parchmentAmount: 1,
+			parchmentInterval: 30,
+			craftManuscript: false,
+			manuscriptAmount: 1,
+			manuscriptInterval: 80,
+			craftCompendium: false,
+			compendiumAmount: 1,
+			compendiumInterval: 250,
+			craftBlueprint: false,
+			blueprintAmount: 1,
+			blueprintInterval: 500,
+			blueprintPriority: false,
+		},
+		dialogRight: false,
+		forceShadow: false,
+		forceShadowGlobal: false,
+		furOptions: {
+			parchmentMode: 0,
+			manuscriptMode: 0,
+			compendiumMode: 0,
+			blueprintMode: 0,
+		},
+		huntOptions: {
+			huntLimit: 0.99,
+			suppressHuntLog: false,
+			huntEarly: true,
+			singleHunts: false, // name is a misnomer since this was updated to a configurable limit
+			huntCount: 1,
+			craftParchment: false,
+			craftManuscript: false,
+			craftCompendium: false,
+			craftBlueprint: false,
+		},
+		prayLimit: 0.99,
+		widenUI: false,
+		displayOptions: {},
+		displayOrder: "standard",
+		timeDisplay: "standard",
+		perfectLeadership: false,
+		tradeOptions: {
+			tradeCount: 1,
+			tradeLimit: 0.99,
+			suppressTradeLog: false,
+			tradePartner: "",
+			tradeSpring: false,
+			tradePartnerSpring: "",
+			tradeSummer: false,
+			tradePartnerSummer: "",
+			tradeAutumn: false,
+			tradePartnerAutumn: "",
+			tradeWinter: false,
+			tradePartnerWinter: "",
+			playMarket: true,
+			buyBlackcoinBelow: 900,
+		},
+		showTimerDisplays: true,
+		disablePollution: false,
+		lunarOutpostOptions: {
+			automate: false,
+			useMinimumPowerProd: true,
+			activationLimit: 0.9,
+			reservedUranium: 0.1,
+			active: true, // semi-hidden
+		},
+	};
+
+	// Inject the options into the global namespace - "default" is a slight misnomer because they're also changable here,
+	// but the object above only provides the defaults (and the structure) so... it works well enough.
+	window.AutoKittensOptions = defaultOptions;
+
+	// A convenience function because typing out `Object.prototype.hasOwnProperty.call` everywhere is a PITA
+	function ownProp(target, prop) {
+		return Object.prototype.hasOwnProperty.call(target, prop);
+	}
+
+	// Sorta like a cross between Array.prototype.forEach and Array.prototype.map, but for objects
+	function iterateObject(obj, callback) {
+		for (const key of Object.keys(obj)) {
+			callback.call(obj, obj[key], key, obj);
+		}
+		return obj;
+	}
+
+	// NOP: no-operation, for when you specifically want to do nothing at all.
+	function NOP() {} // eslint-disable-line no-empty-function
+
+	// Given a string (or array) describing (in dot-notation) the path within an object, set the value at that location
+	// Designed to allow using any object, but since it's most commonly used to set a global (window) variable, that's the default
+	function setArbitrarilyDeepObject(location, value, target = window) {
+		if (Array.isArray(location)) {
+			location = location.join(".");
+		}
+		const segments = location.split(".");
+		const lastPoint = segments.pop();
+		let nextPoint;
+		while ((nextPoint = segments.shift())) {
+			if (typeof target[nextPoint] == "undefined" || target[nextPoint] === null) {
+				target[nextPoint] = {};
+			}
+			target = target[nextPoint];
+		}
+		target[lastPoint] = value;
+		if (window.AUTOKITTENS_ENABLE_DEBUG) {
+			console.log(`Set ${location}=${value}`);
+		}
+	}
+
+	// Makes sure that you get a callable function for use as a callback, falling back to NOP (see above) as a last resort,
+	// so you don't get a halting error about calling a non-function. Can take a function (will be returned unchanged) or a string,
+	// which will be looked for in the global window.
+	function wrapCallback(trigger) {
+		if (typeof trigger == "function") {
+			return trigger;
+		}
+		if (typeof trigger == "string") {
+			trigger = trigger.replace(";", "").replace("()", "");
+			if (typeof window[trigger] == "function") {
+				return window[trigger];
+			}
+		}
+		return NOP;
+	}
+
+	// Given a valid value for `wrapCallback()`, immediately run the function it finds with the provided arguments.
+	// Given an INvalid value, do nothing because it'll call NOP.
+	function runCallback(callback, ...args) {
+		return wrapCallback(callback)(...args);
+	}
+
+	// Try to set a dot-notated path on `window` to a float (TODO - rename function?) value pulled from a string,
+	// allowing only finite positive values. Zero is not permitted.
+	function tryNumericSet(optionName, value) {
+		const parsed = parseFloat(value);
+		if (!isNaN(parsed) && isFinite(parsed) && parsed > 0) {
+			setArbitrarilyDeepObject(optionName, parsed);
+		}
+	}
+
+	// Almost entirely what it sounds like (a deep copy of an object) but with a hack specific to this project.
+	function copyObject(source, target) {
+		for (const attrname in source) {
+			if (typeof source[attrname] === "object") {
+				if (typeof target[attrname] === "undefined") {
+					target[attrname] = {};
+				}
+				copyObject(source[attrname], target[attrname]);
+			}
+			else if (attrname == "supressHuntLog") {
+				// Fixing a typo
+				target.suppressHuntLog = source[attrname];
+			}
+			else {
+				target[attrname] = source[attrname];
+			}
+		}
+	}
+
+	// Render the given number of seconds as `[[days:]hours:]minutes:seconds`, instead of ``[[days"d" ]hours"h" ]minutes"m" ]seconds"s"`
+	function shortTimeFormat(secondsRaw) {
+		const secondsNumeric = parseInt(secondsRaw, 10); // don't forget the second param
+		const days = Math.floor(secondsNumeric / 86400);
+		const hours = Math.floor((secondsNumeric % 86400) / 3600);
+		const minutes = Math.floor((secondsNumeric % 3600) / 60);
+		const seconds = secondsNumeric % 60;
+		let timeFormated = "";
+		if (days) {
+			timeFormated += `${days}:`;
+		}
+		if (timeFormated) {
+			timeFormated += `${String(hours).padStart(2, 0)}:`;
+		}
+		else if (hours) {
+			timeFormated += `${hours}:`;
+		}
+		timeFormated += `${String(minutes).padStart(2, 0)}:${String(seconds).padStart(2, 0)}`;
+		return timeFormated;
+	}
+
+	// Render the given number of seconds as that number with `s` on the end
+	function rawSecondsFormat(secondsRaw) {
+		return `${parseInt(secondsRaw, 10)}s`;
+	}
+
+	// Check for a script update, assuming you can
+	// If update checking is blocked (for instance, the build script was told to output to STDOUT for debugging), then the button label
+	// just gets made all-caps. Like it's shouting at you "hey, idiot, you can't do that" or something.
+	function checkUpdate() {
+		const button = $("#autokittens-checkupdate");
+		if (window.AUTOKITTENS_ENABLE_DEBUG) {
+			console.log("Performing update check...");
+		}
+		const AULBS = "1663189221";
+		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
+		const onError = (xhr, stat, err) => {
+			button.val("Update check failed!");
+			console.group("AK Update Check (failure)");
+			console.info("Status value:", stat);
+			console.info("Error value:", err);
+			console.groupEnd();
+		};
+		const doCheck = (data, stat, xhr) => {
+			if (typeof data != "string") {
+				return void onError(xhr, stat, data);
+			}
+			const liveVersion = data.match(/#AULBS:(\d+)#/u);
+			if (!liveVersion) {
+				return void onError(xhr, "no version string", data);
+			}
+			const liveStamp = parseInt(liveVersion[1], 10);
+			if (liveStamp > parseInt(AULBS, 10)) {
+				button.val("Update found!");
+			}
+			else if (liveStamp < AULBS) {
+				button.val("Release behind live");
+			}
+			else {
+				button.val("No update available");
+			}
+		};
+		try {
+			button.val("Checking...");
+			$.ajax(SOURCE, {
+				method: "GET",
+				cache: false,
+				dataType: "text",
+				error: onError,
+				success: doCheck,
+			});
+		}
+		catch (err) {
+			onError(null, "request failed", err);
+		}
+	}
+
+	// Save our current options into localstorage
+	function saveAutoOptions() {
+		LCstorage[savedConfigKey] = JSON.stringify(window.AutoKittensOptions);
+	}
+
+	// Load stored settings (if any) into the live options
+	function loadAutoOptions() {
+		if (LCstorage[savedConfigKey]) {
+			copyObject(JSON.parse(LCstorage[savedConfigKey]), window.AutoKittensOptions);
+		}
+	}
+
+	// Update the hunting/crafting options for fur products (the whole set, all the way to blueprints)
+	function changeFurCrafts() {
+		const crafts = [
+			[ "parchmentMode", "craftParchment" ],
+			[ "manuscriptMode", "craftManuscript" ],
+			[ "compendiumMode", "craftCompendium" ],
+			[ "blueprintMode", "craftBlueprint" ],
+		];
+		for (const craft of crafts) {
+			// Man, I wish I could remember what the fuck I was doing here
+			window.AutoKittensOptions.huntOptions[craft[1]] = !!(window.AutoKittensOptions.furOptions[craft[0]] & 1);
+			window.AutoKittensOptions.craftOptions[craft[1]] = !!(window.AutoKittensOptions.furOptions[craft[0]] & 2);
+		}
+		saveAutoOptions();
+	}
+
+	// Try to craft the given amount of the given thing. Uses the game's own craft function if the check passes.
+	// Returns whether or not the craft succeeded. If you pass an invalid craft target, the craft will fail and return false.
+	function tryCraft(craftName, amount) {
+		// Really rudimentary "do we have enough stuff to craft this?" check
+		// If so, crafts it and returns true for success
+		const craft = game.workshop.getCraft(craftName);
+		if (!craft) {
 			return false;
 		}
-	}
-	game.craft(craftName, amount);
-	return true;
-}
-
-function changeTimeFormat() {
-	const formats = {
-		standard: defaultTimeFormat,
-		short: shortTimeFormat,
-		seconds: rawSecondsFormat,
-	};
-	game.toDisplaySeconds = formats[autoOptions.timeDisplay];
-}
-
-function handleDisplayOptions(obj) {
-	for (const o of Object.keys(obj)) {
-		const toggle = $(`#autoKittens_show${o}`);
-		if (toggle.length) {
-			// The toggle might not exist yet, since the UI overhaul
-			if (window.AUTOKITTENS_DEBUG_ENABLED) {
-				console.log(`${toggle[0].id}.checked=${obj[o]}`);
+		const prices = craft.prices;
+		for (const price of prices) {
+			const res = game.resPool.get(price.name);
+			if (res.value < price.val * amount) {
+				return false;
 			}
-			toggle[0].checked = obj[o];
 		}
+		game.craft(craftName, amount);
+		return true;
 	}
-}
-function traverseObject(obj) {
-	for (const o of Object.keys(obj)) {
-		if (o === "displayOptions") {
-			handleDisplayOptions(obj[o]);
-		}
-		else if (typeof obj[o] === "object") {
-			traverseObject(obj[o]);
-		}
-		else if (typeof obj[o] === "boolean") {
-			const elms = $(`#autoKittens_${o}`);
-			if (elms && elms[0]) {
-				if (window.AUTOKITTENS_DEBUG_ENABLED) {
-					console.log(`${elms[0].id}.checked=${obj[o]}`);
+
+	// Overrides the game's time display function according to the user's selected option
+	function changeTimeFormat() {
+		const formats = {
+			standard: defaultTimeFormat,
+			short: shortTimeFormat,
+			seconds: rawSecondsFormat,
+		};
+		game.toDisplaySeconds = formats[AutoKittensOptions.timeDisplay];
+	}
+
+	// XXX man, I can barely track my own UI code. I gotta refactor this shit.
+	function handleDisplayOptions(obj) {
+		for (const o of Object.keys(obj)) {
+			const toggle = $(`#AutoKittens_show${o}`);
+			if (toggle.length) {
+				// The toggle might not exist yet, since the UI overhaul
+				if (window.AUTOKITTENS_ENABLE_DEBUG) {
+					console.log(`${toggle[0].id}.checked=${obj[o]}`);
 				}
-				elms[0].checked = obj[o];
+				toggle[0].checked = obj[o];
 			}
+		}
+	}
+	// Traverse the provided object (DO NOT provide a stack!) to update settings on the page itself
+	// XXX rename this - or better, refactor it out of existence
+	function traverseObject(obj, stack = [ "AutoKittensOptions" ]) {
+		for (const o of Object.keys(obj)) {
+			if (o === "displayOptions") {
+				handleDisplayOptions(obj[o]);
+			}
+			else if (typeof obj[o] === "object") {
+				traverseObject(obj[o], stack.concat(o));
+			}
+			else if (typeof obj[o] === "boolean") {
+				const id = `#AutoKittens_${stack.concat(o).join("_")}`;
+				const elms = $(id);
+				if (elms && elms[0]) {
+					if (window.AUTOKITTENS_ENABLE_DEBUG) {
+						console.log(`${elms[0].id}.checked=${obj[o]}`);
+					}
+					elms[0].checked = obj[o];
+				}
+				else {
+					console.warn(`Couldn't find a node with ID "${id}"`);
+				}
+			}
+			else {
+				const id = `#AutoKittens_${stack.concat(o).join("_")}`;
+				const elms = $(id);
+				if (elms && elms[0]) {
+					if (window.AUTOKITTENS_ENABLE_DEBUG) {
+						console.log(`${elms[0].id}.value=${obj[o]}`);
+					}
+					elms[0].value = obj[o];
+				}
+				else {
+					console.warn(`Couldn't find a node with ID "${id}"`);
+				}
+			}
+		}
+	}
+	// XXX again, existing UI code is shit
+	function updateOptionsUI() {
+		const crafts = [
+			[ "manuscriptMode", "craftManuscript" ],
+			[ "compendiumMode", "craftCompendium" ],
+			[ "blueprintMode", "craftBlueprint" ],
+		];
+		for (const craft of crafts) {
+			AutoKittensOptions.furOptions[craft[0]] = Number(AutoKittensOptions.huntOptions[craft[1]]) + 2 * AutoKittensOptions.craftOptions[craft[1]];
+		}
+		traverseObject(AutoKittensOptions);
+		changeTimeFormat();
+	}
+
+	// Resize the three columns based on the current settings
+	function adjustColumns() {
+		if (window.AUTOKITTENS_ENABLE_DEBUG) {
+			console.log("Adjusting column widths");
+		}
+		$("#midColumn").css("width", AutoKittensOptions.widenUI ? "1000px" : "");
+		$("#leftColumn").css("max-width", AutoKittensOptions.widenUI ? "25%" : "");
+	}
+
+	// Toggle whether the timers are visible or not
+	function adjustTimerBar() {
+		if (AutoKittensOptions.showTimerDisplays) {
+			$("html").addClass("autokittens-show-timers");
 		}
 		else {
-			const elms = $(`#autoKittens_${o}`);
-			if (elms && elms[0]) {
-				if (window.AUTOKITTENS_DEBUG_ENABLED) {
-					console.log(`${elms[0].id}.value=${obj[o]}`);
-				}
-				elms[0].value = obj[o];
-			}
+			$("html").removeClass("autokittens-show-timers");
 		}
 	}
-}
 
-function updateOptionsUI() {
-	const crafts = [
-		[
-			"manuscriptMode", "craftManuscript",
-		],
-		[
-			"compendiumMode", "craftCompendium",
-		],
-		[
-			"blueprintMode", "craftBlueprint",
-		],
-	];
-	for (const craft of crafts) {
-		autoOptions.furOptions[craft[0]]
-			= Number(autoOptions.huntOptions[craft[1]]) + 2 * autoOptions.craftOptions[craft[1]];
+	// Add a checkbox to a container node for a specific toggle option.
+	// When toggled, update the live settings and then run the optional callback.
+	function addCheckbox(container, optionName, caption, trigger = NOP) {
+		container.append(
+			$(`<input id="AutoKittens_${optionName.replace(".", "_")}" type="checkbox" />`).on(
+				"input",
+				function updateAutoKittensCheckboxSettingOnValueChange() {
+					setArbitrarilyDeepObject(optionName, this.checked);
+					saveAutoOptions();
+					runCallback(trigger);
+				}
+			),
+			$(`<label for="AutoKittens_${optionName.replace(".", "_")}">${caption}</label>`),
+			"<br />"
+		);
 	}
-	traverseObject(autoOptions);
-	changeTimeFormat();
-}
 
-function adjustColumns() {
-	if (window.AUTOKITTENS_DEBUG_ENABLED) {
-		console.log("Adjusting column widths");
+	// Add an external-value checkbox to a container node. The condition determines the initial state, the callback has to handle changes.
+	function addExternCheckbox(container, controlName, caption, trigger, condition) {
+		const callback = wrapCallback(trigger);
+		const checkbox = $(`<input id="AutoKittens_extern_${controlName}" type="checkbox" />`);
+		const label = $(`<label for="AutoKittens_extern_${controlName}">${caption}</label>`);
+		checkbox[0].checked = typeof condition == "function" ? condition() : !!condition;
+		checkbox.on("input", () => callback(checkbox[0]));
+		if (window.AUTOKITTENS_ENABLE_DEBUG) {
+			console.log(`Creating external checkbox ${checkbox[0].id} as ${checkbox[0].checked ? "en" : "dis"}abled`);
+		}
+		container.append(checkbox, label, "<br />");
 	}
-	$("#midColumn").css("width", autoOptions.widenUI ? "1000px" : "");
-	$("#leftColumn").css("max-width", autoOptions.widenUI ? "25%" : "");
-}
-function adjustTimerBar() {
-	if (autoOptions.showTimerDisplays) {
-		$("html").first()
-			.addClass("autokittens-show-timers");
-	}
-	else {
-		$("html").first()
-			.removeClass("autokittens-show-timers");
-	}
-}
 
-function addCheckbox(container, optionName, caption, trigger = NOP) {
-	container.append(
-		$(`<input id="autoKittens_${optionName}" type="checkbox" />`).on(
+	// Add a section heading to a container node
+	function addHeading(container, title) {
+		container.append(`<h3>${title}</h3>`);
+	}
+
+	// Add a dropdown option menu to a container node. Left and right captions may be empty but must be strings.
+	// The options should be an array of either two-element arrays as [label, value] or objects with keys `label` and `value`.
+	function addOptionMenu(container, optionName, leftCaption, options, rightCaption, trigger = NOP) {
+		const select = $(`<select id="AutoKittens_${optionName.replace(".", "_")}"></select>`).on(
 			"input",
-			function updateAutoKittensCheckboxSettingOnValueChange() {
-				setArbitrarilyDeepObject(optionName, this.checked);
+			function updateAutoKittensDropdownSettingOnValueChange() {
+				setArbitrarilyDeepObject(optionName, $(this).val());
 				saveAutoOptions();
 				runCallback(trigger);
 			}
-		),
-		$(`<label for="autoKittens_${optionName}">${caption}</label>`),
-		"<br />"
-	);
-}
-
-function addExternCheckbox(container, controlName, caption, trigger, condition) {
-	const callback = wrapCallback(trigger);
-	const checkbox = $(`<input id="autoKittens_extern_${controlName}" type="checkbox" />`);
-	const label = $(`<label for="autoKittens_extern_${controlName}">${caption}</label>`);
-	checkbox[0].checked = typeof condition == "function" ? condition() : !!condition;
-	checkbox.on("input", () => callback(checkbox[0]));
-	if (window.AUTOKITTENS_DEBUG_ENABLED) {
-		console.log(`Creating external checkbox ${checkbox[0].id} as ${checkbox[0].checked ? "en" : "dis"}abled`);
-	}
-	container.append(checkbox, label, "<br />");
-}
-
-function addHeading(container, title) {
-	container.append(`<h3>${title}</h3>`);
-}
-
-function addOptionMenu(container, optionName, leftCaption, options, rightCaption, trigger = NOP) {
-	const select = $(`<select id="autoKittens_${optionName}"></select>`).on(
-		"input",
-		function updateAutoKittensDropdownSettingOnValueChange() {
-			setArbitrarilyDeepObject(optionName, $(this).val());
-			saveAutoOptions();
-			runCallback(trigger);
+		);
+		for (const option of options) {
+			if (Array.isArray(option)) {
+				select.append(`<option value="${option[1]}">${option[0]}</option>`);
+			}
+			else {
+				select.append(`<option value="${option.value}">${option.label}</option>`);
+			}
 		}
-	);
-	for (const option of options) {
-		if (Array.isArray(option)) {
-			select.append(`<option value="${option[1]}">${option[0]}</option>`);
+		if (leftCaption.trim()) {
+			leftCaption = `${leftCaption.trim()} `;
+		}
+		if (rightCaption.trim()) {
+			rightCaption = ` ${rightCaption.trim()}`;
+		}
+		container.append(leftCaption, select, rightCaption, "<br />");
+	}
+
+	// Add a button to a container node to do something when clicked, with an optional tooltip hint
+	function addButton(container, caption, trigger, hint) {
+		const button = $('<input type="button" />')
+			.attr("value", caption)
+			.on("click", wrapCallback(trigger));
+		if (hint) {
+			button.attr("title", hint);
+		}
+		container.append(button, "<br />");
+		return button;
+	}
+
+	// Add a simple indentation element to a container node
+	function addIndent(container) {
+		container.append('<span style="width:20px; display:inline-block;"></span>');
+	}
+
+	// Add a numeric (floating point, finite, positive non-zero) input box to a container node
+	function addInputField(container, optionName, leftCaption, rightCaption) {
+		const field = $(`<input id="AutoKittens_${optionName.replace(".", "_")}" size="6" type="text" />`).on(
+			"input",
+			function updateAutoKittensTextSettingOnValueChanged() {
+				tryNumericSet(optionName, this.value);
+				saveAutoOptions();
+			}
+		);
+		if (leftCaption.trim()) {
+			leftCaption = `${leftCaption.trim()} `;
+		}
+		if (rightCaption.trim()) {
+			rightCaption = ` ${rightCaption.trim()}`;
+		}
+		container.append(leftCaption, field, rightCaption, "<br />");
+	}
+
+	// Prepare a container node for population (XXX - shitty UI code again)
+	function prepareContainer(id) {
+		let result;
+		if (typeof id == "object") {
+			result = id;
 		}
 		else {
-			select.append(`<option value="${option.value}">${option.label}</option>`);
+			result = $(`#${id}`);
 		}
-	}
-	if (leftCaption.trim()) {
-		leftCaption = `${leftCaption.trim()} `;
-	}
-	if (rightCaption.trim()) {
-		rightCaption = ` ${rightCaption.trim()}`;
-	}
-	container.append(leftCaption, select, rightCaption, "<br />");
-}
-
-function addButton(container, caption, trigger, hint) {
-	const button = $('<input type="button" />').attr("value", caption)
-		.on("click", wrapCallback(trigger));
-	if (hint) {
-		button.attr("title", hint);
-	}
-	container.append(button, "<br />");
-	return button;
-}
-
-function addIndent(container) {
-	container.append('<span style="width:20px; display:inline-block;"></span>');
-}
-
-function addInputField(container, optionName, leftCaption, rightCaption) {
-	const field = $(`<input id="autoKittens_${optionName}" size="6" type="text" />`).on(
-		"input",
-		function updateAutoKittensTextSettingOnValueChanged() {
-			tryNumericSet(optionName, this.value);
-			saveAutoOptions();
+		const containerID = result.attr("id").toLowerCase();
+		const closeLink = $('<a class="close" href="#">close</a>').on("click", () => {
+			$(scriptDialogClass).hide();
+		});
+		const backLink = $('<a class="close" href="#">back</a>').on("click", () => {
+			$(scriptDialogClass).hide();
+			$("#akSettingsMaster").show();
+		});
+		const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
+		if (containerID.startsWith("aksettings") && !containerID.endsWith("master")) {
+			linkContainer.prepend(backLink, " | ");
 		}
-	);
-	if (leftCaption.trim()) {
-		leftCaption = `${leftCaption.trim()} `;
+		result.empty().append(linkContainer);
+		return result;
 	}
-	if (rightCaption.trim()) {
-		rightCaption = ` ${rightCaption.trim()}`;
-	}
-	container.append(leftCaption, field, rightCaption, "<br />");
-}
 
-function prepareContainer(id) {
-	let result;
-	if (typeof id == "object") {
-		result = id;
+	// If the listed thing is visible in the timer strip, make an entry for it. Otherwise, return an empty string so nothing breaks.
+	// XXX guess what, it's more shitty UI code!
+	function formatTableRow(name, title, value) {
+		if (typeof AutoKittensOptions.displayOptions[name] === "undefined") {
+			AutoKittensOptions.displayOptions[name] = true;
+		}
+		if (AutoKittensOptions.displayOptions[name]) {
+			return `<td style="text-align:center">${title}<br />${value}</td>`;
+		}
+		return "";
 	}
-	else {
-		result = $(`#${id}`);
-	}
-	const containerID = result.attr("id").toLowerCase();
-	const closeLink = $('<a class="close" href="#">close</a>').on("click", () => {
-		$(scriptDialogId).hide();
-	});
-	const backLink = $('<a class="close" href="#">back</a>').on("click", () => {
-		$(scriptDialogId).hide();
-		$("#akSettingsMaster").show();
-	});
-	const linkContainer = $('<span style="top: 10px; right: 15px; position: absolute;"></span>').append(closeLink);
-	if (containerID.startsWith("aksettings") && !containerID.endsWith("master")) {
-		linkContainer.prepend(backLink, " | ");
-	}
-	result.empty().append(linkContainer);
-	return result;
-}
-
-function formatTableRow(name, title, value) {
-	if (typeof autoOptions.displayOptions[name] === "undefined") {
-		autoOptions.displayOptions[name] = true;
-	}
-	if (autoOptions.displayOptions[name]) {
-		return `<td style="text-align:center">${title}<br />${value}</td>`;
-	}
-	return "";
-}
-function fillTable() {
-	let contents = "<tr>";
-	const tickRate = game.getTicksPerSecondUI();
-	const resources = [];
-	for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
-		const r = game.resPool.resources[resIndex];
-		const res = {
-			name: r.name,
-			title: r.title || r.name,
-			// Is this the right property name for this? No.
-			// Am I willing to refactor all of this to do it right? Also no.
-			perTickUI: game.getResourcePerTick(r.name, true),
-			value: r.value,
-			maxValue: r.maxValue,
-		};
-		if (res.perTickUI !== 0) {
-			if (res.maxValue > 0) {
-				if (res.value <= 0) {
-					res.time = 0;
+	// Construct the timer strip
+	function fillTable() {
+		let contents = "<tr>";
+		const tickRate = game.getTicksPerSecondUI();
+		const resources = [];
+		for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
+			const r = game.resPool.resources[resIndex];
+			const res = {
+				name: r.name,
+				title: r.title || r.name,
+				// Is this the right property name for this? No.
+				// Am I willing to refactor all of this to do it right? Also no.
+				perTickUI: game.getResourcePerTick(r.name, true),
+				value: r.value,
+				maxValue: r.maxValue,
+			};
+			if (res.perTickUI !== 0) {
+				if (res.maxValue > 0) {
+					if (res.value <= 0) {
+						res.time = 0;
+					}
+					else if (res.value >= r.maxValue) {
+						res.time = 0;
+					}
+					else if (res.perTickUI > 0) {
+						res.time = (res.maxValue - res.value) / (res.perTickUI * tickRate);
+					}
+					else if (res.perTickUI < 0) {
+						res.time = -r.value / (res.perTickUI * tickRate);
+					}
 				}
-				else if (res.value >= r.maxValue) {
-					res.time = 0;
-				}
-				else if (res.perTickUI > 0) {
-					res.time = (res.maxValue - res.value) / (res.perTickUI * tickRate);
-				}
-				else if (res.perTickUI < 0) {
+				else if (res.value > 0 && res.perTickUI < 0) {
 					res.time = -r.value / (res.perTickUI * tickRate);
 				}
 			}
-			else if (res.value > 0 && res.perTickUI < 0) {
-				res.time = -r.value / (res.perTickUI * tickRate);
-			}
+			resources.push(res);
 		}
-		resources.push(res);
-	}
-	if (autoOptions.displayOrder == "short") {
-		resources.sort((a, b) => a.time - b.time);
-	}
-	else if (autoOptions.displayOrder == "long") {
-		resources.sort((a, b) => b.time - a.time);
-	}
-	for (const r of resources) {
-		const name = r.name;
-		const title = r.title;
-		if (r.perTickUI != 0) {
-			if (r.value > 0 && r.perTickUI < 0) {
+		if (AutoKittensOptions.displayOrder == "short") {
+			resources.sort((a, b) => a.time - b.time);
+		}
+		else if (AutoKittensOptions.displayOrder == "long") {
+			resources.sort((a, b) => b.time - a.time);
+		}
+		for (const r of resources) {
+			const name = r.name;
+			const title = r.title;
+			if (r.perTickUI != 0) {
+				if (r.value > 0 && r.perTickUI < 0) {
 				// not empty, falling - needs time-to-empty
-				contents += formatTableRow(
-					name,
-					title,
-					`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-				);
-			}
-			else if (r.maxValue > 0) {
-				// not (falling + non-empty) - may be rising, may be empty
-				if (r.value >= r.maxValue) {
-					// full, rising - no timer
-					contents += formatTableRow(name, title, "Full");
-				}
-				else if (r.perTickUI > 0) {
-					// not full, rising - needs time-to-cap
 					contents += formatTableRow(
 						name,
 						title,
-						game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate))
+						`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
 					);
 				}
-				else if (r.value <= 0) {
+				else if (r.maxValue > 0) {
+				// not (falling + non-empty) - may be rising, may be empty
+					if (r.value >= r.maxValue) {
+					// full, rising - no timer
+						contents += formatTableRow(name, title, "Full");
+					}
+					else if (r.perTickUI > 0) {
+					// not full, rising - needs time-to-cap
+						contents += formatTableRow(
+							name,
+							title,
+							game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate))
+						);
+					}
+					else if (r.value <= 0) {
 					// empty, falling - no timer
-					contents += formatTableRow(name, title, "Empty");
+						contents += formatTableRow(name, title, "Empty");
+					}
 				}
 			}
 		}
+		contents += "</tr>";
+		document.querySelector("#timerTable").innerHTML = contents;
 	}
-	contents += "</tr>";
-	document.querySelector("#timerTable").innerHTML = contents;
-}
 
-function mintCalculator() {
-	const hunterRatio = game.getEffect("hunterRatio") + game.village.getEffectLeader("manager", 0);
-	const expectedFursFromHunts = 32.5 * (hunterRatio + 1);
-	let expectedIvoryFromHunts = 20 * (hunterRatio + 1);
-	if (2 * hunterRatio < 55) {
-		expectedIvoryFromHunts *= 1 - (55 - 2 * hunterRatio) / 100;
-	}
-	const mintBuildingData = game.bld.getBuildingExt("mint");
-	const mintsRunning = mintBuildingData.get("on");
-	const catpower = game.resPool.get("manpower");
-	const catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
-	const catpowerRateWithMints
+	// The calculator for mint profits - generates the HTML that gets slapped into the calculator window
+	function mintCalculator() {
+		const hunterRatio = game.getEffect("hunterRatio") + game.village.getEffectLeader("manager", 0);
+		const expectedFursFromHunts = 32.5 * (hunterRatio + 1);
+		let expectedIvoryFromHunts = 20 * (hunterRatio + 1);
+		if (2 * hunterRatio < 55) {
+			expectedIvoryFromHunts *= 1 - (55 - 2 * hunterRatio) / 100;
+		}
+		const mintBuildingData = game.bld.getBuildingExt("mint");
+		const mintsRunning = mintBuildingData.get("on");
+		const catpower = game.resPool.get("manpower");
+		const catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
+		const catpowerRateWithMints
 		= ((catpower.perTickUI || catpower.perTickCached)
 			+ mintBuildingData.get("effects").manpowerPerTickCon * mintsRunning)
 		* game.ticksPerSecond;
-	const huntTimeWithoutMint = 100 / catpowerRateBase;
-	const huntTimeWithMint = 100 / catpowerRateWithMints;
-	const fpsHuntsNoMints = expectedFursFromHunts / huntTimeWithoutMint;
-	const ipsHuntsNoMints = expectedIvoryFromHunts / huntTimeWithoutMint;
-	let fpsHuntsWithMint = expectedFursFromHunts / huntTimeWithMint;
-	let ipsHuntsWithMint = expectedIvoryFromHunts / huntTimeWithMint;
-	const fpsFromMint = mintBuildingData.get("effects").fursPerTickProd * mintsRunning * game.ticksPerSecond;
-	const ipsFromMint = mintBuildingData.get("effects").ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
-	fpsHuntsWithMint += fpsFromMint;
-	ipsHuntsWithMint += ipsFromMint;
-	const fpsProfitWithMints = fpsFromMint + fpsHuntsWithMint - fpsHuntsNoMints;
-	const ipsProfitWithMints = ipsFromMint + ipsHuntsWithMint - ipsHuntsNoMints;
-	const mintNoun = `mint${mintsRunning == 1 ? "" : "s"}`;
-	const mintString = `${mintsRunning} ${mintNoun}`;
-	const fpsLossTag = fpsProfitWithMints < 0 ? " (LOSS)" : "";
-	const ipsLossTag = ipsProfitWithMints < 0 ? " (LOSS)" : "";
-	const totalFursPerSecond = game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
-	const totalIvoryPerSecond = game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
-	const result = [];
-	result.push(`Average furs per hunt: ${game.getDisplayValue(expectedFursFromHunts)}`);
-	result.push(`Average ivory per hunt: ${game.getDisplayValue(expectedIvoryFromHunts)}`);
-	result.push(`Average time between hunts (no mints): ${game.getDisplayValue(huntTimeWithoutMint)} sec`);
-	result.push(`Approximate furs per second (hunts, no mints): ${game.getDisplayValue(fpsHuntsNoMints)}`);
-	result.push(`Approximate ivory per second (hunts, no mints): ${game.getDisplayValue(ipsHuntsNoMints)}`);
-	result.push(`Average time between hunts (${mintString}): ${game.getDisplayValue(huntTimeWithMint)}`);
-	result.push(`Approximate furs per second (hunts, ${mintString}): ${totalFursPerSecond}`);
-	result.push(`Approximate ivory per second (hunts, ${mintString}): ${totalIvoryPerSecond}`);
-	result.push(`<br />Profit from ${mintsRunning} running ${mintNoun}:`);
-	result.push(`Furs per second: ${game.getDisplayValue(fpsProfitWithMints)}${fpsLossTag}`);
-	result.push(`Ivory per second: ${game.getDisplayValue(ipsProfitWithMints)}${ipsLossTag}`);
-	return result.join("<br />");
-}
+		const huntTimeWithoutMint = 100 / catpowerRateBase;
+		const huntTimeWithMint = 100 / catpowerRateWithMints;
+		const fpsHuntsNoMints = expectedFursFromHunts / huntTimeWithoutMint;
+		const ipsHuntsNoMints = expectedIvoryFromHunts / huntTimeWithoutMint;
+		let fpsHuntsWithMint = expectedFursFromHunts / huntTimeWithMint;
+		let ipsHuntsWithMint = expectedIvoryFromHunts / huntTimeWithMint;
+		const fpsFromMint = mintBuildingData.get("effects").fursPerTickProd * mintsRunning * game.ticksPerSecond;
+		const ipsFromMint = mintBuildingData.get("effects").ivoryPerTickProd * mintsRunning * game.ticksPerSecond;
+		fpsHuntsWithMint += fpsFromMint;
+		ipsHuntsWithMint += ipsFromMint;
+		const fpsProfitWithMints = fpsFromMint + fpsHuntsWithMint - fpsHuntsNoMints;
+		const ipsProfitWithMints = ipsFromMint + ipsHuntsWithMint - ipsHuntsNoMints;
+		const mintNoun = `mint${mintsRunning == 1 ? "" : "s"}`;
+		const mintString = `${mintsRunning} ${mintNoun}`;
+		const fpsLossTag = fpsProfitWithMints < 0 ? " (LOSS)" : "";
+		const ipsLossTag = ipsProfitWithMints < 0 ? " (LOSS)" : "";
+		const totalFursPerSecond = game.getDisplayValue(fpsHuntsWithMint + fpsFromMint);
+		const totalIvoryPerSecond = game.getDisplayValue(ipsHuntsWithMint + ipsFromMint);
+		const result = [];
+		result.push(`Average furs per hunt: ${game.getDisplayValue(expectedFursFromHunts)}`);
+		result.push(`Average ivory per hunt: ${game.getDisplayValue(expectedIvoryFromHunts)}`);
+		result.push(`Average time between hunts (no mints): ${game.getDisplayValue(huntTimeWithoutMint)} sec`);
+		result.push(`Approximate furs per second (hunts, no mints): ${game.getDisplayValue(fpsHuntsNoMints)}`);
+		result.push(`Approximate ivory per second (hunts, no mints): ${game.getDisplayValue(ipsHuntsNoMints)}`);
+		result.push(`Average time between hunts (${mintString}): ${game.getDisplayValue(huntTimeWithMint)}`);
+		result.push(`Approximate furs per second (hunts, ${mintString}): ${totalFursPerSecond}`);
+		result.push(`Approximate ivory per second (hunts, ${mintString}): ${totalIvoryPerSecond}`);
+		result.push(`<br />Profit from ${mintsRunning} running ${mintNoun}:`);
+		result.push(`Furs per second: ${game.getDisplayValue(fpsProfitWithMints)}${fpsLossTag}`);
+		result.push(`Ivory per second: ${game.getDisplayValue(ipsProfitWithMints)}${ipsLossTag}`);
+		return result.join("<br />");
+	}
 
-function aiCalculator() {
-	const gflopsRes = gameData.gigaflops;
-	const hashRes = gameData.hashes;
-	const aiCoreData = game.bld.get("aiCore");
-	const entanglerData = game.space.getBuilding("entangler");
-	const gigaflops = gflopsRes.value;
-	const hashes = hashRes.value;
-	const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
-	const hashLevel = gameData.hashLevel;
-	const gigaflopsPerTick = gflopsRes.perTickUI || gflopsRes.perTickCached;
-	const gigaflopProdPerTickRaw = aiCoreData.effects.gflopsPerTickBase;
-	const gigaflopProdPerTickEffective = gigaflopProdPerTickRaw * aiCoreData.on;
-	const gigaflopConsumePerTickRaw = entanglerData.effects.gflopsConsumption;
-	const gigaflopConsumePerTickEffective = gigaflopConsumePerTickRaw * entanglerData.on;
-	const aiLevel = gameData.aiLevel;
-	const gigaflopsNeeded = gameData.gigaflopsToNextLevel;
-	const hashesNeeded = gameData.hashesToNextLevel;
-	const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
-	const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
-	const internalCheckTag
+	// As above, but to calculate the AIpocalypse danger
+	function aiCalculator() {
+		const gflopsRes = resmap.gigaflops;
+		const hashRes = resmap.hashes;
+		const aiCoreData = game.bld.get("aiCore");
+		const entanglerData = game.space.getBuilding("entangler");
+		const gigaflops = gflopsRes.value;
+		const hashes = hashRes.value;
+		const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
+		const hashLevel = resmap.hashLevel;
+		const gigaflopsPerTick = gflopsRes.perTickUI || gflopsRes.perTickCached;
+		const gigaflopProdPerTickRaw = aiCoreData.effects.gflopsPerTickBase;
+		const gigaflopProdPerTickEffective = gigaflopProdPerTickRaw * aiCoreData.on;
+		const gigaflopConsumePerTickRaw = entanglerData.effects.gflopsConsumption;
+		const gigaflopConsumePerTickEffective = gigaflopConsumePerTickRaw * entanglerData.on;
+		const aiLevel = resmap.aiLevel;
+		const gigaflopsNeeded = resmap.gigaflopsToNextLevel;
+		const hashesNeeded = resmap.hashesToNextLevel;
+		const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
+		const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
+		const internalCheckTag
 		= gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick
 			? "checks out"
 			: "<b>INTERNAL MATH ERROR!</b>";
-	const timeToNextLevelOfAI = isFinite(timeToNextAiLevel)
-		? game.toDisplaySeconds(timeToNextAiLevel)
-		: "<i>no gigaflops being produced</i>";
-	const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
-		? game.toDisplaySeconds(timeToNextHashLevel)
-		: "<i>no hashes being produced</i>";
-	const result = [
-		`Current gigaflops: ${gigaflops}`,
-		`Net gigaflops per tick: ${gigaflopsPerTick} - ${internalCheckTag}`,
-		`Current AI level: ${aiLevel}`,
-	];
-	if (aiLevel > 14) {
-		const gigaflopsToLose = gigaflops - gigaflopSafeMax;
-		const timeUntilSafetyFromSkynet
+		const timeToNextLevelOfAI = isFinite(timeToNextAiLevel)
+			? game.toDisplaySeconds(timeToNextAiLevel)
+			: "<i>no gigaflops being produced</i>";
+		const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
+			? game.toDisplaySeconds(timeToNextHashLevel)
+			: "<i>no hashes being produced</i>";
+		const result = [
+			`Current gigaflops: ${gigaflops}`,
+			`Net gigaflops per tick: ${gigaflopsPerTick} - ${internalCheckTag}`,
+			`Current AI level: ${aiLevel}`,
+		];
+		if (aiLevel > 14) {
+			const gigaflopsToLose = gigaflops - gigaflopSafeMax;
+			const timeUntilSafetyFromSkynet
 			= game.toDisplaySeconds(Math.abs(gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
-		result.push(
-			'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
-			`Gigaflops beyond safe limit: ${gigaflopsToLose}`
-		);
-		if (gigaflopsPerTick > 0) {
-			result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
-		}
-		else if (gigaflopsPerTick == 0) {
-			result.push('<span class="ohshit">AI LEVEL IS STEADY - BUILD MORE ENTANGLERS</span>');
-		}
-		else {
-			result.push(`Time drop back to safe limit: ${timeUntilSafetyFromSkynet}`);
-		}
-	}
-	else {
-		const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
-		const timeUntilDangerFromSkynet
-			= game.toDisplaySeconds(Math.abs(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
-		result.push(
-			"The AI apocalypse will not occur yet",
-			`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax}`
-		);
-		if (gigaflopsPerTick > 0) {
-			result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
-		}
-		else if (gigaflopsPerTick == 0) {
-			result.push("AI Level is steady - AI apocalypse is not possible");
-		}
-		else {
-			result.push("AI Level is falling - AI apocalypse is not possible");
-		}
-	}
-	result.push(
-		`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
-		`Time to reach next AI level: ${timeToNextLevelOfAI}`,
-		`Current hashes: ${hashes}`,
-		`Net hashes per tick: ${hashesPerTick}`,
-		`Current hashlevel: ${hashLevel}`,
-		`Hashes needed to reach next hash level: ${hashesNeeded}`,
-		`Time to reach next hash level: ${timeToNextLevelOfHashes}`
-	);
-	return result.join("<br />\n");
-}
-
-function powerCalculator() {
-	const sections = [];
-	const lines = [];
-	const currentProd = parseFloat(game.resPool.energyProd.toFixed(2));
-	const safeUsage = parseFloat(game.resPool.energyWinterProd.toFixed(2));
-	const currentUsage = parseFloat(game.resPool.energyCons.toFixed(2));
-	lines.push(`Power production: ${currentProd}`);
-	if (game.calendar.season != 3) {
-		lines.push(`Minimum power production: ${safeUsage}`);
-	}
-	lines.push(`Power consumption: ${currentUsage}`);
-	if (currentUsage < safeUsage) {
-		lines.push(`Maximum safe additional usage: ${(safeUsage - currentUsage).toFixed(2)}`);
-	}
-	else if (currentUsage > currentProd) {
-		lines.push(`<b>Usage exceeds current limit by ${(currentUsage - currentProd).toFixed(2)}!</b>`);
-	}
-	else if (currentUsage > safeUsage) {
-		lines.push(`</b>Usage exceeds safe limit by ${(currentUsage - safeUsage).toFixed(2)}!<b>`);
-	}
-	else {
-		lines.push("Power usage is at capacity. Do not draw additional energy.");
-	}
-	sections.push(lines.join("<br/>\n"));
-	return sections;
-}
-
-function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
-	// container
-	// > mainToggle
-	// > contents
-	// > > mainSection
-	// ? > subToggle
-	// ? > subSection
-	const container = $(`<div id="${id}_container" class="calculator container"></div>`);
-	const contents = $(`<div id="${id}_content" class="calculator container"></div>`).hide();
-	const mainToggle = $(`<h3 class="fakelink">${title}</h3>`).on("click", () => {
-		contents.toggle();
-	});
-	const mainSection = $(`<div id="${id}" class="calculator section"></div>`);
-	const ids = [ id ];
-	contents.append(mainSection);
-	container.append(mainToggle, contents);
-	if (subsectionId && subsectionTitle) {
-		const subSection = $(`<div id="${subsectionId}" class="calculator subsection"></div>`).hide();
-		const subToggle = $(`<h4 class="fakelink">${subsectionTitle}</h4>`).on("click", () => {
-			subSection.toggle();
-		});
-		contents.append(subToggle, subSection);
-		ids.push(subsectionId);
-	}
-	calculators.push([
-		ids, calcFunc,
-	]);
-	wnd.append(container);
-}
-function updateCalculators() {
-	for (const c of calculators) {
-		const contents = [].concat(c[1]());
-		for (let n = 0; n < c[0].length; n++) {
-			document.querySelector(`#kittenCalcs #${c[0][n]}`).innerHTML = contents[n];
-		}
-	}
-}
-function rebuildCalculatorUI() {
-	const calcContainer = prepareContainer("kittenCalcs");
-	calculators = [];
-	addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", mintCalculator);
-	addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", aiCalculator);
-	addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator);
-}
-
-function realignSciptDialogs() {
-	if (autoOptions.dialogRight) {
-		$("html").addClass("autokittensRight");
-	}
-	else {
-		$("html").removeClass("autokittensRight");
-	}
-}
-function reapplyShadows() {
-	if (autoOptions.forceShadowGlobal) {
-		$("html")
-			.addClass("forceShadowGlobal")
-			.removeClass("forceShadow");
-	}
-	else if (autoOptions.forceShadow) {
-		$("html")
-			.addClass("forceShadow")
-			.removeClass("forceShadowGlobal");
-	}
-	else {
-		$("html")
-			.removeClass("forceShadow")
-			.removeClass("forceShadowGlobal");
-	}
-}
-
-function unlockGameTheme(name) {
-	if (game.ui.defaultSchemes.includes(name)) {
-		return;
-	}
-	if (game.ui.allSchemes.includes(name)) {
-		if (window.AUTOKITTENS_DEBUG_ENABLED) {
-			console.log(`Unlocking game theme ${name}`);
-		}
-		if (!game.unlockedSchemes.includes(name)) {
-			game.unlockedSchemes.push(name);
-		}
-		$(`#schemeToggle > option[value=${name}]`).removeAttr("disabled");
-		(document.querySelector(`input#autoKittens_extern_theme_${name}`) || {}).checked = true;
-		game.ui.updateOptions();
-	}
-}
-function lockGameTheme(name) {
-	if (game.ui.defaultSchemes.includes(name)) {
-		return;
-	}
-	if (game.ui.allSchemes.includes(name)) {
-		if (window.AUTOKITTENS_DEBUG_ENABLED) {
-			console.log(`Locking game theme ${name}`);
-		}
-		const idx = game.unlockedSchemes.indexOf(name);
-		if (idx >= 0) {
-			game.unlockedSchemes.splice(idx, 1);
-		}
-		$(`#schemeToggle > option[value=${name}]`).attr("disabled", "disabled");
-		(document.querySelector(`#autoKittens_extern_theme_${name}`) || {}).checked = false;
-		game.ui.updateOptions();
-	}
-}
-function unlockAllGameThemes() {
-	for (const scheme of game.ui.allSchemes) {
-		unlockGameTheme(scheme);
-	}
-}
-function lockAllGameThemes() {
-	for (const scheme of game.ui.allSchemes) {
-		lockGameTheme(scheme);
-	}
-}
-
-function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
-	const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
-	const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, (l) => ` ${l.toLowerCase()}`);
-	const questioningSuffix = needsPluralising ? "(s)" : "";
-	const certainSuffix = needsPluralising ? "s" : "";
-	addCheckbox(
-		uiContainer,
-		`autoOptions.craftOptions.craft${internalTo.replace(/^[a-z]/u, (l) => l.toUpperCase())}`,
-		`Automatically convert ${from} to ${labelTo + certainSuffix}`
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		`autoOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Amount`,
-		"Craft",
-		`${labelTo + questioningSuffix} at a time`
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		`autoOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Interval`,
-		`Craft ${labelTo + certainSuffix} every`,
-		"game tick(s)"
-	);
-}
-
-function rebuildOptionsPaneGeneralUI() {
-	const uiContainer = prepareContainer("akSettingsUi");
-	addHeading(uiContainer, "Timer displays");
-	addCheckbox(uiContainer, "autoOptions.showTimerDisplays", "Show timer displays below", adjustTimerBar);
-	uiContainer.append("Note: Ordering by time may cause elements near cap to frequently switch places.<br />");
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.displayOrder",
-		"Order time displays by",
-		[
-			[
-				"default order", "standard",
-			],
-			[
-				"shortest first", "short",
-			],
-			[
-				"longest first", "long",
-			],
-		],
-		""
-	);
-	game.resPool.resources.forEach((r) => {
-		if (typeof autoOptions.displayOptions[r.name] !== "undefined") {
-			addCheckbox(uiContainer, `autoOptions.displayOptions.${r.name}`, `Show ${r.title || r.name}`);
-		}
-	});
-	addHeading(uiContainer, "Game options");
-	addCheckbox(uiContainer, "autoOptions.autoStar", "Automatically witness astronomical events");
-	addHeading(uiContainer, "Game themes");
-	addButton(uiContainer, "Unlock all", unlockAllGameThemes);
-	for (const theme of game.ui.allSchemes) {
-		if (!game.ui.defaultSchemes.includes(theme)) {
-			addExternCheckbox(
-				uiContainer,
-				`theme_${theme}`,
-				theme.slice(0, 1).toUpperCase() + theme.slice(1),
-				(toggle) => {
-					if (toggle.checked) {
-						unlockGameTheme(theme);
-					}
-					else {
-						lockGameTheme(theme);
-					}
-				},
-				game.unlockedSchemes.includes.bind(game.unlockedSchemes, theme)
+			result.push(
+				'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
+				`Gigaflops beyond safe limit: ${gigaflopsToLose}`
 			);
+			if (gigaflopsPerTick > 0) {
+				result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
+			}
+			else if (gigaflopsPerTick == 0) {
+				result.push('<span class="ohshit">AI LEVEL IS STEADY - BUILD MORE ENTANGLERS</span>');
+			}
+			else {
+				result.push(`Time drop back to safe limit: ${timeUntilSafetyFromSkynet}`);
+			}
+		}
+		else {
+			const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
+			const timeUntilDangerFromSkynet
+			= game.toDisplaySeconds(Math.abs(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
+			result.push(
+				"The AI apocalypse will not occur yet",
+				`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax}`
+			);
+			if (gigaflopsPerTick > 0) {
+				result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
+			}
+			else if (gigaflopsPerTick == 0) {
+				result.push("AI Level is steady - AI apocalypse is not possible");
+			}
+			else {
+				result.push("AI Level is falling - AI apocalypse is not possible");
+			}
+		}
+		result.push(
+			`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
+			`Time to reach next AI level: ${timeToNextLevelOfAI}`,
+			`Current hashes: ${hashes}`,
+			`Net hashes per tick: ${hashesPerTick}`,
+			`Current hashlevel: ${hashLevel}`,
+			`Hashes needed to reach next hash level: ${hashesNeeded}`,
+			`Time to reach next hash level: ${timeToNextLevelOfHashes}`
+		);
+		return result.join("<br />\n");
+	}
+
+	// As above, but for power usage and generation
+	function powerCalculator() {
+		const sections = [];
+		const lines = [];
+		const currentProd = parseFloat(game.resPool.energyProd.toFixed(2));
+		const safeUsage = parseFloat(game.resPool.energyWinterProd.toFixed(2));
+		const currentUsage = parseFloat(game.resPool.energyCons.toFixed(2));
+		lines.push(`Power production: ${currentProd}`);
+		if (game.calendar.season != 3) {
+			lines.push(`Minimum power production: ${safeUsage}`);
+		}
+		lines.push(`Power consumption: ${currentUsage}`);
+		if (currentUsage < safeUsage) {
+			lines.push(`Maximum safe additional usage: ${(safeUsage - currentUsage).toFixed(2)}`);
+		}
+		else if (currentUsage > currentProd) {
+			lines.push(`<b>Usage exceeds current limit by ${(currentUsage - currentProd).toFixed(2)}!</b>`);
+		}
+		else if (currentUsage > safeUsage) {
+			lines.push(`</b>Usage exceeds safe limit by ${(currentUsage - safeUsage).toFixed(2)}!<b>`);
+		}
+		else {
+			lines.push("Power usage is at capacity. Do not draw additional energy.");
+		}
+		sections.push(lines.join("<br/>\n"));
+		return sections;
+	}
+
+	// Assemble the UI for a calculator, and shove the details into the calculators array
+	function addCalculator(wnd, id, title, calcFunc, subsectionId, subsectionTitle) {
+		// container
+		// > mainToggle
+		// > contents
+		// > > mainSection
+		// ? > subToggle
+		// ? > subSection
+		const container = $(`<div id="${id}_container" class="calculator container"></div>`);
+		const contents = $(`<div id="${id}_content" class="calculator container"></div>`).hide();
+		const mainToggle = $(`<h3 class="fakelink">${title}</h3>`).on("click", () => {
+			contents.toggle();
+		});
+		const mainSection = $(`<div id="${id}" class="calculator section"></div>`);
+		const ids = [ id ];
+		contents.append(mainSection);
+		container.append(mainToggle, contents);
+		if (subsectionId && subsectionTitle) {
+			const subSection = $(`<div id="${subsectionId}" class="calculator subsection"></div>`).hide();
+			const subToggle = $(`<h4 class="fakelink">${subsectionTitle}</h4>`).on("click", () => {
+				subSection.toggle();
+			});
+			contents.append(subToggle, subSection);
+			ids.push(subsectionId);
+		}
+		calculators.push([
+			ids, calcFunc,
+		]);
+		wnd.append(container);
+	}
+	// Update all of the calculators by calling their function and then writing the returned HTML into the UI
+	function updateCalculators() {
+		for (const c of calculators) {
+			const contents = [].concat(c[1]());
+			for (let n = 0; n < c[0].length; n++) {
+				document.querySelector(`#kittenCalcs #${c[0][n]}`).innerHTML = contents[n];
+			}
 		}
 	}
-	addButton(uiContainer, "Lock all", lockAllGameThemes);
-	addHeading(uiContainer, "UI options");
-	addCheckbox(uiContainer, "autoOptions.warnOnLeave", "Warn before leaving the page");
-	addCheckbox(
-		uiContainer,
-		"autoOptions.widenUI",
-		"Make the game use more horizontal space (particularly useful for Grassy theme)",
-		adjustColumns
-	);
-	addCheckbox(
-		uiContainer,
-		"autoOptions.dialogRight",
-		"Move AK dialogs to the right of the window to improve playability",
-		realignSciptDialogs
-	);
-	addCheckbox(
-		uiContainer,
-		"autoOptions.forceShadow",
-		"Enable a light shadow on AK dialogs",
-		reapplyShadows
-	);
-	addCheckbox(
-		uiContainer,
-		"autoOptions.forceShadowGlobal",
-		"Enable a light shadow on ALL dialogs (overrides the above option!)",
-		reapplyShadows
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.timeDisplay",
-		"Format time displays as",
-		[
-			[
-				"default", "standard",
-			],
-			[
-				"short", "short",
-			],
-			[
-				"seconds", "seconds",
-			],
-		],
-		"",
-		changeTimeFormat
-	);
-	updateOptionsUI();
-}
-function rebuildOptionsPaneCrafting() {
-	const uiContainer = prepareContainer("akSettingsCraft");
-	addHeading(uiContainer, "Crafting");
-	addCheckbox(uiContainer, "autoOptions.autoCraft", "Craft materials when storage is near limit");
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.craftOptions.craftLimit",
-		"Craft when storage is",
-		percentages,
-		"full"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.craftOptions.secondaryCraftLimit",
-		"Keep secondary crafting outputs at least",
-		percentages,
-		"the amount of the inputs"
-	);
-	addAutocraftConfigLine(uiContainer, "catnip", "wood");
-	addAutocraftConfigLine(uiContainer, "wood", "beam", true);
-	addAutocraftConfigLine(uiContainer, "minerals", "slab", true);
-	addAutocraftConfigLine(uiContainer, "iron", "plate", true);
-	addAutocraftConfigLine(uiContainer, "iron and coal", "steel");
-	addAutocraftConfigLine(uiContainer, "slabs and steel", "concrete", false);
-	addAutocraftConfigLine(uiContainer, "steel", "gear", true);
-	addAutocraftConfigLine(uiContainer, "steel and titanium", "alloy");
-	addAutocraftConfigLine(uiContainer, "alloy and unobtainium", "eludium");
-	addAutocraftConfigLine(uiContainer, "beams", "scaffold", true);
-	addAutocraftConfigLine(uiContainer, "scaffolds, plates, and starcharts", "ship", true);
-	addAutocraftConfigLine(uiContainer, "ships, alloy, and blueprints", "tanker", true);
-	addAutocraftConfigLine(uiContainer, "oil", "kerosene");
-	addAutocraftConfigLine(uiContainer, "uranium", "thorium");
-	addAutocraftConfigLine(uiContainer, "slabs, beams, and plates", "megalith", true);
-	addAutocraftConfigLine(uiContainer, "time crystals and relics", "bloodstone", true);
-	addHeading(uiContainer, "Lunar Outposts");
-	addCheckbox(
-		uiContainer,
-		"autoOptions.lunarOutpostOptions.automate",
-		"Automatically manage Lunar Outposts according to power and uranium supply"
-	);
-	addCheckbox(
-		uiContainer,
-		"autoOptions.lunarOutpostOptions.useMinimumPowerProd",
-		"Calculate power according to winter (lowest solar output)"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.lunarOutpostOptions.activationLimit",
-		"Activate outposts when uranium storage above",
-		percentages,
-		"full"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.lunarOutpostOptions.reservedUranium",
-		"Stop all outposts when uranium below",
-		faithPercentages,
-		"storage capacity"
-	);
-	addButton(
-		uiContainer,
-		"Recalculate",
-		() => {
-			autoOptions.lunarOutpostOptions.active = false;
-		},
-		"Recheck input storage and shut off outposts if under the threshold. You probably won't ever need this."
-	);
-	addHeading(uiContainer, "Fur product crafting");
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.furOptions.parchmentMode",
-		"Auto-craft parchment",
-		[
-			[
-				"never", 0,
-			],
-			[
-				"all, before hunting", 1,
-			],
-			[
-				"on full culture storage", 2,
-			],
-			[
-				"both", 3,
-			],
-		],
-		"",
-		changeFurCrafts
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.parchmentAmount",
-		"When storage full, craft",
-		"parchment at a time"
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.parchmentInterval",
-		"Only craft parchment on full storage every",
-		"game tick(s)"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.furOptions.manuscriptMode",
-		"Auto-craft manuscripts",
-		[
-			[
-				"never", 0,
-			],
-			[
-				"all, before hunting", 1,
-			],
-			[
-				"on full culture storage", 2,
-			],
-			[
-				"both", 3,
-			],
-		],
-		"",
-		changeFurCrafts
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.manuscriptAmount",
-		"When storage full, craft",
-		"manuscript(s) at a time"
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.manuscriptInterval",
-		"Only craft manuscripts on full storage every",
-		"game tick(s)"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.furOptions.compendiumMode",
-		"Auto-craft compendiums",
-		[
-			[
-				"never", 0,
-			],
-			[
-				"all, before hunting", 1,
-			],
-			[
-				"on full science storage", 2,
-			],
-			[
-				"both", 3,
-			],
-		],
-		"",
-		changeFurCrafts
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.compendiumAmount",
-		"When storage full, craft",
-		"compendium(s) at a time"
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.compendiumInterval",
-		"Only craft compendiums on full storage every",
-		"game tick(s)"
-	);
-	addOptionMenu(
-		uiContainer,
-		"autoOptions.furOptions.blueprintMode",
-		"Auto-craft blueprints",
-		[
-			[
-				"never", 0,
-			],
-			[
-				"all, before hunting", 1,
-			],
-			[
-				"on full science storage", 2,
-			],
-			[
-				"both", 3,
-			],
-		],
-		"",
-		changeFurCrafts
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.blueprintAmount",
-		"When storage full, craft",
-		"blueprints(s) at a time"
-	);
-	addIndent(uiContainer);
-	addInputField(
-		uiContainer,
-		"autoOptions.craftOptions.blueprintInterval",
-		"Only craft blueprints on full storage every",
-		"game tick(s)"
-	);
-	addCheckbox(
-		uiContainer,
-		"autoOptions.craftOptions.blueprintPriority",
-		"When crafting both from full storage, check blueprints before compendiums"
-	);
-	updateOptionsUI();
-}
-function buildUI() {
-	const tableContainer = $('<div id="timerTableContainer"></div>');
-	tableContainer.html('<table id="timerTable" style="width: 100%; table-layout: fixed;"></table>');
-	$("body").append(tableContainer);
-	adjustColumns();
-	adjustTimerBar();
-	reapplyShadows();
-	realignSciptDialogs();
-	const akDialogClasses = "dialog help autokittens-dialog";
-	const switchToDialog = (which, pre) => {
-		$(scriptDialogId).hide();
-		if (typeof pre == "function") {
-			pre();
+	// Completely rebuild the calculator UI by wiping everything and then reassigning the calculators themselves
+	function rebuildCalculatorUI() {
+		const calcContainer = prepareContainer("kittenCalcs");
+		calculators = [];
+		addCalculator(calcContainer, "mintCalc", "Mint efficiency calculator", mintCalculator);
+		addCalculator(calcContainer, "aiCalc", "AI, gigaflops, and hashes", aiCalculator);
+		addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator);
+	}
+
+	// Toggle whether our script dialogs should be pushed to the right or positioned normally
+	function realignSciptDialogs() {
+		if (AutoKittensOptions.dialogRight) {
+			$("html").addClass("autokittensRight");
 		}
-		which.show();
-	};
-	const switcher = (...pass) => switchToDialog.bind(null, ...pass);
-	const makeContainer = (id) => prepareContainer(
-		$(
-			`<div class="${akDialogClasses}" id="akSettings${id.replace(/^[a-z]/u, (c) => c.toUpperCase())}"></div>`
-		).hide()
-	);
-	const masterSettingsContainer = makeContainer("master");
-	const prayerSettingsContainer = makeContainer("prayer");
-	const tradeSettingsContainer = makeContainer("trade");
-	const craftSettingsContainer = makeContainer("craft");
-	const huntSettingsContainer = makeContainer("hunt");
-	const uiSettingsContainer = makeContainer("ui");
-	const miscSettingsContainer = makeContainer("misc");
-	// The master panel, from here you have override toggles and the other panels
-	addButton(masterSettingsContainer, "Prayer Settings", switcher(prayerSettingsContainer))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "Trading Settings", switcher(tradeSettingsContainer))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "Crafting Settings", switcher(craftSettingsContainer, rebuildOptionsPaneCrafting))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "Hunting Settings", switcher(huntSettingsContainer))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "UI Settings", switcher(uiSettingsContainer, rebuildOptionsPaneGeneralUI))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "Miscellaneous Settings", switcher(miscSettingsContainer))
-		.addClass("autokittens-dispatch-button");
-	addButton(masterSettingsContainer, "Check for update", checkUpdate)
-		.addClass("autokittens-dispatch-button")
-		.attr("id", "autokittens-checkupdate");
-	addButton(
-		masterSettingsContainer,
-		"Reset options",
-		() => {
-			autoOptions = defaultOptions;
-			saveAutoOptions();
-			updateOptionsUI();
-		},
-		"DANGER! This CANNOT be undone!"
-	)
-		.addClass("autokittens-dispatch-button")
-		.attr("id", "autokittens-reset-options");
-	// Prayer settings
-	addHeading(prayerSettingsContainer, "Prayer");
-	addCheckbox(prayerSettingsContainer, "autoOptions.autoPray", "Praise the sun when faith is near limit");
-	addIndent(prayerSettingsContainer);
-	addOptionMenu(
-		prayerSettingsContainer,
-		"autoOptions.prayLimit",
-		"Pray when faith is",
-		faithPercentages,
-		"full"
-	);
-	addIndent(prayerSettingsContainer);
-	addCheckbox(
-		prayerSettingsContainer,
-		"autoOptions.autoResetFaith",
-		"Perform an apocrypha reset just before praising the sun"
-	);
-	// Trading settings
-	addHeading(tradeSettingsContainer, "Trading");
-	const races = [
-		[
-			"No one", "",
-		],
-	];
-	game.diplomacy.races.forEach((r) => {
-		races.push([
-			r.title || r.name, r.name,
+		else {
+			$("html").removeClass("autokittensRight");
+		}
+	}
+	// Toggle between the three dialog-shadow states (all dialogs, our dialogs, no dialogs)
+	function reapplyShadows() {
+		if (AutoKittensOptions.forceShadowGlobal) {
+			$("html")
+				.addClass("forceShadowGlobal")
+				.removeClass("forceShadow");
+		}
+		else if (AutoKittensOptions.forceShadow) {
+			$("html")
+				.addClass("forceShadow")
+				.removeClass("forceShadowGlobal");
+		}
+		else {
+			$("html")
+				.removeClass("forceShadow")
+				.removeClass("forceShadowGlobal");
+		}
+	}
+
+	// Unlock the game's UI theme with the given internal name, assuming it's not a default one
+	function unlockGameTheme(name) {
+		if (game.ui.defaultSchemes.includes(name)) {
+			return;
+		}
+		if (game.ui.allSchemes.includes(name)) {
+			if (window.AUTOKITTENS_ENABLE_DEBUG) {
+				console.log(`Unlocking game theme ${name}`);
+			}
+			if (!game.unlockedSchemes.includes(name)) {
+				game.unlockedSchemes.push(name);
+			}
+			$(`#schemeToggle > option[value=${name}]`).removeAttr("disabled");
+			(document.querySelector(`input#AutoKittens_extern_theme_${name}`) || {}).checked = true;
+			game.ui.updateOptions();
+		}
+	}
+	// Locks the game's UI theme by the given internal name, unless it's a default one
+	function lockGameTheme(name) {
+		if (game.ui.defaultSchemes.includes(name)) {
+			return;
+		}
+		if (game.ui.allSchemes.includes(name)) {
+			if (window.AUTOKITTENS_ENABLE_DEBUG) {
+				console.log(`Locking game theme ${name}`);
+			}
+			const idx = game.unlockedSchemes.indexOf(name);
+			if (idx >= 0) {
+				game.unlockedSchemes.splice(idx, 1);
+			}
+			$(`#schemeToggle > option[value=${name}]`).attr("disabled", "disabled");
+			(document.querySelector(`#AutoKittens_extern_theme_${name}`) || {}).checked = false;
+			game.ui.updateOptions();
+		}
+	}
+	// Unlock all non-default UI themes
+	function unlockAllGameThemes() {
+		for (const scheme of game.ui.allSchemes) {
+			unlockGameTheme(scheme);
+		}
+	}
+	// Lock all non-default UI themes
+	function lockAllGameThemes() {
+		for (const scheme of game.ui.allSchemes) {
+			lockGameTheme(scheme);
+		}
+	}
+
+	// Name's misleading cause it adds THREE lines - toggle, amount, rate - for autocrafting
+	// XXX refactor this too during the Grand UI Overhaul(tm)
+	function addAutocraftConfigLine(uiContainer, from, to, needsPluralising, labelFix) {
+		const internalTo = to.replace(/\s+([a-z])/gu, (m, l) => l.toUpperCase());
+		const labelTo = labelFix || internalTo.replace(/([A-Z])/gu, (l) => ` ${l.toLowerCase()}`);
+		const questioningSuffix = needsPluralising ? "(s)" : "";
+		const certainSuffix = needsPluralising ? "s" : "";
+		addCheckbox(
+			uiContainer,
+			`AutoKittensOptions.craftOptions.craft${internalTo.replace(/^[a-z]/u, (l) => l.toUpperCase())}`,
+			`Automatically convert ${from} to ${labelTo + certainSuffix}`
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			`AutoKittensOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Amount`,
+			"Craft",
+			`${labelTo + questioningSuffix} at a time`
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			`AutoKittensOptions.craftOptions.${internalTo.replace(/^[a-z]/u, (l) => l.toLowerCase())}Interval`,
+			`Craft ${labelTo + certainSuffix} every`,
+			"game tick(s)"
+		);
+	}
+
+	// Completely rebuilds the entire UI settings pane (XXX - bad)
+	function rebuildOptionsPaneGeneralUI() {
+		const uiContainer = prepareContainer("akSettingsUi");
+		addHeading(uiContainer, "Timer displays");
+		addCheckbox(uiContainer, "AutoKittensOptions.showTimerDisplays", "Show timer displays below", adjustTimerBar);
+		uiContainer.append("Note: Ordering by time may cause elements near cap to frequently switch places.<br />");
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.displayOrder",
+			"Order time displays by",
+			[
+				[ "default order", "standard" ],
+				[ "shortest first", "short" ],
+				[ "longest first", "long" ],
+			],
+			""
+		);
+		game.resPool.resources.forEach((r) => {
+			if (typeof AutoKittensOptions.displayOptions[r.name] !== "undefined") {
+				addCheckbox(uiContainer, `AutoKittensOptions.displayOptions.${r.name}`, `Show ${r.title || r.name}`);
+			}
+		});
+		addHeading(uiContainer, "Game options");
+		addCheckbox(uiContainer, "AutoKittensOptions.autoStar", "Automatically witness astronomical events");
+		addHeading(uiContainer, "Game themes");
+		addButton(uiContainer, "Unlock all", unlockAllGameThemes);
+		for (const theme of game.ui.allSchemes) {
+			if (!game.ui.defaultSchemes.includes(theme)) {
+				addExternCheckbox(
+					uiContainer,
+					`theme_${theme}`,
+					theme.slice(0, 1).toUpperCase() + theme.slice(1),
+					(toggle) => {
+						if (toggle.checked) {
+							unlockGameTheme(theme);
+						}
+						else {
+							lockGameTheme(theme);
+						}
+					},
+					game.unlockedSchemes.includes.bind(game.unlockedSchemes, theme)
+				);
+			}
+		}
+		addButton(uiContainer, "Lock all", lockAllGameThemes);
+		addHeading(uiContainer, "UI options");
+		addCheckbox(uiContainer, "AutoKittensOptions.warnOnLeave", "Warn before leaving the page");
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.widenUI",
+			"Make the game use more horizontal space (particularly useful for Grassy theme)",
+			adjustColumns
+		);
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.dialogRight",
+			"Move AK dialogs to the right of the window to improve playability",
+			realignSciptDialogs
+		);
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.forceShadow",
+			"Enable a light shadow on AK dialogs",
+			reapplyShadows
+		);
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.forceShadowGlobal",
+			"Enable a light shadow on ALL dialogs (overrides the above option!)",
+			reapplyShadows
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.timeDisplay",
+			"Format time displays as",
+			[
+				[ "default", "standard" ],
+				[ "short", "short" ],
+				[ "seconds", "seconds" ],
+			],
+			"",
+			changeTimeFormat
+		);
+		updateOptionsUI();
+	}
+	// Completely rebuilds the entire autocrafting settings pane (XXX - bad)
+	function rebuildOptionsPaneCrafting() {
+		const uiContainer = prepareContainer("akSettingsCraft");
+		addHeading(uiContainer, "Crafting");
+		addCheckbox(uiContainer, "AutoKittensOptions.autoCraft", "Craft materials when storage is near limit");
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.craftLimit",
+			"Craft when storage is",
+			percentages,
+			"full"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.secondaryCraftLimit",
+			"Keep secondary crafting outputs at least",
+			percentages,
+			"the amount of the inputs"
+		);
+		addAutocraftConfigLine(uiContainer, "catnip", "wood");
+		addAutocraftConfigLine(uiContainer, "wood", "beam", true);
+		addAutocraftConfigLine(uiContainer, "minerals", "slab", true);
+		addAutocraftConfigLine(uiContainer, "iron", "plate", true);
+		addAutocraftConfigLine(uiContainer, "iron and coal", "steel");
+		addAutocraftConfigLine(uiContainer, "slabs and steel", "concrete", false);
+		addAutocraftConfigLine(uiContainer, "steel", "gear", true);
+		addAutocraftConfigLine(uiContainer, "steel and titanium", "alloy");
+		addAutocraftConfigLine(uiContainer, "alloy and unobtainium", "eludium");
+		addAutocraftConfigLine(uiContainer, "beams", "scaffold", true);
+		addAutocraftConfigLine(uiContainer, "scaffolds, plates, and starcharts", "ship", true);
+		addAutocraftConfigLine(uiContainer, "ships, alloy, and blueprints", "tanker", true);
+		addAutocraftConfigLine(uiContainer, "oil", "kerosene");
+		addAutocraftConfigLine(uiContainer, "uranium", "thorium");
+		addAutocraftConfigLine(uiContainer, "slabs, beams, and plates", "megalith", true);
+		addAutocraftConfigLine(uiContainer, "time crystals and relics", "bloodstone", true);
+		addHeading(uiContainer, "Lunar Outposts");
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.lunarOutpostOptions.automate",
+			"Automatically manage Lunar Outposts according to power and uranium supply"
+		);
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.lunarOutpostOptions.useMinimumPowerProd",
+			"Calculate power according to winter (lowest solar output)"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.lunarOutpostOptions.activationLimit",
+			"Activate outposts when uranium storage above",
+			percentages,
+			"full"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.lunarOutpostOptions.reservedUranium",
+			"Stop all outposts when uranium below",
+			faithPercentages,
+			"storage capacity"
+		);
+		addButton(
+			uiContainer,
+			"Recalculate",
+			() => {
+				AutoKittensOptions.lunarOutpostOptions.active = false;
+			},
+			"Recheck input storage and shut off outposts if under the threshold. You probably won't ever need this."
+		);
+		addHeading(uiContainer, "Fur product crafting");
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.furOptions.parchmentMode",
+			"Auto-craft parchment",
+			[
+				[
+					"never", 0,
+				],
+				[
+					"all, before hunting", 1,
+				],
+				[
+					"on full culture storage", 2,
+				],
+				[
+					"both", 3,
+				],
+			],
+			"",
+			changeFurCrafts
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.parchmentAmount",
+			"When storage full, craft",
+			"parchment at a time"
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.parchmentInterval",
+			"Only craft parchment on full storage every",
+			"game tick(s)"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.furOptions.manuscriptMode",
+			"Auto-craft manuscripts",
+			[
+				[
+					"never", 0,
+				],
+				[
+					"all, before hunting", 1,
+				],
+				[
+					"on full culture storage", 2,
+				],
+				[
+					"both", 3,
+				],
+			],
+			"",
+			changeFurCrafts
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.manuscriptAmount",
+			"When storage full, craft",
+			"manuscript(s) at a time"
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.manuscriptInterval",
+			"Only craft manuscripts on full storage every",
+			"game tick(s)"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.furOptions.compendiumMode",
+			"Auto-craft compendiums",
+			[
+				[
+					"never", 0,
+				],
+				[
+					"all, before hunting", 1,
+				],
+				[
+					"on full science storage", 2,
+				],
+				[
+					"both", 3,
+				],
+			],
+			"",
+			changeFurCrafts
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.compendiumAmount",
+			"When storage full, craft",
+			"compendium(s) at a time"
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.compendiumInterval",
+			"Only craft compendiums on full storage every",
+			"game tick(s)"
+		);
+		addOptionMenu(
+			uiContainer,
+			"AutoKittensOptions.furOptions.blueprintMode",
+			"Auto-craft blueprints",
+			[
+				[
+					"never", 0,
+				],
+				[
+					"all, before hunting", 1,
+				],
+				[
+					"on full science storage", 2,
+				],
+				[
+					"both", 3,
+				],
+			],
+			"",
+			changeFurCrafts
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.blueprintAmount",
+			"When storage full, craft",
+			"blueprints(s) at a time"
+		);
+		addIndent(uiContainer);
+		addInputField(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.blueprintInterval",
+			"Only craft blueprints on full storage every",
+			"game tick(s)"
+		);
+		addCheckbox(
+			uiContainer,
+			"AutoKittensOptions.craftOptions.blueprintPriority",
+			"When crafting both from full storage, check blueprints before compendiums"
+		);
+		updateOptionsUI();
+	}
+	// Over three hundred lines of UI assembly, but at least it only runs once.
+	// / XXX - I don't care if it only runs once, the UI code is still shit and needs to be overhauled.
+	function buildUI() {
+		const tableContainer = $('<div id="timerTableContainer"></div>');
+		tableContainer.html('<table id="timerTable" style="width: 100%; table-layout: fixed;"></table>');
+		$("body").append(tableContainer);
+		adjustColumns();
+		adjustTimerBar();
+		reapplyShadows();
+		realignSciptDialogs();
+		const akDialogClasses = "dialog help autokittens-dialog";
+		const switchToDialog = (which, pre) => {
+			$(scriptDialogClass).hide();
+			if (typeof pre == "function") {
+				pre();
+			}
+			which.show();
+		};
+		const switcher = (...pass) => switchToDialog.bind(null, ...pass);
+		const makeContainer = (id) => prepareContainer(
+			$(
+				`<div class="${akDialogClasses}" id="akSettings${id.replace(/^[a-z]/u, (c) => c.toUpperCase())}"></div>`
+			).hide()
+		);
+		const masterSettingsContainer = makeContainer("master");
+		const prayerSettingsContainer = makeContainer("prayer");
+		const tradeSettingsContainer = makeContainer("trade");
+		const craftSettingsContainer = makeContainer("craft");
+		const huntSettingsContainer = makeContainer("hunt");
+		const uiSettingsContainer = makeContainer("ui");
+		const miscSettingsContainer = makeContainer("misc");
+		// The master panel, from here you have override toggles and the other panels
+		addButton(masterSettingsContainer, "Prayer Settings", switcher(prayerSettingsContainer))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "Trading Settings", switcher(tradeSettingsContainer))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "Crafting Settings", switcher(craftSettingsContainer, rebuildOptionsPaneCrafting))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "Hunting Settings", switcher(huntSettingsContainer))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "UI Settings", switcher(uiSettingsContainer, rebuildOptionsPaneGeneralUI))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "Miscellaneous Settings", switcher(miscSettingsContainer))
+			.addClass("autokittens-dispatch-button");
+		addButton(masterSettingsContainer, "Check for update", checkUpdate)
+			.addClass("autokittens-dispatch-button")
+			.attr("id", "autokittens-checkupdate");
+		addButton(
+			masterSettingsContainer,
+			"Reset options",
+			() => {
+				AutoKittensOptions = defaultOptions;
+				saveAutoOptions();
+				updateOptionsUI();
+			},
+			"DANGER! This CANNOT be undone!"
+		)
+			.addClass("autokittens-dispatch-button")
+			.attr("id", "autokittens-reset-options");
+		// Prayer settings
+		addHeading(prayerSettingsContainer, "Prayer");
+		addCheckbox(prayerSettingsContainer, "AutoKittensOptions.autoPray", "Praise the sun when faith is near limit");
+		addIndent(prayerSettingsContainer);
+		addOptionMenu(
+			prayerSettingsContainer,
+			"AutoKittensOptions.prayLimit",
+			"Pray when faith is",
+			faithPercentages,
+			"full"
+		);
+		addIndent(prayerSettingsContainer);
+		addCheckbox(
+			prayerSettingsContainer,
+			"AutoKittensOptions.autoResetFaith",
+			"Perform an apocrypha reset just before praising the sun"
+		);
+		// Trading settings
+		addHeading(tradeSettingsContainer, "Trading");
+		const races = [
+			[
+				"No one", "",
+			],
+		];
+		game.diplomacy.races.forEach((r) => {
+			races.push([
+				r.title || r.name, r.name,
+			]);
+		});
+		addCheckbox(tradeSettingsContainer, "AutoKittensOptions.autoTrade", "Trade when gold is near limit");
+		addIndent(tradeSettingsContainer);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradeLimit",
+			"Trade when gold is",
+			percentages,
+			"full"
+		);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradePartner",
+			"Trade with",
+			races,
+			"by default"
+		);
+		addCheckbox(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.suppressTradeLog",
+			"Hide log messages when auto-trading"
+		);
+		races[0][0] = "Default selection";
+		addIndent(tradeSettingsContainer);
+		addInputField(tradeSettingsContainer, "AutoKittensOptions.tradeOptions.tradeCount", "Send", "caravans at a time");
+		addCheckbox(tradeSettingsContainer, "AutoKittensOptions.tradeOptions.tradeSpring", "Allow trading in spring");
+		addIndent(tradeSettingsContainer);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradePartnerSpring",
+			"Trade with",
+			races,
+			" in spring"
+		);
+		addCheckbox(tradeSettingsContainer, "AutoKittensOptions.tradeOptions.tradeSummer", "Allow trading in summer");
+		addIndent(tradeSettingsContainer);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradePartnerSummer",
+			"Trade with",
+			races,
+			" in summer"
+		);
+		addCheckbox(tradeSettingsContainer, "AutoKittensOptions.tradeOptions.tradeAutumn", "Allow trading in autumn");
+		addIndent(tradeSettingsContainer);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradePartnerAutumn",
+			"Trade with",
+			races,
+			" in autumn"
+		);
+		addCheckbox(tradeSettingsContainer, "AutoKittensOptions.tradeOptions.tradeWinter", "Allow trading in winter");
+		addIndent(tradeSettingsContainer);
+		addOptionMenu(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.tradePartnerWinter",
+			"Trade with",
+			races,
+			" in winter"
+		);
+		addCheckbox(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.playMarket",
+			"Play the blackcoin market like a cheap fiddle"
+		);
+		addIndent(tradeSettingsContainer);
+		addInputField(
+			tradeSettingsContainer,
+			"AutoKittensOptions.tradeOptions.buyBlackcoinBelow",
+			"Buy blackcoin for at most",
+			"relics"
+		);
+		// Hunting settings
+		addHeading(huntSettingsContainer, "Hunting");
+		addCheckbox(huntSettingsContainer, "AutoKittensOptions.autoHunt", "Hunt when catpower is near limit");
+		addOptionMenu(
+			huntSettingsContainer,
+			"AutoKittensOptions.huntOptions.huntLimit",
+			"Hunt when catpower is",
+			percentages,
+			"full"
+		);
+		addCheckbox(
+			huntSettingsContainer,
+			"AutoKittensOptions.huntOptions.suppressHuntLog",
+			"Hide log messages when auto-hunting (includes hunt-triggered crafts)"
+		);
+		addCheckbox(
+			huntSettingsContainer,
+			"AutoKittensOptions.huntOptions.singleHunts",
+			"Limit the number of hunts sent out at once"
+		);
+		addIndent(huntSettingsContainer);
+		addInputField(huntSettingsContainer, "AutoKittensOptions.huntOptions.huntCount", "Send out", "hunts at once");
+		addCheckbox(
+			huntSettingsContainer,
+			"AutoKittensOptions.huntOptions.huntEarly",
+			"Hunt as soon as the maximum number of hunts is reached (relative to the limit)"
+		);
+		// Miscellaneous settings
+		addHeading(miscSettingsContainer, "Miscellaneous");
+		addCheckbox(
+			miscSettingsContainer,
+			"AutoKittensOptions.perfectLeadership",
+			"Pretend that your leader is perfect at everything",
+			"If only we could do this in the real world..."
+		);
+		addHeading(miscSettingsContainer, "Pollution");
+		addCheckbox(miscSettingsContainer, "AutoKittensOptions.disablePollution", "Actually disable pollution, for real");
+		addButton(
+			miscSettingsContainer,
+			"Reset pollution level",
+			() => {
+				game.bld.cathPollution = 0;
+			},
+			"Remove all existing pollution WITHOUT locking it so you that you can keep generating more. For some reason."
+		);
+		// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
+		// functions above instead of being in here
+		const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
+		$("#gamePageContainer").append([
+			masterSettingsContainer,
+			prayerSettingsContainer,
+			tradeSettingsContainer,
+			craftSettingsContainer,
+			huntSettingsContainer,
+			uiSettingsContainer,
+			miscSettingsContainer,
+			calcContainer,
 		]);
-	});
-	addCheckbox(tradeSettingsContainer, "autoOptions.autoTrade", "Trade when gold is near limit");
-	addIndent(tradeSettingsContainer);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradeLimit",
-		"Trade when gold is",
-		percentages,
-		"full"
-	);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradePartner",
-		"Trade with",
-		races,
-		"by default"
-	);
-	addCheckbox(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.suppressTradeLog",
-		"Hide log messages when auto-trading"
-	);
-	races[0][0] = "Default selection";
-	addIndent(tradeSettingsContainer);
-	addInputField(tradeSettingsContainer, "autoOptions.tradeOptions.tradeCount", "Send", "caravans at a time");
-	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeSpring", "Allow trading in spring");
-	addIndent(tradeSettingsContainer);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradePartnerSpring",
-		"Trade with",
-		races,
-		" in spring"
-	);
-	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeSummer", "Allow trading in summer");
-	addIndent(tradeSettingsContainer);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradePartnerSummer",
-		"Trade with",
-		races,
-		" in summer"
-	);
-	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeAutumn", "Allow trading in autumn");
-	addIndent(tradeSettingsContainer);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradePartnerAutumn",
-		"Trade with",
-		races,
-		" in autumn"
-	);
-	addCheckbox(tradeSettingsContainer, "autoOptions.tradeOptions.tradeWinter", "Allow trading in winter");
-	addIndent(tradeSettingsContainer);
-	addOptionMenu(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.tradePartnerWinter",
-		"Trade with",
-		races,
-		" in winter"
-	);
-	addCheckbox(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.playMarket",
-		"Play the blackcoin market like a cheap fiddle"
-	);
-	addIndent(tradeSettingsContainer);
-	addInputField(
-		tradeSettingsContainer,
-		"autoOptions.tradeOptions.buyBlackcoinBelow",
-		"Buy blackcoin for at most",
-		"relics"
-	);
-	// Hunting settings
-	addHeading(huntSettingsContainer, "Hunting");
-	addCheckbox(huntSettingsContainer, "autoOptions.autoHunt", "Hunt when catpower is near limit");
-	addOptionMenu(
-		huntSettingsContainer,
-		"autoOptions.huntOptions.huntLimit",
-		"Hunt when catpower is",
-		percentages,
-		"full"
-	);
-	addCheckbox(
-		huntSettingsContainer,
-		"autoOptions.huntOptions.suppressHuntLog",
-		"Hide log messages when auto-hunting (includes hunt-triggered crafts)"
-	);
-	addCheckbox(
-		huntSettingsContainer,
-		"autoOptions.huntOptions.singleHunts",
-		"Limit the number of hunts sent out at once"
-	);
-	addIndent(huntSettingsContainer);
-	addInputField(huntSettingsContainer, "autoOptions.huntOptions.huntCount", "Send out", "hunts at once");
-	addCheckbox(
-		huntSettingsContainer,
-		"autoOptions.huntOptions.huntEarly",
-		"Hunt as soon as the maximum number of hunts is reached (relative to the limit)"
-	);
-	// Miscellaneous settings
-	addHeading(miscSettingsContainer, "Miscellaneous");
-	addCheckbox(
-		miscSettingsContainer,
-		"autoOptions.perfectLeadership",
-		"Pretend that your leader is perfect at everything",
-		"If only we could do this in the real world..."
-	);
-	addHeading(miscSettingsContainer, "Pollution");
-	addCheckbox(miscSettingsContainer, "autoOptions.disablePollution", "Actually disable pollution, for real");
-	addButton(
-		miscSettingsContainer,
-		"Reset pollution level",
-		() => {
-			game.bld.cathPollution = 0;
-		},
-		"Remove all existing pollution WITHOUT locking it so you that you can keep generating more. For some reason."
-	);
-	// The rest of the settings panels are dynamic, so they have `rebuildOptionsPane<Purpose>()`
-	// functions above instead of being in here
-	const calcContainer = $(`<div class="${akDialogClasses}" id="kittenCalcs"></div>`).hide();
-	$("#gamePageContainer").append([
-		masterSettingsContainer,
-		prayerSettingsContainer,
-		tradeSettingsContainer,
-		craftSettingsContainer,
-		huntSettingsContainer,
-		uiSettingsContainer,
-		miscSettingsContainer,
-		calcContainer,
-	]);
-	// Put the links in the headers
-	const optLink = $('<a id="autokittens-optlink" href="#">AK</a>')
-		.on("click", switcher(masterSettingsContainer));
-	const calcLink = $('<a id="autokittens-calclink" href="#">Calcs</a>')
-		.attr("title", "According to my catculations...")
-		.on("click", switcher(calcContainer, rebuildCalculatorUI));
-	$("#devModeButton").parent()
-		.prepend(optLink, " | ", calcLink, " | ");
-	// Inject our stylesheet, because trying to manage inline styles with
-	// this sort of logic/selection criteria is /not/ happening
-	const inlineStylesheet = $('<style type="text/css"></style>');
-	inlineStylesheet.text(`
+		// Put the links in the headers
+		const optLink = $('<a id="autokittens-optlink" href="#">AK</a>')
+			.on("click", switcher(masterSettingsContainer));
+		const calcLink = $('<a id="autokittens-calclink" href="#">Calcs</a>')
+			.attr("title", "According to my catculations...")
+			.on("click", switcher(calcContainer, rebuildCalculatorUI));
+		$("#devModeButton").parent()
+			.prepend(optLink, " | ", calcLink, " | ");
+		// Inject our stylesheet, because trying to manage inline styles with
+		// this sort of logic/selection criteria is /not/ happening
+		const inlineStylesheet = $('<style type="text/css"></style>');
+		inlineStylesheet.text(`
 		html.autokittensUpdateCheckDisabled #autokittens-checkupdate {
 			color: red;
 		}
@@ -1591,463 +1673,464 @@ function buildUI() {
 			content: " ⚠";
 		}
 	`.trim());
-	$("head").append(inlineStylesheet);
-}
+		$("head").append(inlineStylesheet);
+	}
 
-function starClick() {
-	if (autoOptions.autoStar) {
-		(document.querySelector("#observeBtn") || {
-			click: NOP,
-		}).click();
+	// This is used by the "warn before leaving" setting
+	function unloadGuard(evt) { // eslint-disable-line consistent-return
+		if (AutoKittensOptions.warnOnLeave) {
+			const warning = "Are you sure you want to leave?";
+			evt.preventDefault();
+			evt.returnValue = warning;
+			return warning;
+		}
 	}
-}
-function autoHunt() {
-	if (!autoOptions.autoHunt) {
-		return;
+
+	// Click on astronomical events
+	function starClick() {
+		if (AutoKittensOptions.autoStar) {
+			(document.querySelector("#observeBtn") || {
+				click: NOP,
+			}).click();
+		}
 	}
-	const msgFunc = game.msg;
-	if (autoOptions.huntOptions.suppressHuntLog) {
-		game.msg = NOP;
-	}
-	const catpower = game.resPool.get("manpower");
-	const leftBeforeCap = (1 - autoOptions.huntOptions.huntLimit) * catpower.maxValue;
-	if (
-		catpower.value / catpower.maxValue >= autoOptions.huntOptions.huntLimit
+	// DEPLOY THE HUNT
+	function autoHunt() {
+		if (!AutoKittensOptions.autoHunt) {
+			return;
+		}
+		const msgFunc = game.msg;
+		if (AutoKittensOptions.huntOptions.suppressHuntLog) {
+			game.msg = NOP;
+		}
+		const catpower = game.resPool.get("manpower");
+		const leftBeforeCap = (1 - AutoKittensOptions.huntOptions.huntLimit) * catpower.maxValue;
+		if (
+			catpower.value / catpower.maxValue >= AutoKittensOptions.huntOptions.huntLimit
 		|| (
-			autoOptions.huntOptions.huntEarly
+			AutoKittensOptions.huntOptions.huntEarly
 			&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
 		)
-	) {
-		if (autoOptions.huntOptions.craftParchment && game.workshop.getCraft("parchment").unlocked) {
-			game.craftAll("parchment");
-		}
-		if (autoOptions.huntOptions.craftManuscript && game.workshop.getCraft("manuscript").unlocked) {
-			game.craftAll("manuscript");
-		}
-		if (autoOptions.huntOptions.craftCompendium && game.workshop.getCraft("compedium").unlocked) {
-			game.craftAll("compedium");
-		}
-		if (autoOptions.huntOptions.craftBlueprint && game.workshop.getCraft("blueprint").unlocked) {
-			game.craftAll("blueprint");
-		}
-		if (autoOptions.huntOptions.singleHunts) {
-			const squads = Math.floor(autoOptions.huntOptions.huntCount);
-			if (squads >= 1) {
-				const cost = squads * 100;
-				if (game.resPool.get("manpower").value >= cost) {
-					game.resPool.addResEvent("manpower", -cost);
-					game.village.gainHuntRes(squads);
+		) {
+			if (AutoKittensOptions.huntOptions.craftParchment && game.workshop.getCraft("parchment").unlocked) {
+				game.craftAll("parchment");
+			}
+			if (AutoKittensOptions.huntOptions.craftManuscript && game.workshop.getCraft("manuscript").unlocked) {
+				game.craftAll("manuscript");
+			}
+			if (AutoKittensOptions.huntOptions.craftCompendium && game.workshop.getCraft("compedium").unlocked) {
+				game.craftAll("compedium");
+			}
+			if (AutoKittensOptions.huntOptions.craftBlueprint && game.workshop.getCraft("blueprint").unlocked) {
+				game.craftAll("blueprint");
+			}
+			if (AutoKittensOptions.huntOptions.singleHunts) {
+				const squads = Math.floor(AutoKittensOptions.huntOptions.huntCount);
+				if (squads >= 1) {
+					const cost = squads * 100;
+					if (game.resPool.get("manpower").value >= cost) {
+						game.resPool.addResEvent("manpower", -cost);
+						game.village.gainHuntRes(squads);
+					}
 				}
 			}
-		}
-		else {
-			game.village.huntAll();
-		}
-	}
-	if (autoOptions.huntOptions.suppressHuntLog) {
-		game.msg = msgFunc;
-	}
-}
-function autoCraft() {
-	if (!autoOptions.autoCraft) {
-		return;
-	}
-	// To add a new one:
-	// 1: add `craft<Thing>` and `<thing>Amount` options in the defaults
-	// 2: add the `addAutocraftConfigLine(uiContainer, '<from label>', '<internal to>', pluraliseOutputLabelP)`
-	//    line to `rebuildOptionsUI()` above
-	// 3: add a `['<result ID>', 'craft<Thing>', '<thing>Amount', '<thing>Interval', condition]` line here
-	const resources = [
-		[
-			"bloodstone",
-			"craftBloodstone",
-			"bloodstoneAmount",
-			"bloodstoneInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"tanker",
-			"craftTanker",
-			"tankerAmount",
-			"tankerInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"ship",
-			"craftShip",
-			"shipAmount",
-			"shipInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"concrate",
-			"craftConcrete",
-			"concreteAmount",
-			"concreteInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"megalith",
-			"craftMegalith",
-			"megalithAmount",
-			"megalithInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"slab",
-			"craftSlab",
-			"slabAmount",
-			"slabInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"gear",
-			"craftGear",
-			"gearAmount",
-			"gearInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"alloy",
-			"craftAlloy",
-			"alloyAmount",
-			"alloyInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"steel",
-			"craftSteel",
-			"steelAmount",
-			"steelInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"plate",
-			"craftPlate",
-			"plateAmount",
-			"plateInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"eludium",
-			"craftEludium",
-			"eludiumAmount",
-			"eludiumInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"kerosene",
-			"craftKerosene",
-			"keroseneAmount",
-			"keroseneInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"thorium",
-			"craftThorium",
-			"thoriumAmount",
-			"thoriumInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"scaffold",
-			"craftScaffold",
-			"scaffoldAmount",
-			"scaffoldInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"beam",
-			"craftBeam",
-			"beamAmount",
-			"beamInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"wood",
-			"craftWood",
-			"woodAmount",
-			"woodInterval",
-			true,
-		],
-		[
-			"parchment",
-			"craftParchment",
-			"parchmentAmount",
-			"parchmentInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"manuscript",
-			"craftManuscript",
-			"manuscriptAmount",
-			"manuscriptInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"blueprint",
-			"craftBlueprint",
-			"blueprintAmount",
-			"blueprintInterval",
-			game.science.get("construction").researched && autoOptions.craftOptions.blueprintPriority,
-		],
-		[
-			"compedium",
-			"craftCompendium",
-			"compendiumAmount",
-			"compendiumInterval",
-			game.science.get("construction").researched,
-		],
-		[
-			"blueprint",
-			"craftBlueprint",
-			"blueprintAmount",
-			"blueprintInterval",
-			game.science.get("construction").researched && !autoOptions.craftOptions.blueprintPriority,
-		],
-	];
-	AUTOCRAFT: for (const craftData of resources) {
-		const [
-			product,
-			toggleSetting,
-			amountSetting,
-			intervalSetting,
-			consider,
-		] = craftData;
-		const costs = autoKittensCache.craftingInputs[product];
-		const ticksSinceLastCraft = craftingTickTracker[product] || 1;
-		if (
-			consider
-			&& autoOptions.craftOptions[toggleSetting]
-			&& ticksSinceLastCraft >= autoOptions.craftOptions[intervalSetting]
-			&& game.workshop.getCraft(product).unlocked
-		) {
-			if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
-				console.log(`Attempting to craft ${product}`);
+			else {
+				game.village.huntAll();
 			}
-			craftingTickTracker[product] = 0;
-			const output = game.resPool.get(product);
-			for (const resource in costs) {
-				if (ownProp(costs, resource)) {
-					if (product == "steel" && resource == "iron") {
+		}
+		if (AutoKittensOptions.huntOptions.suppressHuntLog) {
+			game.msg = msgFunc;
+		}
+	}
+	// Craft things
+	function autoCraft() {
+		if (!AutoKittensOptions.autoCraft) {
+			return;
+		}
+		// To add a new one:
+		// 1: add `craft<Thing>` and `<thing>Amount` options in the defaults
+		// 2: add the `addAutocraftConfigLine(uiContainer, '<from label>', '<internal to>', pluraliseOutputLabelP)`
+		//    line to `rebuildOptionsUI()` above
+		// 3: add a `['<result ID>', 'craft<Thing>', '<thing>Amount', '<thing>Interval', condition]` line here
+		const resources = [
+			[
+				"bloodstone",
+				"craftBloodstone",
+				"bloodstoneAmount",
+				"bloodstoneInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"tanker",
+				"craftTanker",
+				"tankerAmount",
+				"tankerInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"ship",
+				"craftShip",
+				"shipAmount",
+				"shipInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"concrate",
+				"craftConcrete",
+				"concreteAmount",
+				"concreteInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"megalith",
+				"craftMegalith",
+				"megalithAmount",
+				"megalithInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"slab",
+				"craftSlab",
+				"slabAmount",
+				"slabInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"gear",
+				"craftGear",
+				"gearAmount",
+				"gearInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"alloy",
+				"craftAlloy",
+				"alloyAmount",
+				"alloyInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"steel",
+				"craftSteel",
+				"steelAmount",
+				"steelInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"plate",
+				"craftPlate",
+				"plateAmount",
+				"plateInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"eludium",
+				"craftEludium",
+				"eludiumAmount",
+				"eludiumInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"kerosene",
+				"craftKerosene",
+				"keroseneAmount",
+				"keroseneInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"thorium",
+				"craftThorium",
+				"thoriumAmount",
+				"thoriumInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"scaffold",
+				"craftScaffold",
+				"scaffoldAmount",
+				"scaffoldInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"beam",
+				"craftBeam",
+				"beamAmount",
+				"beamInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"wood",
+				"craftWood",
+				"woodAmount",
+				"woodInterval",
+				true,
+			],
+			[
+				"parchment",
+				"craftParchment",
+				"parchmentAmount",
+				"parchmentInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"manuscript",
+				"craftManuscript",
+				"manuscriptAmount",
+				"manuscriptInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"blueprint",
+				"craftBlueprint",
+				"blueprintAmount",
+				"blueprintInterval",
+				game.science.get("construction").researched && AutoKittensOptions.craftOptions.blueprintPriority,
+			],
+			[
+				"compedium",
+				"craftCompendium",
+				"compendiumAmount",
+				"compendiumInterval",
+				game.science.get("construction").researched,
+			],
+			[
+				"blueprint",
+				"craftBlueprint",
+				"blueprintAmount",
+				"blueprintInterval",
+				game.science.get("construction").researched && !AutoKittensOptions.craftOptions.blueprintPriority,
+			],
+		];
+		AUTOCRAFT: for (const craftData of resources) {
+			const [
+				product,
+				toggleSetting,
+				amountSetting,
+				intervalSetting,
+				consider,
+			] = craftData;
+			const costs = AutoKittensCache.craftingInputs[product];
+			if (
+				consider
+				&& AutoKittensOptions.craftOptions[toggleSetting]
+				&& game.ticks % AutoKittensOptions.craftOptions[intervalSetting] == 0
+				&& game.workshop.getCraft(product).unlocked
+			) {
+				if (window.AUTOKITTENS_ENABLE_DEBUG_SPAM) {
+					console.log(`Attempting to craft ${product}`);
+				}
+				const output = game.resPool.get(product);
+				for (const resource in costs) {
+					if (ownProp(costs, resource)) {
+						if (product == "steel" && resource == "iron") {
 						// It's a monkey patch, I know - I'm working on a proper fix
 						// update 2022-08-31: how long has it even been?
-						continue;
-					}
-					const input = game.resPool.get(resource);
-					if (input.value < costs[resource]) {
+							continue;
+						}
+						const input = game.resPool.get(resource);
+						if (input.value < costs[resource]) {
+							continue AUTOCRAFT;
+						}
+						if (input.maxValue > 0) {
+						// Check by percentage of max value - the original method
+							const percentage = input.value / input.maxValue;
+							if (percentage < AutoKittensOptions.craftOptions.craftLimit) {
+								continue AUTOCRAFT;
+							}
+							continue;
+						}
+						if (input.value > 0) {
+						// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
+							const percentage = output.value / input.value;
+							// If we have MORE of the OUTPUT than the threshold, skip this entirely
+							if (percentage > AutoKittensOptions.craftOptions.secondaryCraftLimit) {
+								continue AUTOCRAFT;
+							}
+							continue;
+						}
+						// Input is uncapped, input <= output, output <= 0, (transitively) input <= 0
 						continue AUTOCRAFT;
 					}
-					if (input.maxValue > 0) {
-						// Check by percentage of max value - the original method
-						const percentage = input.value / input.maxValue;
-						if (percentage < autoOptions.craftOptions.craftLimit) {
-							continue AUTOCRAFT;
-						}
-						continue;
-					}
-					if (input.value > 0) {
-						// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
-						const percentage = output.value / input.value;
-						// If we have MORE of the OUTPUT than the threshold, skip this entirely
-						if (percentage > autoOptions.craftOptions.secondaryCraftLimit) {
-							continue AUTOCRAFT;
-						}
-						continue;
-					}
-					// Input is uncapped, input <= output, output <= 0, (transitively) input <= 0
-					continue AUTOCRAFT;
 				}
+				tryCraft(product, AutoKittensOptions.craftOptions[amountSetting]);
 			}
-			tryCraft(product, autoOptions.craftOptions[amountSetting]);
 		}
-		else if (window.AUTOKITTENS_DEBUG_SPAM_ENABLED) {
-			console.log(
-				[
-					`Haven't crafted ${product} in ${ticksSinceLastCraft} ticks,`,
-					`crafting every ${autoOptions.craftOptions[intervalSetting]} ticks`,
-				].join(" ")
-			);
+	}
+	// Pray to ceiling cat (who is watching you)
+	function autoPray() {
+		if (!AutoKittensOptions.autoPray) {
+			return;
 		}
-		craftingTickTracker[product] = ticksSinceLastCraft + 1;
-	}
-}
-function autoPray() {
-	if (!autoOptions.autoPray) {
-		return;
-	}
-	const faith = game.resPool.get("faith");
-	if (faith.value / faith.maxValue >= autoOptions.prayLimit && faith.value > 0.01) {
-		if (autoOptions.autoResetFaith) {
-			game.religion._resetFaithInternal(1.01); // dunno why the source uses 1.01, but it does
+		const faith = game.resPool.get("faith");
+		if (faith.value / faith.maxValue >= AutoKittensOptions.prayLimit && faith.value > 0.01) {
+			if (AutoKittensOptions.autoResetFaith) {
+				game.religion._resetFaithInternal(1.01); // dunno why the source uses 1.01, but it does
+			}
+			game.religion.praise();
 		}
-		game.religion.praise();
 	}
-}
-function autoTrade() {
-	if (!autoOptions.autoTrade || autoOptions.tradeOptions.tradePartner === "") {
-		return;
-	}
-	let race;
-	const season = [
-		"Spring",
-		"Summer",
-		"Autumn",
-		"Winter",
-	][game.calendar.season];
-	if (autoOptions.tradeOptions[`tradePartner${season}`]) {
-		race = game.diplomacy.get(autoOptions.tradeOptions[`tradePartner${season}`]);
-	}
-	else {
-		race = game.diplomacy.get(autoOptions.tradeOptions.tradePartner);
-	}
-	if (!race.unlocked) {
-		return;
-	}
-	const gold = game.resPool.get("gold");
-	if (
-		game.resPool.get(race.buys[0].name).value < race.buys[0].val
+	// Trade with other civilisations
+	function autoTrade() {
+		if (!AutoKittensOptions.autoTrade || AutoKittensOptions.tradeOptions.tradePartner === "") {
+			return;
+		}
+		let race;
+		const season = [
+			"Spring",
+			"Summer",
+			"Autumn",
+			"Winter",
+		][game.calendar.season];
+		if (AutoKittensOptions.tradeOptions[`tradePartner${season}`]) {
+			race = game.diplomacy.get(AutoKittensOptions.tradeOptions[`tradePartner${season}`]);
+		}
+		else {
+			race = game.diplomacy.get(AutoKittensOptions.tradeOptions.tradePartner);
+		}
+		if (!race.unlocked) {
+			return;
+		}
+		const gold = game.resPool.get("gold");
+		if (
+			game.resPool.get(race.buys[0].name).value < race.buys[0].val
 		|| game.resPool.get("manpower").value < 50
-		|| gold.value / gold.maxValue < autoOptions.tradeOptions.tradeLimit
-	) {
-		return;
+			|| gold.value / gold.maxValue < AutoKittensOptions.tradeOptions.tradeLimit
+		) {
+			return;
+		}
+		const msgFunc = game.msg;
+		if (AutoKittensOptions.tradeOptions.suppressTradeLog) {
+			game.msg = NOP;
+		}
+		if (AutoKittensOptions.tradeOptions[`trade${season}`]) {
+			game.diplomacy.tradeMultiple(race, Math.max(AutoKittensOptions.tradeOptions.tradeCount, 1));
+		}
+		if (AutoKittensOptions.tradeOptions.suppressTradeLog) {
+			game.msg = msgFunc;
+		}
 	}
-	const msgFunc = game.msg;
-	if (autoOptions.tradeOptions.suppressTradeLog) {
-		game.msg = NOP;
-	}
-	if (autoOptions.tradeOptions[`trade${season}`]) {
-		game.diplomacy.tradeMultiple(race, Math.max(autoOptions.tradeOptions.tradeCount, 1));
-	}
-	if (autoOptions.tradeOptions.suppressTradeLog) {
-		game.msg = msgFunc;
-	}
-}
-function autoBlackcoin() {
-	if (!autoOptions.tradeOptions.playMarket) {
-		return;
-	}
-	// From the wiki:
-	// > After researching Antimatter the leviathan info box will list a thing called Blackcoin
-	// > Once you've researched Blackchain (or if you already have blackcoins),
-	// > blackcoins can be bought with relics.
-	if (
-		!game.science.get("antimatter").researched
+	// Play the crypto market as if it actually works (which, tbf, it does in the game)
+	function autoBlackcoin() {
+		if (!AutoKittensOptions.tradeOptions.playMarket) {
+			return;
+		}
+		// From the wiki:
+		// > After researching Antimatter the leviathan info box will list a thing called Blackcoin
+		// > Once you've researched Blackchain (or if you already have blackcoins),
+		// > blackcoins can be bought with relics.
+		if (
+			!game.science.get("antimatter").researched
 		|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
-	) {
-		return;
+		) {
+			return;
+		}
+		if (!game.diplomacy.get("leviathans").unlocked) {
+			return;
+		}
+		const curPrice = game.calendar.cryptoPrice;
+		const maxPrice = game.calendar.cryptoPriceMax;
+		const relics = game.resPool.get("relic");
+		const coins = game.resPool.get("blackcoin");
+		if (relics.value > 0 && curPrice <= AutoKittensOptions.tradeOptions.buyBlackcoinBelow) {
+			const amt = relics.value / curPrice;
+			coins.value += amt;
+			relics.value = 0;
+		}
+		else if (coins.value > 0 && maxPrice - curPrice <= 1) {
+			const amt = coins.value * curPrice;
+			relics.value += amt;
+			coins.value = 0;
+		}
 	}
-	if (!game.diplomacy.get("leviathans").unlocked) {
-		return;
+	// Manage your lunar outposts (TODO - the whole algorithm could probably be improved)
+	function manageOutposts() {
+		if (!AutoKittensOptions.lunarOutpostOptions.automate) {
+			return;
+		}
+
+		// bad hack to handle a caching bug
+		// game.resPool.energyCons is updated every tick, in the original game tick function
+		// the replacement tick function we inject calls the original before AK's own functions run, including this one
+		// however, sometimes the energy consumption effects that are used in that calculation are out of date
+		// it's only by a tick or two, but it's still enough to introduce problems
+		// if it stabilised and we had just a tick or two of running an extra outpost, it wouldn't matter
+		// unfortunately, something in the timing causes it to flip back and forth indefinitely
+		// sadly, there's no discernible reason for that occasional timing glitch, so I can't fix it
+		// instead, here's a workaround: only update every five ticks
+		if (game.ticks % 5) {
+			return;
+		}
+
+		const consumed = 0.35;
+		const produced = 0.007;
+
+		const bld = game.space.getBuilding("moonOutpost");
+		const input = game.resPool.get("uranium");
+		const output = game.resPool.get("unobtainium");
+
+		if (input.maxValue <= 0) {
+			bld.on = 0;
+			return;
+		}
+
+		const count = bld.val;
+		const active = bld.on;
+
+		const threshold = AutoKittensOptions.lunarOutpostOptions.activationLimit;
+		const reserved = AutoKittensOptions.lunarOutpostOptions.reservedUranium * input.maxValue;
+
+		const maxPower = AutoKittensOptions.lunarOutpostOptions.useMinimumPowerProd
+			? game.resPool.energyWinterProd
+			: game.resPool.energyProd;
+		const usage = bld.effects.energyConsumption;
+		const basePowerDraw = game.resPool.energyCons - usage * active;
+		const leftover = maxPower - basePowerDraw;
+
+		const available = Math.max(input.value - reserved, 0);
+		const fullness = available / input.maxValue;
+
+		// this is the most that can be run according to power limitations, and will probably be the limiting factor
+		const supportedByPower = Math.floor(leftover / usage);
+		// this many outposts can be active for one tick - it's probably vastly higher than we need in MOST cases
+		const supportedByInput = Math.floor(available / consumed);
+		// ceil because we can overflow by less than one outpost's full output in order to cap
+		const supportedByOutput = Math.ceil((output.maxValue - output.value) / produced);
+		// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
+		const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
+
+		// if we've passed the UPPER limit, enable outpost activation
+		if (fullness >= threshold) {
+			AutoKittensOptions.lunarOutpostOptions.active = true;
+		}
+		// if we've passed the LOWER limit, disable outposts
+		else if (!supportedByInput) {
+			AutoKittensOptions.lunarOutpostOptions.active = false;
+		}
+
+		// if outposts are enabled, set the active number
+		if (AutoKittensOptions.lunarOutpostOptions.active) {
+			bld.on = supported;
+		}
+		// otherwise, turn them all off
+		else {
+			bld.on = 0;
+		}
 	}
-	const curPrice = game.calendar.cryptoPrice;
-	const maxPrice = game.calendar.cryptoPriceMax;
-	const relics = game.resPool.get("relic");
-	const coins = game.resPool.get("blackcoin");
-	if (relics.value > 0 && curPrice <= autoOptions.tradeOptions.buyBlackcoinBelow) {
-		const amt = relics.value / curPrice;
-		coins.value += amt;
-		relics.value = 0;
-	}
-	else if (coins.value > 0 && maxPrice - curPrice <= 1) {
-		const amt = coins.value * curPrice;
-		relics.value += amt;
-		coins.value = 0;
-	}
-}
-function manageOutposts() {
-	if (!autoOptions.lunarOutpostOptions.automate) {
-		return;
+	// Just dispatch all of the different things we do each tick
+	function processAutoKittens() {
+		starClick();
+		autoHunt();
+		autoCraft();
+		autoTrade();
+		autoPray();
+		autoBlackcoin();
+		manageOutposts();
+		fillTable();
+		updateCalculators();
 	}
 
-	// bad hack to handle a caching bug
-	// game.resPool.energyCons is updated every tick, in the original game tick function
-	// the replacement tick function we inject calls the original before AK's own functions run, including this one
-	// however, sometimes the energy consumption effects that are used in that calculation are out of date
-	// it's only by a tick or two, but it's still enough to introduce problems
-	// if it stabilised and we had just a tick or two of running an extra outpost, it wouldn't matter
-	// unfortunately, something in the timing causes it to flip back and forth indefinitely
-	// sadly, there's no discernible reason for that occasional timing glitch, so I can't fix it
-	// instead, here's a workaround: only update every five ticks
-	if (game.ticks % 5) {
-		return;
-	}
-
-	const consumed = 0.35;
-	const produced = 0.007;
-
-	const bld = game.space.getBuilding("moonOutpost");
-	const input = game.resPool.get("uranium");
-	const output = game.resPool.get("unobtainium");
-
-	if (input.maxValue <= 0) {
-		bld.on = 0;
-		return;
-	}
-
-	const count = bld.val;
-	const active = bld.on;
-
-	const threshold = autoOptions.lunarOutpostOptions.activationLimit;
-	const reserved = autoOptions.lunarOutpostOptions.reservedUranium * input.maxValue;
-
-	const maxPower = autoOptions.lunarOutpostOptions.useMinimumPowerProd
-		? game.resPool.energyWinterProd
-		: game.resPool.energyProd;
-	const usage = bld.effects.energyConsumption;
-	const basePowerDraw = game.resPool.energyCons - usage * active;
-	const leftover = maxPower - basePowerDraw;
-
-	const available = Math.max(input.value - reserved, 0);
-	const fullness = available / input.maxValue;
-
-	// this is the most that can be run according to power limitations, and will probably be the limiting factor
-	const supportedByPower = Math.floor(leftover / usage);
-	// this many outposts can be active for one tick - it's probably vastly higher than we need in MOST cases
-	const supportedByInput = Math.floor(available / consumed);
-	// ceil because we can overflow by less than one outpost's full output in order to cap
-	const supportedByOutput = Math.ceil((output.maxValue - output.value) / produced);
-	// this is the most that can be turned on without SOMETHING being overdrawn (including the number available)
-	const supported = Math.max(Math.min(supportedByPower, supportedByInput, supportedByOutput, count), 0);
-
-	// if we've passed the UPPER limit, enable outpost activation
-	if (fullness >= threshold) {
-		autoOptions.lunarOutpostOptions.active = true;
-	}
-	// if we've passed the LOWER limit, disable outposts
-	else if (!supportedByInput) {
-		autoOptions.lunarOutpostOptions.active = false;
-	}
-
-	// if outposts are enabled, set the active number
-	if (autoOptions.lunarOutpostOptions.active) {
-		bld.on = supported;
-	}
-	// otherwise, turn them all off
-	else {
-		bld.on = 0;
-	}
-}
-function processAutoKittens() {
-	starClick();
-	autoHunt();
-	autoCraft();
-	autoTrade();
-	autoPray();
-	autoBlackcoin();
-	manageOutposts();
-	fillTable();
-	updateCalculators();
-}
-
-(() => {
-	// Load saved options, if any
-	if (LCstorage[savedConfigKey]) {
-		copyObject(JSON.parse(LCstorage[savedConfigKey]), window.autoOptions);
-	}
-	// The internal cache of things we need that WON'T change over time
-	let internalCache;
-	const rebuildAutoKittensCache = function rebuildAutoKittensCache() {
+	// Rebuild the data cache, which is used in autocrafting (and accessible by other scripts)
+	function rebuildAutoKittensCache() {
 		const temporaryCache = {
 			unicornUpgrades: [],
 			craftingInputs: {},
@@ -2068,213 +2151,251 @@ function processAutoKittens() {
 		}
 		Object.freeze(temporaryCache.craftingInputs);
 		internalCache = Object.freeze(temporaryCache);
-	};
-	rebuildAutoKittensCache();
-	// Keep the cache (semi-)regularly updated, every ten minutes
-	setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
-	// The magic "cache" of commonly desired game data
-	const gameDataMap = Object.create(null);
-	[
-		"catnip",
-		"wood",
-		"minerals",
-		"coal",
-		"iron",
-		"titanium",
-		"gold",
-		"oil",
-		"uranium",
-		"unobtainium",
-		"antimatter",
-		"science",
-		"culture",
-		"faith",
-		"kittens",
-		"zebras",
-		"temporalFlux",
-		"gflops",
-		"hashrates",
-		"furs",
-		"ivory",
-		"spice",
-		"unicorns",
-		"tears",
-		"karma",
-		"paragon",
-		"burnedParagon",
-		"sorrow",
-		"void",
-		"elderBox",
-		"wrappingPaper",
-		"blackcoin",
-		"steel",
-		"alloy",
-		"eludium",
-		"kerosene",
-		"parchment",
-		"thorium",
-	].forEach((id) => {
-		Object.defineProperty(gameDataMap, id, {
-			enumerable: true,
-			get: () => game.resPool.get(id),
+	}
+
+	// Put the resource map together to allow easy reference to all sorts of things
+	function constructMagicResourceCache() {
+		// These names are used directly
+		[
+			"catnip",
+			"wood",
+			"minerals",
+			"coal",
+			"iron",
+			"titanium",
+			"gold",
+			"oil",
+			"uranium",
+			"unobtainium",
+			"antimatter",
+			"science",
+			"culture",
+			"faith",
+			"kittens",
+			"zebras",
+			"temporalFlux",
+			"gflops",
+			"hashrates",
+			"furs",
+			"ivory",
+			"spice",
+			"unicorns",
+			"tears",
+			"karma",
+			"paragon",
+			"burnedParagon",
+			"sorrow",
+			"void",
+			"elderBox",
+			"wrappingPaper",
+			"blackcoin",
+			"steel",
+			"alloy",
+			"eludium",
+			"kerosene",
+			"parchment",
+			"thorium",
+		].forEach((id) => {
+			Object.defineProperty(gameDataMap, id, {
+				enumerable: true,
+				get: () => game.resPool.get(id),
+			});
 		});
-	});
-	[
-		"starchart",
-		"alicorn",
-		"necrocorn",
-		"timeCrystal",
-		"relic",
-		"bloodstone",
-		"beam",
-		"slab",
-		"plate",
-		"gear",
-		"scaffold",
-		"ship",
-		"tanker",
-		"manuscript",
-		"blueprint",
-		"megalith",
-	].forEach((id) => {
-		Object.defineProperty(gameDataMap, `${id}s`, {
-			enumerable: true,
-			get: () => game.resPool.get(id),
+		// These names are all pluralised
+		[
+			"starchart",
+			"alicorn",
+			"necrocorn",
+			"timeCrystal",
+			"relic",
+			"bloodstone",
+			"beam",
+			"slab",
+			"plate",
+			"gear",
+			"scaffold",
+			"ship",
+			"tanker",
+			"manuscript",
+			"blueprint",
+			"megalith",
+		].forEach((id) => {
+			Object.defineProperty(gameDataMap, `${id}s`, {
+				enumerable: true,
+				get: () => game.resPool.get(id),
+			});
 		});
-	});
-	Object.defineProperties(
-		gameDataMap,
-		iterateObject(
-			{
-				flux: {
-					get: () => gameDataMap.temporalFlux,
-				},
-				gigaflops: {
-					get: () => gameDataMap.gflops,
-				},
-				hashes: {
-					get: () => gameDataMap.hashrates,
-				},
-				elderBoxes: {
-					get: () => gameDataMap.elderBox,
-				},
-				boxes: {
-					get: () => gameDataMap.elderBox,
-				},
-				concrete: {
-					get: () => game.resPool.get("concrate"),
-				},
-				compendiums: {
-					get: () => game.resPool.get("compedium"),
-				},
-				aiLevel: {
-					get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
-				},
-				gigaflopsToNextLevel: {
-					get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
-				},
-				hashLevel: {
-					get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
-				},
-				hashesToNextLevel: {
-					get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
-				},
-				pollution: {
-					get: () => game.bld.cathPollution,
-					set: (value) => {
-						game.bld.cathPollution = value;
+		// These are all custom aliases
+		Object.defineProperties(
+			gameDataMap,
+			iterateObject(
+				{
+					flux: {
+						get: () => gameDataMap.temporalFlux,
+					},
+					gigaflops: {
+						get: () => gameDataMap.gflops,
+					},
+					hashes: {
+						get: () => gameDataMap.hashrates,
+					},
+					elderBoxes: {
+						get: () => gameDataMap.elderBox,
+					},
+					boxes: {
+						get: () => gameDataMap.elderBox,
+					},
+					concrete: {
+						get: () => game.resPool.get("concrate"),
+					},
+					compendiums: {
+						get: () => game.resPool.get("compedium"),
+					},
+					aiLevel: {
+						get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
+					},
+					gigaflopsToNextLevel: {
+						get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
+					},
+					hashLevel: {
+						get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
+					},
+					hashesToNextLevel: {
+						get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
+					},
+					pollution: {
+						get: () => game.bld.cathPollution,
+						set: (value) => {
+							game.bld.cathPollution = value;
+						},
 					},
 				},
-			},
-			(descrip) => {
-				descrip.enumerable = true;
-			}
-		)
-	);
+				(descrip) => {
+					descrip.enumerable = true;
+				}
+			)
+		);
+	}
+
 	// Inject things into the global namespace as read-only values
-	Object.defineProperties(
-		window,
-		iterateObject(
-			{
-				gameData: {
-					value: Object.freeze(gameDataMap),
+	function injectGlobalReadOnlyValues() {
+		Object.defineProperties(
+			window,
+			iterateObject(
+				{
+					resmap: {
+						value: Object.freeze(gameDataMap),
+					},
+					AutoKittensCache: {
+						get: () => internalCache,
+					},
+					rebuildAutoKittensCache: {
+						value: rebuildAutoKittensCache,
+					},
 				},
-				autoKittensCache: {
-					get: () => internalCache,
-				},
-				rebuildAutoKittensCache: {
-					value: rebuildAutoKittensCache,
-				},
-			},
-			(descrip) => {
-				descrip.enumerable = true;
-			}
-		)
-	);
-	// Set the unload-guard
-	const unloadGuard = function unloadGuard(evt) { // eslint-disable-line consistent-return
-		if (autoOptions.warnOnLeave) {
-			const warning = "Are you sure you want to leave?";
-			evt.preventDefault();
-			evt.returnValue = warning;
-			return warning;
-		}
-	};
-	window.addEventListener("beforeunload", unloadGuard, {
-		capture: true,
-		once: false,
-	});
-	// Cheese the leader's effect checks (when autoOptions.perfectLeadership)
+				(descrip) => {
+					descrip.enumerable = true;
+				}
+			)
+		);
+	}
+
+	function installUnloadGuard() {
+		window.addEventListener("beforeunload", unloadGuard, {
+			capture: true,
+			once: false,
+		});
+	}
+
+	// Cheese the leader's effect checks (when `perfectLeadership` is enabled)
 	// Credit to patsy#5684/160499684744364032 on the discord for the initial code
 	// Practical differences: doesn't care if you even HAVE a leader, doesn't care about the current leader's trait
 	// Internal differences: uses Reflect.apply instead of relying on Function.prototype.apply
-	const realGetEffectLeader = game.village.getEffectLeader;
-	game.village.getEffectLeader = function cheesyGetEffectLeader(trait, ...rest) {
-		const realLeader = this.leader;
-		if (
-			autoOptions.perfectLeadership
-			&& game.challenges.currentChallenge != "anarchy"
-			&& game.science.get("civil").researched
-			&& this.traits
-			&& this.traits.some((t) => t.name == trait)
-		) {
-			this.leader = {
-				trait: {
-					name: trait,
-				},
-			};
-		}
-		const value = Reflect.apply(realGetEffectLeader, this, [
-			trait, ...rest,
-		]);
-		this.leader = realLeader;
-		return value;
-	};
-	// Hijack the pollution level
-	let pollution = game.bld.cathPollution;
-	Object.defineProperty(game.bld, "cathPollution", {
-		enumerable: true,
-		get: () => (autoOptions.disablePollution ? 0 : pollution),
-		set: (value) => {
-			pollution = autoOptions.disablePollution ? 0 : value;
-		},
-	});
-	// Inject the script's core function
-	if (game.worker) {
-		const runOriginalGameTick = gameTickFunc.bind(game);
-		game.tick = function runAutoKittensHijackedGameTick() {
-			runOriginalGameTick();
-			processAutoKittens();
+	function hijackLeaderEffectChecks() {
+		const realGetEffectLeader = game.village.getEffectLeader;
+		game.village.getEffectLeader = function cheesyGetEffectLeader(trait, ...rest) {
+			const realLeader = this.leader;
+			if (
+				AutoKittensOptions.perfectLeadership
+				&& game.challenges.currentChallenge != "anarchy"
+				&& game.science.get("civil").researched
+				&& this.traits
+				&& this.traits.some((t) => t.name == trait)
+			) {
+				this.leader = {
+					trait: {
+						name: trait,
+					},
+				};
+			}
+			const value = Reflect.apply(realGetEffectLeader, this, [
+				trait, ...rest,
+			]);
+			this.leader = realLeader;
+			return value;
 		};
 	}
-	else {
-		window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
+
+	// Hijack the pollution level
+	function hijackPollutionLevel() {
+		let pollution = game.bld.cathPollution;
+		Object.defineProperty(game.bld, "cathPollution", {
+			enumerable: true,
+			get: () => (AutoKittensOptions.disablePollution ? 0 : pollution),
+			set: (value) => {
+				pollution = AutoKittensOptions.disablePollution ? 0 : value;
+			},
+		});
 	}
+
+	// Inject the script's core function
+	function injectScriptCore() {
+		if (game.worker) {
+			const runOriginalGameTick = gameTickFunc.bind(game);
+			game.tick = function runAutoKittensHijackedGameTick() {
+				runOriginalGameTick();
+				processAutoKittens();
+			};
+		}
+		else {
+			window.autoKittensTimer = setInterval(processAutoKittens, checkInterval);
+		}
+	}
+
 	// Make the UI changes
-	if (!document.querySelector("#timerTable")) {
-		buildUI();
-		$(scriptDialogId).hide();
-		rebuildOptionsPaneGeneralUI();
-		rebuildOptionsPaneCrafting();
+	function initialiseScriptUI() {
+		if (!document.querySelector("#timerTable")) {
+			buildUI();
+			$(scriptDialogClass).hide();
+			rebuildOptionsPaneGeneralUI();
+			rebuildOptionsPaneCrafting();
+		}
 	}
+
+	(function performFinalInitialisation() {
+		// Load any saved settings
+		loadAutoOptions();
+		// Apply the unload guard
+		installUnloadGuard();
+		// Assemble the magic resource "cache"
+		constructMagicResourceCache();
+		// Inject our global readonly values into the window
+		injectGlobalReadOnlyValues();
+		// Intercept leader effect checks
+		hijackLeaderEffectChecks();
+		// Override pollution
+		hijackPollutionLevel();
+		// Build the cache on load
+		rebuildAutoKittensCache();
+		// Prepare the script's UI
+		initialiseScriptUI();
+
+		// Start the core script
+		injectScriptCore();
+
+		// And keep the cache (semi-)regularly updated, every ten minutes
+		setInterval(rebuildAutoKittensCache, 1000 * 60 * 10);
+	})();
 })();
+
+/* eslint-enable max-len */
