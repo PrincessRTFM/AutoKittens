@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
+Last built at 23:25:56 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663197379#
+#AULBS:1663197956#
 */
 
 /* eslint-env browser, jquery */
@@ -76,6 +76,7 @@ Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
 	const TIMERVIS_RISING = "rising";
 	const TIMERVIS_NOTFULL = "nonfull";
 	const TIMERVIS_NOTEMPTY = "nonempty";
+	const TIMERVIS_CHANGING = "changing";
 	const timerVisibility = [
 		[ "Never", TIMERVIS_NEVER ],
 		[ "Always", TIMERVIS_ALWAYS ],
@@ -83,6 +84,7 @@ Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
 		[ "When rising,", TIMERVIS_RISING ],
 		[ "When not full,", TIMERVIS_NOTFULL ],
 		[ "When not empty,", TIMERVIS_NOTEMPTY ],
+		[ "When changing,", TIMERVIS_CHANGING ],
 	];
 
 	// Resources that should never show up in the timers (internal names)
@@ -396,7 +398,7 @@ Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663197379";
+		const AULBS = "1663197956";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -777,9 +779,12 @@ Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
 					timeDisplay = "No change";
 				}
 				if (
-					displayMode == TIMERVIS_ALWAYS
+					    displayMode == TIMERVIS_ALWAYS
 					|| (displayMode == TIMERVIS_FALLING && isFalling)
+					|| (displayMode == TIMERVIS_RISING && isRising)
 					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
+					|| (displayMode == TIMERVIS_NOTEMPTY && !isEmpty)
+					|| (displayMode == TIMERVIS_CHANGING && isChanging)
 				) {
 					contents += `<td style="text-align:center">${r.title}<br />${timeDisplay}</td>`;
 				}

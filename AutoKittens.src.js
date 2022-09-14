@@ -79,6 +79,7 @@ $BUILD_STAMP
 	const TIMERVIS_RISING = "rising";
 	const TIMERVIS_NOTFULL = "nonfull";
 	const TIMERVIS_NOTEMPTY = "nonempty";
+	const TIMERVIS_CHANGING = "changing";
 	const timerVisibility = [
 		[ "Never", TIMERVIS_NEVER ],
 		[ "Always", TIMERVIS_ALWAYS ],
@@ -86,6 +87,7 @@ $BUILD_STAMP
 		[ "When rising,", TIMERVIS_RISING ],
 		[ "When not full,", TIMERVIS_NOTFULL ],
 		[ "When not empty,", TIMERVIS_NOTEMPTY ],
+		[ "When changing,", TIMERVIS_CHANGING ],
 	];
 
 	// Resources that should never show up in the timers (internal names)
@@ -784,9 +786,12 @@ $BUILD_STAMP
 					timeDisplay = "No change";
 				}
 				if (
-					displayMode == TIMERVIS_ALWAYS
+					    displayMode == TIMERVIS_ALWAYS
 					|| (displayMode == TIMERVIS_FALLING && isFalling)
+					|| (displayMode == TIMERVIS_RISING && isRising)
 					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
+					|| (displayMode == TIMERVIS_NOTEMPTY && !isEmpty)
+					|| (displayMode == TIMERVIS_CHANGING && isChanging)
 				) {
 					contents += `<td style="text-align:center">${r.title}<br />${timeDisplay}</td>`;
 				}
