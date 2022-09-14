@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
+Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663189509#
+#AULBS:1663192494#
 */
 
 /* eslint-env browser, jquery */
@@ -63,11 +63,23 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 		[ "100%", 1 ],
 	];
 
-	// Percentages starting from 0% (initially for prayer, now for other things too - TODO rename?)
-	const faithPercentages = [
+	// Percentages starting from 0% (initially for prayer, now for other things too)
+	const finePercentages = [
 		[ "0%", 0 ],
 		[ "0.1%", 0.001 ],
 	].concat(percentages);
+
+	// Visibility options for the timer strip
+	const TIMERVIS_NEVER = 0;
+	const TIMERVIS_ALWAYS = 1;
+	const TIMERVIS_FALLING = 2;
+	const TIMERVIS_NOTFULL = 3;
+	const timerVisibility = [
+		[ "Never", TIMERVIS_NEVER ],
+		[ "Always", TIMERVIS_ALWAYS ],
+		[ "When negative,", TIMERVIS_FALLING ],
+		[ "When not full,", TIMERVIS_NOTFULL ],
+	];
 
 	// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
 	const gigaflopSafeMax = Math.exp(14.5) - 0.1;
@@ -324,7 +336,7 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663189509";
+		const AULBS = "1663192494";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -632,17 +644,6 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 		return result;
 	}
 
-	// If the listed thing is visible in the timer strip, make an entry for it. Otherwise, return an empty string so nothing breaks.
-	// XXX guess what, it's more shitty UI code!
-	function formatTableRow(name, title, value) {
-		if (typeof AutoKittensOptions.displayOptions[name] === "undefined") {
-			AutoKittensOptions.displayOptions[name] = true;
-		}
-		if (AutoKittensOptions.displayOptions[name]) {
-			return `<td style="text-align:center">${title}<br />${value}</td>`;
-		}
-		return "";
-	}
 	// Construct the timer strip
 	function fillTable() {
 		let contents = "<tr>";
@@ -688,34 +689,41 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 		}
 		for (const r of resources) {
 			const name = r.name;
-			const title = r.title;
-			if (r.perTickUI != 0) {
-				if (r.value > 0 && r.perTickUI < 0) {
-				// not empty, falling - needs time-to-empty
-					contents += formatTableRow(
-						name,
-						title,
-						`-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`
-					);
+			const title = r.title || name;
+			if (typeof AutoKittensOptions.displayOptions[name] === "undefined") {
+				AutoKittensOptions.displayOptions[name] = TIMERVIS_NEVER;
+			}
+			// Migration from the old on-or-off options
+			else if (typeof AutoKittensOptions.displayOptions[name] === "boolean") {
+				AutoKittensOptions.displayOptions[name] = AutoKittensOptions.displayOptions[name] ? TIMERVIS_ALWAYS : TIMERVIS_NEVER;
+			}
+			const displayMode = AutoKittensOptions.displayOptions[name];
+			const hasMax = r.maxValue > 0;
+			const isFalling = r.perTickUI < 0;
+			const isRising = r.perTickUI > 0;
+			const isChanging = isFalling || isRising;
+			const isFull = hasMax && r.value >= r.maxValue;
+			const isEmpty = r.value <= 0;
+			if (isChanging && displayMode != TIMERVIS_NEVER) {
+				let timeDisplay;
+				if (isEmpty) {
+					timeDisplay = "Empty";
 				}
-				else if (r.maxValue > 0) {
-				// not (falling + non-empty) - may be rising, may be empty
-					if (r.value >= r.maxValue) {
-					// full, rising - no timer
-						contents += formatTableRow(name, title, "Full");
-					}
-					else if (r.perTickUI > 0) {
-					// not full, rising - needs time-to-cap
-						contents += formatTableRow(
-							name,
-							title,
-							game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate))
-						);
-					}
-					else if (r.value <= 0) {
-					// empty, falling - no timer
-						contents += formatTableRow(name, title, "Empty");
-					}
+				else if (isFalling) {
+					timeDisplay = `-${game.toDisplaySeconds(-r.value / (r.perTickUI * tickRate))}`;
+				}
+				else if (isFull) {
+					timeDisplay = "Full";
+				}
+				else if (hasMax && isRising) {
+					timeDisplay = game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate));
+				}
+				if (
+					displayMode == TIMERVIS_ALWAYS
+					|| (displayMode == TIMERVIS_FALLING && isFalling)
+					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
+				) {
+					contents += `<td style="text-align:center">${title}<br />${timeDisplay}</td>`;
 				}
 			}
 		}
@@ -1054,7 +1062,7 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 		);
 		game.resPool.resources.forEach((r) => {
 			if (typeof AutoKittensOptions.displayOptions[r.name] !== "undefined") {
-				addCheckbox(uiContainer, `AutoKittensOptions.displayOptions.${r.name}`, `Show ${r.title || r.name}`);
+				addOptionMenu(uiContainer, `AutoKittensOptions.displayOptions.${r.name}`, "", timerVisibility, `show ${r.title || r.name}`);
 			}
 		});
 		addHeading(uiContainer, "Game options");
@@ -1177,7 +1185,7 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 			uiContainer,
 			"AutoKittensOptions.lunarOutpostOptions.reservedUranium",
 			"Stop all outposts when uranium below",
-			faithPercentages,
+			finePercentages,
 			"storage capacity"
 		);
 		addButton(
@@ -1403,7 +1411,7 @@ Last built at 21:05:09 on Wednesday, September 14, 2022 UTC
 			prayerSettingsContainer,
 			"AutoKittensOptions.prayLimit",
 			"Pray when faith is",
-			faithPercentages,
+			finePercentages,
 			"full"
 		);
 		addIndent(prayerSettingsContainer);
