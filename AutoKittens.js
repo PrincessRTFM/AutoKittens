@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
+Last built at 22:44:12 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663192494#
+#AULBS:1663195452#
 */
 
 /* eslint-env browser, jquery */
@@ -70,16 +70,63 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 	].concat(percentages);
 
 	// Visibility options for the timer strip
-	const TIMERVIS_NEVER = 0;
-	const TIMERVIS_ALWAYS = 1;
-	const TIMERVIS_FALLING = 2;
-	const TIMERVIS_NOTFULL = 3;
+	const TIMERVIS_NEVER = "never";
+	const TIMERVIS_ALWAYS = "always";
+	const TIMERVIS_FALLING = "falling";
+	const TIMERVIS_NOTFULL = "nonfull";
 	const timerVisibility = [
 		[ "Never", TIMERVIS_NEVER ],
 		[ "Always", TIMERVIS_ALWAYS ],
-		[ "When negative,", TIMERVIS_FALLING ],
+		[ "When falling,", TIMERVIS_FALLING ],
 		[ "When not full,", TIMERVIS_NOTFULL ],
 	];
+
+	// Resources that should never show up in the timers (internal names)
+	const untimed = new Set([
+		// neither produced nor consumed automatically
+		"karma",
+		"paragon",
+		"burnedParagon",
+		// modification is handled specially
+		"antimatter",
+		"kittens",
+		"temporalFlux",
+		// produced/consumed only by crafting or other special actions
+		"alloy",
+		"beam",
+		"slab",
+		"plate",
+		"concrate", // [sic]
+		"steel",
+		"gear",
+		"alloy",
+		"eludium",
+		"scaffold",
+		"ship",
+		"tanker",
+		"kerosene",
+		"parchment",
+		"manuscript",
+		"compedium", // [sic]
+		"blueprint",
+		"megalith",
+		"starchart",
+		"timeCrystal",
+		"sorrow",
+		"relic",
+		"hashrates",
+		"unicorns",
+		"alicorn",
+		"necrocorn",
+		"tears",
+		"elderBox",
+		"wrappingPaper",
+		"void",
+		"bloodstone",
+		"tMythril",
+		"blackcoin",
+		"zebras",
+	]);
 
 	// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
 	const gigaflopSafeMax = Math.exp(14.5) - 0.1;
@@ -336,7 +383,7 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663192494";
+		const AULBS = "1663195452";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -651,6 +698,9 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 		const resources = [];
 		for (let resIndex = 0; resIndex < game.resPool.resources.length; resIndex++) {
 			const r = game.resPool.resources[resIndex];
+			if (untimed.has(r.name)) {
+				continue;
+			}
 			const res = {
 				name: r.name,
 				title: r.title || r.name,
@@ -658,7 +708,7 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 				// Am I willing to refactor all of this to do it right? Also no.
 				perTickUI: game.getResourcePerTick(r.name, true),
 				value: r.value,
-				maxValue: r.maxValue,
+				maxValue: r.name == "gflops" ? gigaflopSafeMax : r.maxValue,
 			};
 			if (res.perTickUI !== 0) {
 				if (res.maxValue > 0) {
@@ -688,23 +738,21 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 			resources.sort((a, b) => b.time - a.time);
 		}
 		for (const r of resources) {
-			const name = r.name;
-			const title = r.title || name;
-			if (typeof AutoKittensOptions.displayOptions[name] === "undefined") {
-				AutoKittensOptions.displayOptions[name] = TIMERVIS_NEVER;
+			if (typeof AutoKittensOptions.displayOptions[r.name] == "undefined") {
+				AutoKittensOptions.displayOptions[r.name] = TIMERVIS_NEVER;
 			}
 			// Migration from the old on-or-off options
-			else if (typeof AutoKittensOptions.displayOptions[name] === "boolean") {
-				AutoKittensOptions.displayOptions[name] = AutoKittensOptions.displayOptions[name] ? TIMERVIS_ALWAYS : TIMERVIS_NEVER;
+			else if (typeof AutoKittensOptions.displayOptions[r.name] === "boolean") {
+				AutoKittensOptions.displayOptions[r.name] = AutoKittensOptions.displayOptions[r.name] ? TIMERVIS_ALWAYS : TIMERVIS_NEVER;
 			}
-			const displayMode = AutoKittensOptions.displayOptions[name];
+			const displayMode = AutoKittensOptions.displayOptions[r.name];
 			const hasMax = r.maxValue > 0;
 			const isFalling = r.perTickUI < 0;
 			const isRising = r.perTickUI > 0;
 			const isChanging = isFalling || isRising;
 			const isFull = hasMax && r.value >= r.maxValue;
 			const isEmpty = r.value <= 0;
-			if (isChanging && displayMode != TIMERVIS_NEVER) {
+			if (displayMode != TIMERVIS_NEVER) {
 				let timeDisplay;
 				if (isEmpty) {
 					timeDisplay = "Empty";
@@ -718,12 +766,15 @@ Last built at 21:54:54 on Wednesday, September 14, 2022 UTC
 				else if (hasMax && isRising) {
 					timeDisplay = game.toDisplaySeconds((r.maxValue - r.value) / (r.perTickUI * tickRate));
 				}
+				else if (!isChanging) {
+					timeDisplay = "No change";
+				}
 				if (
 					displayMode == TIMERVIS_ALWAYS
 					|| (displayMode == TIMERVIS_FALLING && isFalling)
 					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
 				) {
-					contents += `<td style="text-align:center">${title}<br />${timeDisplay}</td>`;
+					contents += `<td style="text-align:center">${r.title}<br />${timeDisplay}</td>`;
 				}
 			}
 		}
