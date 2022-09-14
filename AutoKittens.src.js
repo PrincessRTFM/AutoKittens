@@ -306,6 +306,15 @@ $BUILD_STAMP
 		}
 	}
 
+	// Try to find a node by the given selector, and warn if it couldn't be found and debugging is enabled
+	function findNode(selector) {
+		const node = document.querySelector(selector);
+		if (!node && window.$BASIC_DEBUG_TOGGLE) {
+			console.warn(`Couldn't find a node matching "${selector}"`);
+		}
+		return node;
+	}
+
 	// Makes sure that you get a callable function for use as a callback, falling back to NOP (see above) as a last resort,
 	// so you don't get a halting error about calling a non-function. Can take a function (will be returned unchanged) or a string,
 	// which will be looked for in the global window.
@@ -496,15 +505,17 @@ $BUILD_STAMP
 	}
 
 	// XXX man, I can barely track my own UI code. I gotta refactor this shit.
-	function handleDisplayOptions(obj) {
+	function handleDisplayOptions(obj, stack) {
 		for (const o of Object.keys(obj)) {
-			const toggle = $(`#$CONCAT($ID_PREFIX, show)${o}`);
-			if (toggle.length) {
+			const menu = findNode(`#$ID_PREFIX${stack.concat(o).join("_")}`);
+			if (menu) {
 				// The toggle might not exist yet, since the UI overhaul
 				if (window.$BASIC_DEBUG_TOGGLE) {
-					console.log(`${toggle[0].id}.checked=${obj[o]}`);
+					console.log(`${menu.id}.selected=${obj[o]}`);
 				}
-				toggle[0].checked = obj[o];
+				for (const child of menu.children) {
+					child.selected = child.value == obj[o];
+				}
 			}
 		}
 	}
@@ -513,35 +524,27 @@ $BUILD_STAMP
 	function traverseObject(obj, stack = [ "$SCRIPT_OPTS" ]) {
 		for (const o of Object.keys(obj)) {
 			if (o === "displayOptions") {
-				handleDisplayOptions(obj[o]);
+				handleDisplayOptions(obj[o], stack.concat(o));
 			}
 			else if (typeof obj[o] === "object") {
 				traverseObject(obj[o], stack.concat(o));
 			}
 			else if (typeof obj[o] === "boolean") {
-				const id = `#$ID_PREFIX${stack.concat(o).join("_")}`;
-				const elms = $(id);
-				if (elms && elms[0]) {
+				const elem = findNode(`#$ID_PREFIX${stack.concat(o).join("_")}`);
+				if (elem) {
 					if (window.$BASIC_DEBUG_TOGGLE) {
-						console.log(`${elms[0].id}.checked=${obj[o]}`);
+						console.log(`${elem.id}.checked=${obj[o]}`);
 					}
-					elms[0].checked = obj[o];
-				}
-				else if (window.$BASIC_DEBUG_TOGGLE) {
-					console.warn(`Couldn't find a node with ID "${id}"`);
+					elem.checked = obj[o];
 				}
 			}
 			else {
-				const id = `#$ID_PREFIX${stack.concat(o).join("_")}`;
-				const elms = $(id);
-				if (elms && elms[0]) {
+				const elem = findNode(`#$ID_PREFIX${stack.concat(o).join("_")}`);
+				if (elem) {
 					if (window.$BASIC_DEBUG_TOGGLE) {
-						console.log(`${elms[0].id}.value=${obj[o]}`);
+						console.log(`${elem.id}.value=${obj[o]}`);
 					}
-					elms[0].value = obj[o];
-				}
-				else if (window.$BASIC_DEBUG_TOGGLE) {
-					console.warn(`Couldn't find a node with ID "${id}"`);
+					elem.value = obj[o];
 				}
 			}
 		}

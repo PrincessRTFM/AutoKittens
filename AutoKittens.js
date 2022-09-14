@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
+Last built at 23:16:19 on Wednesday, September 14, 2022 UTC
 
-#AULBS:1663195750#
+#AULBS:1663197379#
 */
 
 /* eslint-env browser, jquery */
@@ -303,6 +303,15 @@ Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
 		}
 	}
 
+	// Try to find a node by the given selector, and warn if it couldn't be found and debugging is enabled
+	function findNode(selector) {
+		const node = document.querySelector(selector);
+		if (!node && window.AUTOKITTENS_ENABLE_DEBUG) {
+			console.warn(`Couldn't find a node matching "${selector}"`);
+		}
+		return node;
+	}
+
 	// Makes sure that you get a callable function for use as a callback, falling back to NOP (see above) as a last resort,
 	// so you don't get a halting error about calling a non-function. Can take a function (will be returned unchanged) or a string,
 	// which will be looked for in the global window.
@@ -387,7 +396,7 @@ Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663195750";
+		const AULBS = "1663197379";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -489,15 +498,17 @@ Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
 	}
 
 	// XXX man, I can barely track my own UI code. I gotta refactor this shit.
-	function handleDisplayOptions(obj) {
+	function handleDisplayOptions(obj, stack) {
 		for (const o of Object.keys(obj)) {
-			const toggle = $(`#AutoKittens_show${o}`);
-			if (toggle.length) {
+			const menu = findNode(`#AutoKittens_${stack.concat(o).join("_")}`);
+			if (menu) {
 				// The toggle might not exist yet, since the UI overhaul
 				if (window.AUTOKITTENS_ENABLE_DEBUG) {
-					console.log(`${toggle[0].id}.checked=${obj[o]}`);
+					console.log(`${menu.id}.selected=${obj[o]}`);
 				}
-				toggle[0].checked = obj[o];
+				for (const child of menu.children) {
+					child.selected = child.value == obj[o];
+				}
 			}
 		}
 	}
@@ -506,35 +517,27 @@ Last built at 22:49:10 on Wednesday, September 14, 2022 UTC
 	function traverseObject(obj, stack = [ "AutoKittensOptions" ]) {
 		for (const o of Object.keys(obj)) {
 			if (o === "displayOptions") {
-				handleDisplayOptions(obj[o]);
+				handleDisplayOptions(obj[o], stack.concat(o));
 			}
 			else if (typeof obj[o] === "object") {
 				traverseObject(obj[o], stack.concat(o));
 			}
 			else if (typeof obj[o] === "boolean") {
-				const id = `#AutoKittens_${stack.concat(o).join("_")}`;
-				const elms = $(id);
-				if (elms && elms[0]) {
+				const elem = findNode(`#AutoKittens_${stack.concat(o).join("_")}`);
+				if (elem) {
 					if (window.AUTOKITTENS_ENABLE_DEBUG) {
-						console.log(`${elms[0].id}.checked=${obj[o]}`);
+						console.log(`${elem.id}.checked=${obj[o]}`);
 					}
-					elms[0].checked = obj[o];
-				}
-				else if (window.AUTOKITTENS_ENABLE_DEBUG) {
-					console.warn(`Couldn't find a node with ID "${id}"`);
+					elem.checked = obj[o];
 				}
 			}
 			else {
-				const id = `#AutoKittens_${stack.concat(o).join("_")}`;
-				const elms = $(id);
-				if (elms && elms[0]) {
+				const elem = findNode(`#AutoKittens_${stack.concat(o).join("_")}`);
+				if (elem) {
 					if (window.AUTOKITTENS_ENABLE_DEBUG) {
-						console.log(`${elms[0].id}.value=${obj[o]}`);
+						console.log(`${elem.id}.value=${obj[o]}`);
 					}
-					elms[0].value = obj[o];
-				}
-				else if (window.AUTOKITTENS_ENABLE_DEBUG) {
-					console.warn(`Couldn't find a node with ID "${id}"`);
+					elem.value = obj[o];
 				}
 			}
 		}
