@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 23:29:40 on Wednesday, September 14, 2022 UTC
+Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 
-#AULBS:1663198180#
+#AULBS:1663656395#
 */
 
 /* eslint-env browser, jquery */
@@ -67,6 +67,8 @@ Last built at 23:29:40 on Wednesday, September 14, 2022 UTC
 	const finePercentages = [
 		[ "0%", 0 ],
 		[ "0.1%", 0.001 ],
+		[ "0.25%", 0.025 ],
+		[ "0.5%", 0.005 ],
 	].concat(percentages);
 
 	// Visibility options for the timer strip
@@ -400,7 +402,7 @@ Last built at 23:29:40 on Wednesday, September 14, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663198180";
+		const AULBS = "1663656395";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");

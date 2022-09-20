@@ -70,6 +70,8 @@ $BUILD_STAMP
 	const finePercentages = [
 		[ "0%", 0 ],
 		[ "0.1%", 0.001 ],
+		[ "0.25%", 0.025 ],
+		[ "0.5%", 0.005 ],
 	].concat(percentages);
 
 	// Visibility options for the timer strip
