@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 15:17:06 on Friday, September 30, 2022 UTC
+Last built at 15:47:34 on Friday, September 30, 2022 UTC
 
-#AULBS:1664551026#
+#AULBS:1664552854#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -405,7 +405,7 @@ Last built at 15:17:06 on Friday, September 30, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1664551026";
+		const AULBS = "1664552854";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -854,20 +854,21 @@ Last built at 15:17:06 on Friday, September 30, 2022 UTC
 	function aiCalculator() {
 		const gflopsRes = resmap.gigaflops;
 		const hashRes = resmap.hashes;
-		const aiCoreData = game.bld.get("aiCore");
-		const entanglerData = game.space.getBuilding("entangler");
 		const gigaflops = gflopsRes.value;
 		const hashes = hashRes.value;
-		const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
 		const hashLevel = resmap.hashLevel;
+		const aiLevel = resmap.aiLevel;
+		const gigaflopsNeeded = resmap.gigaflopsToNextLevel;
+		const hashesNeeded = resmap.hashesToNextLevel;
+		/*
+		const aiCoreData = game.bld.get("aiCore");
+		const entanglerData = game.space.getBuilding("entangler");
+		const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
 		const gigaflopsPerTick = gflopsRes.perTickUI || gflopsRes.perTickCached;
 		const gigaflopProdPerTickRaw = aiCoreData.effects.gflopsPerTickBase;
 		const gigaflopProdPerTickEffective = gigaflopProdPerTickRaw * aiCoreData.on;
 		const gigaflopConsumePerTickRaw = entanglerData.effects.gflopsConsumption;
 		const gigaflopConsumePerTickEffective = gigaflopConsumePerTickRaw * entanglerData.on;
-		const aiLevel = resmap.aiLevel;
-		const gigaflopsNeeded = resmap.gigaflopsToNextLevel;
-		const hashesNeeded = resmap.hashesToNextLevel;
 		const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
 		const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
 		const internalCheckTag = ( // forgive me
@@ -883,22 +884,26 @@ Last built at 15:17:06 on Friday, September 30, 2022 UTC
 		const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
 			? game.toDisplaySeconds(timeToNextHashLevel)
 			: "<i>no hashes being produced</i>";
+		*/
 		const result = [
 			`Current gigaflops: ${gigaflops.toFixed(2)}`,
-			`Net gigaflops per tick: ${gigaflopsPerTick.toFixed(2)} - ${internalCheckTag}`,
+			// `Net gigaflops per tick: ${gigaflopsPerTick.toFixed(2)} - ${internalCheckTag}`,
 			`Current AI level: ${aiLevel}`,
 		];
 		if (aiLevel > 14) {
 			const gigaflopsToLose = gigaflops - gigaflopSafeMax;
+			/*
 			const timeUntilSafetyFromSkynet = game.toDisplaySeconds(
 				Math.abs(
 					gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond)
 				)
 			) || "now";
+			*/
 			result.push(
 				'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
 				`Gigaflops beyond safe limit: ${gigaflopsToLose.toFixed(2)}`
 			);
+			/*
 			if (gigaflopsPerTick > 0) {
 				result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
 			}
@@ -908,18 +913,22 @@ Last built at 15:17:06 on Friday, September 30, 2022 UTC
 			else {
 				result.push(`Time drop back to safe limit: ${timeUntilSafetyFromSkynet}`);
 			}
+			*/
 		}
 		else {
 			const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
+			/*
 			const timeUntilDangerFromSkynet = game.toDisplaySeconds(
 				Math.abs(
 					gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond)
 				)
 			) || "now";
+			*/
 			result.push(
 				"The AI apocalypse will not occur yet",
 				`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax.toFixed(2)}`
 			);
+			/*
 			if (gigaflopsPerTick > 0) {
 				result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
 			}
@@ -929,15 +938,17 @@ Last built at 15:17:06 on Friday, September 30, 2022 UTC
 			else {
 				result.push("AI Level is falling - AI apocalypse is not possible");
 			}
+			*/
 		}
 		result.push(
 			`Gigaflops needed for next AI level: ${gigaflopsNeeded.toFixed(2)}`,
-			`Time to reach next AI level: ${timeToNextLevelOfAI}`,
+			// `Time to reach next AI level: ${timeToNextLevelOfAI}`,
 			`Current hashes: ${hashes.toFixed(2)}`,
-			`Net hashes per tick: ${hashesPerTick.toFixed(2)}`,
+			// `Net hashes per tick: ${hashesPerTick.toFixed(2)}`,
 			`Current hashlevel: ${hashLevel}`,
-			`Hashes needed to reach next hash level: ${hashesNeeded.toFixed(2)}`,
-			`Time to reach next hash level: ${timeToNextLevelOfHashes}`
+			`Total hashes for next hash level: ${hashesNeeded.toFixed(2)}`,
+			`Remaining hashes needed: ${(hashesNeeded - hashes).toFixed(2)}`
+			// `Time to reach next hash level: ${timeToNextLevelOfHashes}`
 		);
 		return result.join("<br />\n");
 	}

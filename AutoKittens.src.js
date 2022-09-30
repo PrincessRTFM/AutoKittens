@@ -861,20 +861,21 @@ $BUILD_STAMP
 	function aiCalculator() {
 		const gflopsRes = $SCRIPT_RESMAP.gigaflops;
 		const hashRes = $SCRIPT_RESMAP.hashes;
-		const aiCoreData = game.bld.get("aiCore");
-		const entanglerData = game.space.getBuilding("entangler");
 		const gigaflops = gflopsRes.value;
 		const hashes = hashRes.value;
-		const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
 		const hashLevel = $SCRIPT_RESMAP.hashLevel;
+		const aiLevel = $SCRIPT_RESMAP.aiLevel;
+		const gigaflopsNeeded = $SCRIPT_RESMAP.gigaflopsToNextLevel;
+		const hashesNeeded = $SCRIPT_RESMAP.hashesToNextLevel;
+		/*
+		const aiCoreData = game.bld.get("aiCore");
+		const entanglerData = game.space.getBuilding("entangler");
+		const hashesPerTick = hashRes.perTickUI || hashRes.perTickCached;
 		const gigaflopsPerTick = gflopsRes.perTickUI || gflopsRes.perTickCached;
 		const gigaflopProdPerTickRaw = aiCoreData.effects.gflopsPerTickBase;
 		const gigaflopProdPerTickEffective = gigaflopProdPerTickRaw * aiCoreData.on;
 		const gigaflopConsumePerTickRaw = entanglerData.effects.gflopsConsumption;
 		const gigaflopConsumePerTickEffective = gigaflopConsumePerTickRaw * entanglerData.on;
-		const aiLevel = $SCRIPT_RESMAP.aiLevel;
-		const gigaflopsNeeded = $SCRIPT_RESMAP.gigaflopsToNextLevel;
-		const hashesNeeded = $SCRIPT_RESMAP.hashesToNextLevel;
 		const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
 		const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
 		const internalCheckTag = ( // forgive me
@@ -890,22 +891,26 @@ $BUILD_STAMP
 		const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
 			? game.toDisplaySeconds(timeToNextHashLevel)
 			: "<i>no hashes being produced</i>";
+		*/
 		const result = [
 			`Current gigaflops: ${gigaflops.toFixed(2)}`,
-			`Net gigaflops per tick: ${gigaflopsPerTick.toFixed(2)} - ${internalCheckTag}`,
+			// `Net gigaflops per tick: ${gigaflopsPerTick.toFixed(2)} - ${internalCheckTag}`,
 			`Current AI level: ${aiLevel}`,
 		];
 		if (aiLevel > 14) {
 			const gigaflopsToLose = gigaflops - gigaflopSafeMax;
+			/*
 			const timeUntilSafetyFromSkynet = game.toDisplaySeconds(
 				Math.abs(
 					gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond)
 				)
 			) || "now";
+			*/
 			result.push(
 				'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
 				`Gigaflops beyond safe limit: ${gigaflopsToLose.toFixed(2)}`
 			);
+			/*
 			if (gigaflopsPerTick > 0) {
 				result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
 			}
@@ -915,18 +920,22 @@ $BUILD_STAMP
 			else {
 				result.push(`Time drop back to safe limit: ${timeUntilSafetyFromSkynet}`);
 			}
+			*/
 		}
 		else {
 			const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
+			/*
 			const timeUntilDangerFromSkynet = game.toDisplaySeconds(
 				Math.abs(
 					gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond)
 				)
 			) || "now";
+			*/
 			result.push(
 				"The AI apocalypse will not occur yet",
 				`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax.toFixed(2)}`
 			);
+			/*
 			if (gigaflopsPerTick > 0) {
 				result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
 			}
@@ -936,15 +945,17 @@ $BUILD_STAMP
 			else {
 				result.push("AI Level is falling - AI apocalypse is not possible");
 			}
+			*/
 		}
 		result.push(
 			`Gigaflops needed for next AI level: ${gigaflopsNeeded.toFixed(2)}`,
-			`Time to reach next AI level: ${timeToNextLevelOfAI}`,
+			// `Time to reach next AI level: ${timeToNextLevelOfAI}`,
 			`Current hashes: ${hashes.toFixed(2)}`,
-			`Net hashes per tick: ${hashesPerTick.toFixed(2)}`,
+			// `Net hashes per tick: ${hashesPerTick.toFixed(2)}`,
 			`Current hashlevel: ${hashLevel}`,
-			`Hashes needed to reach next hash level: ${hashesNeeded.toFixed(2)}`,
-			`Time to reach next hash level: ${timeToNextLevelOfHashes}`
+			`Total hashes for next hash level: ${hashesNeeded.toFixed(2)}`,
+			`Remaining hashes needed: ${(hashesNeeded - hashes).toFixed(2)}`
+			// `Time to reach next hash level: ${timeToNextLevelOfHashes}`
 		);
 		return result.join("<br />\n");
 	}
