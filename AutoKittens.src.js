@@ -2430,7 +2430,7 @@ $BUILD_STAMP
 						get: () => Math.exp(gameDataMap.aiLevel + 1) - gameDataMap.gigaflops.value,
 					},
 					hashLevel: {
-						get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
+						get: () => Math.floor(Math.log(gameDataMap.hashrates.value / 1000) / Math.log(1.6)) || 0,
 					},
 					hashesToNextLevel: {
 						get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),

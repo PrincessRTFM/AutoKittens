@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 13:16:14 on Friday, September 30, 2022 UTC
+Last built at 15:17:06 on Friday, September 30, 2022 UTC
 
-#AULBS:1664543774#
+#AULBS:1664551026#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -405,7 +405,7 @@ Last built at 13:16:14 on Friday, September 30, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1664543774";
+		const AULBS = "1664551026";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -2346,7 +2346,7 @@ Last built at 13:16:14 on Friday, September 30, 2022 UTC
 						get: () => Math.exp(gameDataMap.aiLevel + 1) - gameDataMap.gigaflops.value,
 					},
 					hashLevel: {
-						get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
+						get: () => Math.floor(Math.log(gameDataMap.hashrates.value / 1000) / Math.log(1.6)) || 0,
 					},
 					hashesToNextLevel: {
 						get: () => 1000 * Math.pow(1.6, gameDataMap.hashLevel + 1),
