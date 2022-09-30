@@ -5,10 +5,13 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
+Last built at 13:16:14 on Friday, September 30, 2022 UTC
 
-#AULBS:1663656395#
+#AULBS:1664543774#
 */
+
+// For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
+// For EXCESSIVE debugging, set `window.AUTOKITTENS_ENABLE_DEBUG_SPAM = true` in the console, but not for long.
 
 /* eslint-env browser, jquery */
 /* global game, LCstorage, AutoKittensOptions:writable, AutoKittensCache, resmap */
@@ -402,7 +405,7 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1663656395";
+		const AULBS = "1664543774";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -811,10 +814,9 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 		const mintsRunning = mintBuildingData.get("on");
 		const catpower = game.resPool.get("manpower");
 		const catpowerRateBase = (catpower.perTickUI || catpower.perTickCached) * game.ticksPerSecond;
-		const catpowerRateWithMints
-		= ((catpower.perTickUI || catpower.perTickCached)
+		const catpowerRateWithMints = ((catpower.perTickUI || catpower.perTickCached)
 			+ mintBuildingData.get("effects").manpowerPerTickCon * mintsRunning)
-		* game.ticksPerSecond;
+			* game.ticksPerSecond;
 		const huntTimeWithoutMint = 100 / catpowerRateBase;
 		const huntTimeWithMint = 100 / catpowerRateWithMints;
 		const fpsHuntsNoMints = expectedFursFromHunts / huntTimeWithoutMint;
@@ -868,28 +870,34 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 		const hashesNeeded = resmap.hashesToNextLevel;
 		const timeToNextAiLevel = gigaflopsNeeded / (gigaflopsPerTick * game.ticksPerSecond);
 		const timeToNextHashLevel = hashesNeeded / (hashesPerTick * game.ticksPerSecond);
-		const internalCheckTag
-		= gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick
+		const internalCheckTag = ( // forgive me
+			gigaflops > 0
+				? gigaflopProdPerTickEffective - gigaflopConsumePerTickEffective == gigaflopsPerTick
+				: gigaflopsPerTick == 0
+		)
 			? "checks out"
 			: "<b>INTERNAL MATH ERROR!</b>";
-		const timeToNextLevelOfAI = isFinite(timeToNextAiLevel)
+		const timeToNextLevelOfAI = isFinite(timeToNextAiLevel) && timeToNextAiLevel >= 0
 			? game.toDisplaySeconds(timeToNextAiLevel)
-			: "<i>no gigaflops being produced</i>";
+			: "<i>no excess gigaflops being produced</i>";
 		const timeToNextLevelOfHashes = isFinite(timeToNextHashLevel)
 			? game.toDisplaySeconds(timeToNextHashLevel)
 			: "<i>no hashes being produced</i>";
 		const result = [
-			`Current gigaflops: ${gigaflops}`,
-			`Net gigaflops per tick: ${gigaflopsPerTick} - ${internalCheckTag}`,
+			`Current gigaflops: ${gigaflops.toFixed(2)}`,
+			`Net gigaflops per tick: ${gigaflopsPerTick.toFixed(2)} - ${internalCheckTag}`,
 			`Current AI level: ${aiLevel}`,
 		];
 		if (aiLevel > 14) {
 			const gigaflopsToLose = gigaflops - gigaflopSafeMax;
-			const timeUntilSafetyFromSkynet
-			= game.toDisplaySeconds(Math.abs(gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
+			const timeUntilSafetyFromSkynet = game.toDisplaySeconds(
+				Math.abs(
+					gigaflopsToLose / (gigaflopsPerTick * game.ticksPerSecond)
+				)
+			) || "now";
 			result.push(
 				'<span class="ohshit">THE AI APOCALYPSE WILL OCCUR</span>',
-				`Gigaflops beyond safe limit: ${gigaflopsToLose}`
+				`Gigaflops beyond safe limit: ${gigaflopsToLose.toFixed(2)}`
 			);
 			if (gigaflopsPerTick > 0) {
 				result.push('<span class="ohshit">AI LEVEL IS STILL INCREASING - BUILD MORE ENTANGLERS</span>');
@@ -903,11 +911,14 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 		}
 		else {
 			const gigaflopsToHitMax = gigaflopSafeMax - gigaflops;
-			const timeUntilDangerFromSkynet
-			= game.toDisplaySeconds(Math.abs(gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond))) || "now";
+			const timeUntilDangerFromSkynet = game.toDisplaySeconds(
+				Math.abs(
+					gigaflopsToHitMax / (gigaflopsPerTick * game.ticksPerSecond)
+				)
+			) || "now";
 			result.push(
 				"The AI apocalypse will not occur yet",
-				`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax}`
+				`Gigaflops needed to reach maximum safe limit: ${gigaflopsToHitMax.toFixed(2)}`
 			);
 			if (gigaflopsPerTick > 0) {
 				result.push(`Time to reach maximum safe limit: ${timeUntilDangerFromSkynet}`);
@@ -920,12 +931,12 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 			}
 		}
 		result.push(
-			`Gigaflops needed for next AI level: ${gigaflopsNeeded}`,
+			`Gigaflops needed for next AI level: ${gigaflopsNeeded.toFixed(2)}`,
 			`Time to reach next AI level: ${timeToNextLevelOfAI}`,
-			`Current hashes: ${hashes}`,
-			`Net hashes per tick: ${hashesPerTick}`,
+			`Current hashes: ${hashes.toFixed(2)}`,
+			`Net hashes per tick: ${hashesPerTick.toFixed(2)}`,
 			`Current hashlevel: ${hashLevel}`,
-			`Hashes needed to reach next hash level: ${hashesNeeded}`,
+			`Hashes needed to reach next hash level: ${hashesNeeded.toFixed(2)}`,
 			`Time to reach next hash level: ${timeToNextLevelOfHashes}`
 		);
 		return result.join("<br />\n");
@@ -2301,11 +2312,11 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 				get: () => game.resPool.get(id),
 			});
 		});
-		// These are all custom aliases
 		Object.defineProperties(
 			gameDataMap,
 			iterateObject(
 				{
+					// These are all custom aliases
 					flux: {
 						get: () => gameDataMap.temporalFlux,
 					},
@@ -2327,11 +2338,12 @@ Last built at 06:46:35 on Tuesday, September 20, 2022 UTC
 					compendiums: {
 						get: () => game.resPool.get("compedium"),
 					},
+					// And these are special handlers
 					aiLevel: {
-						get: () => Math.round(Math.log(gameDataMap.gigaflops)) || 0,
+						get: () => gameDataMap.gigaflops.value > 0 ? Math.max(Math.round(Math.log(gameDataMap.gigaflops.value)), 0) : 0,
 					},
 					gigaflopsToNextLevel: {
-						get: () => Math.exp(gameDataMap.aiLevel + 0.5) - gameDataMap.gigaflops.value,
+						get: () => Math.exp(gameDataMap.aiLevel + 1) - gameDataMap.gigaflops.value,
 					},
 					hashLevel: {
 						get: () => Math.floor(Math.log(gameDataMap.hashrates / 1000) / Math.log(1.6)) || 0,
