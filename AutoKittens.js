@@ -5,9 +5,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 15:47:34 on Friday, September 30, 2022 UTC
+Last built at 15:51:59 on Friday, September 30, 2022 UTC
 
-#AULBS:1664552854#
+#AULBS:1664553119#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -139,6 +139,9 @@ Last built at 15:47:34 on Friday, September 30, 2022 UTC
 		"tMythril",
 		"blackcoin",
 		"zebras",
+		// game doesn't calculate per-tick changerates >:(
+		"gflops",
+		"hashrates",
 	]);
 
 	// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
@@ -405,7 +408,7 @@ Last built at 15:47:34 on Friday, September 30, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1664552854";
+		const AULBS = "1664553119";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");

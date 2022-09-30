@@ -142,6 +142,9 @@ $BUILD_STAMP
 		"tMythril",
 		"blackcoin",
 		"zebras",
+		// game doesn't calculate per-tick changerates >:(
+		"gflops",
+		"hashrates",
 	]);
 
 	// More than APPROXIMATELY this many gigaflops will hit AI level 15, causing the AIpocalypse.
