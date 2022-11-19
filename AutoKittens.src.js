@@ -2213,7 +2213,7 @@ $BUILD_STAMP
 			return;
 		}
 		const curPrice = game.calendar.cryptoPrice;
-		const maxPrice = game.calendar.cryptoPriceMax;
+		const maxPrice = 1100;
 		const relics = game.resPool.get("relic");
 		const coins = game.resPool.get("blackcoin");
 		if (relics.value > 0 && curPrice <= $SCRIPT_OPTS.tradeOptions.buyBlackcoinBelow) {

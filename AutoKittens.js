@@ -1,13 +1,14 @@
 /*
+#include common.h
 AutoKittens - helper script for the Kittens Game (https://kittensgame.com/web/)
 
 Original author: Michael Madsen <michael@birdiesoft.dk>
-Current maintainer: Lilith Song <lsong@princessrtfm.com>
+Current maintainer: Lilith Song "Vixen" <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 15:51:59 on Friday, September 30, 2022 UTC
+Last built at 16:22 on Saturday, November 19, 2022 UTC
 
-#AULBS:1664553119#
+#AULBS:1668874921#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -292,7 +293,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 	}
 
 	// NOP: no-operation, for when you specifically want to do nothing at all.
-	function NOP() {} // eslint-disable-line no-empty-function
+	function NOP() { } // eslint-disable-line no-empty-function
 
 	// Given a string (or array) describing (in dot-notation) the path within an object, set the value at that location
 	// Designed to allow using any object, but since it's most commonly used to set a global (window) variable, that's the default
@@ -408,7 +409,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1664553119";
+		const AULBS = "1668874921";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -789,7 +790,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 					timeDisplay = "No change";
 				}
 				if (
-					    displayMode == TIMERVIS_ALWAYS
+					displayMode == TIMERVIS_ALWAYS
 					|| (displayMode == TIMERVIS_FALLING && isFalling)
 					|| (displayMode == TIMERVIS_RISING && isRising)
 					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
@@ -1808,10 +1809,10 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 		const leftBeforeCap = (1 - AutoKittensOptions.huntOptions.huntLimit) * catpower.maxValue;
 		if (
 			catpower.value / catpower.maxValue >= AutoKittensOptions.huntOptions.huntLimit
-		|| (
-			AutoKittensOptions.huntOptions.huntEarly
-			&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
-		)
+			|| (
+				AutoKittensOptions.huntOptions.huntEarly
+				&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
+			)
 		) {
 			if (AutoKittensOptions.huntOptions.craftParchment && game.workshop.getCraft("parchment").unlocked) {
 				game.craftAll("parchment");
@@ -2024,8 +2025,8 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 				for (const resource in costs) {
 					if (ownProp(costs, resource)) {
 						if (product == "steel" && resource == "iron") {
-						// It's a monkey patch, I know - I'm working on a proper fix
-						// update 2022-08-31: how long has it even been?
+							// It's a monkey patch, I know - I'm working on a proper fix
+							// update 2022-08-31: how long has it even been?
 							continue;
 						}
 						const input = game.resPool.get(resource);
@@ -2033,7 +2034,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 							continue AUTOCRAFT;
 						}
 						if (input.maxValue > 0) {
-						// Check by percentage of max value - the original method
+							// Check by percentage of max value - the original method
 							const percentage = input.value / input.maxValue;
 							if (percentage < AutoKittensOptions.craftOptions.craftLimit) {
 								continue AUTOCRAFT;
@@ -2041,7 +2042,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 							continue;
 						}
 						if (input.value > 0) {
-						// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
+							// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
 							const percentage = output.value / input.value;
 							// If we have MORE of the OUTPUT than the threshold, skip this entirely
 							if (percentage > AutoKittensOptions.craftOptions.secondaryCraftLimit) {
@@ -2094,7 +2095,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 		const gold = game.resPool.get("gold");
 		if (
 			game.resPool.get(race.buys[0].name).value < race.buys[0].val
-		|| game.resPool.get("manpower").value < 50
+			|| game.resPool.get("manpower").value < 50
 			|| gold.value / gold.maxValue < AutoKittensOptions.tradeOptions.tradeLimit
 		) {
 			return;
@@ -2121,7 +2122,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 		// > blackcoins can be bought with relics.
 		if (
 			!game.science.get("antimatter").researched
-		|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
+			|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
 		) {
 			return;
 		}
@@ -2129,7 +2130,7 @@ Last built at 15:51:59 on Friday, September 30, 2022 UTC
 			return;
 		}
 		const curPrice = game.calendar.cryptoPrice;
-		const maxPrice = game.calendar.cryptoPriceMax;
+		const maxPrice = 1100;
 		const relics = game.resPool.get("relic");
 		const coins = game.resPool.get("blackcoin");
 		if (relics.value > 0 && curPrice <= AutoKittensOptions.tradeOptions.buyBlackcoinBelow) {
