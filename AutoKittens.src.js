@@ -295,7 +295,7 @@ $BUILD_STAMP
 	}
 
 	// NOP: no-operation, for when you specifically want to do nothing at all.
-	function NOP() {} // eslint-disable-line no-empty-function
+	function NOP() { } // eslint-disable-line no-empty-function
 
 	// Given a string (or array) describing (in dot-notation) the path within an object, set the value at that location
 	// Designed to allow using any object, but since it's most commonly used to set a global (window) variable, that's the default
@@ -455,7 +455,7 @@ $BUILD_STAMP
 		catch (err) {
 			onError(null, "request failed", err);
 		}
-	// #endif
+		// #endif
 	}
 
 	// Save our current options into localstorage
@@ -796,7 +796,7 @@ $BUILD_STAMP
 					timeDisplay = "No change";
 				}
 				if (
-					    displayMode == TIMERVIS_ALWAYS
+					displayMode == TIMERVIS_ALWAYS
 					|| (displayMode == TIMERVIS_FALLING && isFalling)
 					|| (displayMode == TIMERVIS_RISING && isRising)
 					|| (displayMode == TIMERVIS_NOTFULL && !isFull)
@@ -1110,7 +1110,7 @@ $BUILD_STAMP
 		addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator, "powerGenerationCalc", "Generation");
 		// #else
 		addCalculator(calcContainer, "powerCalc", "Power stats", powerCalculator);
-	// #endif
+		// #endif
 	}
 
 	// Toggle whether our script dialogs should be pushed to the right or positioned normally
@@ -1858,7 +1858,7 @@ $BUILD_STAMP
 		$("head").append(inlineStylesheet);
 		// #ifdef NO_UPDATE_CHECK
 		$("html").addClass("autokittensUpdateCheckDisabled");
-	// #endif
+		// #endif
 	}
 
 	// This is used by the "warn before leaving" setting
@@ -1892,10 +1892,10 @@ $BUILD_STAMP
 		const leftBeforeCap = (1 - $SCRIPT_OPTS.huntOptions.huntLimit) * catpower.maxValue;
 		if (
 			catpower.value / catpower.maxValue >= $SCRIPT_OPTS.huntOptions.huntLimit
-		|| (
-			$SCRIPT_OPTS.huntOptions.huntEarly
-			&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
-		)
+			|| (
+				$SCRIPT_OPTS.huntOptions.huntEarly
+				&& catpower.value >= catpower.maxValue - leftBeforeCap - ((catpower.maxValue - leftBeforeCap) % 100)
+			)
 		) {
 			if ($SCRIPT_OPTS.huntOptions.craftParchment && game.workshop.getCraft("parchment").unlocked) {
 				game.craftAll("parchment");
@@ -2108,8 +2108,8 @@ $BUILD_STAMP
 				for (const resource in costs) {
 					if (ownProp(costs, resource)) {
 						if (product == "steel" && resource == "iron") {
-						// It's a monkey patch, I know - I'm working on a proper fix
-						// update 2022-08-31: how long has it even been?
+							// It's a monkey patch, I know - I'm working on a proper fix
+							// update 2022-08-31: how long has it even been?
 							continue;
 						}
 						const input = game.resPool.get(resource);
@@ -2117,7 +2117,7 @@ $BUILD_STAMP
 							continue AUTOCRAFT;
 						}
 						if (input.maxValue > 0) {
-						// Check by percentage of max value - the original method
+							// Check by percentage of max value - the original method
 							const percentage = input.value / input.maxValue;
 							if (percentage < $SCRIPT_OPTS.craftOptions.craftLimit) {
 								continue AUTOCRAFT;
@@ -2125,7 +2125,7 @@ $BUILD_STAMP
 							continue;
 						}
 						if (input.value > 0) {
-						// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
+							// Check by percentage of the PRODUCT'S CURRENT VALUE - uncapped stuff
 							const percentage = output.value / input.value;
 							// If we have MORE of the OUTPUT than the threshold, skip this entirely
 							if (percentage > $SCRIPT_OPTS.craftOptions.secondaryCraftLimit) {
@@ -2178,7 +2178,7 @@ $BUILD_STAMP
 		const gold = game.resPool.get("gold");
 		if (
 			game.resPool.get(race.buys[0].name).value < race.buys[0].val
-		|| game.resPool.get("manpower").value < 50
+			|| game.resPool.get("manpower").value < 50
 			|| gold.value / gold.maxValue < $SCRIPT_OPTS.tradeOptions.tradeLimit
 		) {
 			return;
@@ -2205,7 +2205,7 @@ $BUILD_STAMP
 		// > blackcoins can be bought with relics.
 		if (
 			!game.science.get("antimatter").researched
-		|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
+			|| !(game.resPool.resourceMap.blackcoin.unlocked || game.science.get("blackchain").researched)
 		) {
 			return;
 		}
