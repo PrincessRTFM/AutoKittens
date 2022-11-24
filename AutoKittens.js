@@ -6,9 +6,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song "Vixen" <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 16:22 on Saturday, November 19, 2022 UTC
+Last built at 15:04 on Thursday, November 24, 2022 UTC
 
-#AULBS:1668874921#
+#AULBS:1669302274#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -74,6 +74,23 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		[ "0.25%", 0.025 ],
 		[ "0.5%", 0.005 ],
 	].concat(percentages);
+
+	const counts = [
+		[ "one", 1 ],
+		[ "two", 2 ],
+		[ "three", 3 ],
+		[ "four", 4 ],
+		[ "five", 5 ],
+		[ "six", 6 ],
+		[ "seven", 7 ],
+		[ "eight", 8 ],
+		[ "nine", 9 ],
+		[ "ten", 10 ],
+	];
+
+	const zeroCounts = [
+		[ "zero", 0 ],
+	].concat(counts);
 
 	// Visibility options for the timer strip
 	const TIMERVIS_NEVER = "never";
@@ -157,6 +174,9 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		autoPray: false,
 		autoResetFaith: false,
 		autoTrade: false,
+		autoFestival: false,
+		autoFestivalDays: 0,
+		autoFestivalCount: 1,
 		craftOptions: {
 			craftLimit: 0.99,
 			secondaryCraftLimit: 0.6,
@@ -233,7 +253,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		},
 		huntOptions: {
 			huntLimit: 0.99,
-			suppressHuntLog: false,
 			huntEarly: true,
 			singleHunts: false, // name is a misnomer since this was updated to a configurable limit
 			huntCount: 1,
@@ -251,7 +270,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		tradeOptions: {
 			tradeCount: 1,
 			tradeLimit: 0.99,
-			suppressTradeLog: false,
 			tradePartner: "",
 			tradeSpring: false,
 			tradePartnerSpring: "",
@@ -365,10 +383,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 				}
 				copyObject(source[attrname], target[attrname]);
 			}
-			else if (attrname == "supressHuntLog") {
-				// Fixing a typo
-				target.suppressHuntLog = source[attrname];
-			}
 			else {
 				target[attrname] = source[attrname];
 			}
@@ -409,7 +423,7 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1668874921";
+		const AULBS = "1669302274";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -1610,11 +1624,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		);
 		addCheckbox(
 			huntSettingsContainer,
-			"AutoKittensOptions.huntOptions.suppressHuntLog",
-			"Hide log messages when auto-hunting (includes hunt-triggered crafts)"
-		);
-		addCheckbox(
-			huntSettingsContainer,
 			"AutoKittensOptions.huntOptions.singleHunts",
 			"Limit the number of hunts sent out at once"
 		);
@@ -1633,6 +1642,16 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 			"Pretend that your leader is perfect at everything",
 			"If only we could do this in the real world..."
 		);
+		addHeading(miscSettingsContainer, "Festivals");
+		addCheckbox(miscSettingsContainer, "AutoKittensOptions.autoFestival", "Automatically hold festivals");
+		addOptionMenu(
+			miscSettingsContainer,
+			"AutoKittensOptions.autoFestivalDays",
+			"Unless the current one has more than",
+			zeroCounts,
+			"day(s) left"
+		);
+		addOptionMenu(miscSettingsContainer, "AutoKittensOptions.autoFestivalCount", "Try to hold up to", counts, "festivals at once");
 		addHeading(miscSettingsContainer, "Pollution");
 		addCheckbox(miscSettingsContainer, "AutoKittensOptions.disablePollution", "Actually disable pollution, for real");
 		addButton(
@@ -1801,10 +1820,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		if (!AutoKittensOptions.autoHunt) {
 			return;
 		}
-		const msgFunc = game.msg;
-		if (AutoKittensOptions.huntOptions.suppressHuntLog) {
-			game.msg = NOP;
-		}
 		const catpower = game.resPool.get("manpower");
 		const leftBeforeCap = (1 - AutoKittensOptions.huntOptions.huntLimit) * catpower.maxValue;
 		if (
@@ -1839,9 +1854,6 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 			else {
 				game.village.huntAll();
 			}
-		}
-		if (AutoKittensOptions.huntOptions.suppressHuntLog) {
-			game.msg = msgFunc;
 		}
 	}
 	// Craft things
@@ -2100,15 +2112,8 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 		) {
 			return;
 		}
-		const msgFunc = game.msg;
-		if (AutoKittensOptions.tradeOptions.suppressTradeLog) {
-			game.msg = NOP;
-		}
 		if (AutoKittensOptions.tradeOptions[`trade${season}`]) {
 			game.diplomacy.tradeMultiple(race, Math.max(AutoKittensOptions.tradeOptions.tradeCount, 1));
-		}
-		if (AutoKittensOptions.tradeOptions.suppressTradeLog) {
-			game.msg = msgFunc;
 		}
 	}
 	// Play the crypto market as if it actually works (which, tbf, it does in the game)
@@ -2218,9 +2223,42 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 			bld.on = 0;
 		}
 	}
+	// Keep a permanent festival running, designed to work before the carnivals metaphysics upgrade (although it'll work fine after too)
+	function throwFestival() {
+		if (!AutoKittensOptions.autoFestival) {
+			return;
+		}
+		if (typeof game.villageTab.festivalBtn == "undefined" || game.villageTab.festivalBtn === null) {
+			return;
+		}
+		if (!game.villageTab.festivalBtn.model.enabled || resmap.kittens.value < 1) {
+			return;
+		}
+		const remaining = game.calendar.festivalDays;
+		if (remaining > AutoKittensOptions.autoFestivalDays) {
+			return;
+		}
+		let festivalCount = AutoKittensOptions.autoFestivalCount;
+		const prices = game.villageTab.festivalBtn.controller.getPrices(game.villageTab.festivalBtn.model);
+		for (const price of prices) {
+			festivalCount = Math.min(festivalCount, Math.floor(resmap[price.name].value / prices.val));
+		}
+		if (!this.game.prestige.getPerk("carnivals").researched) {
+			festivalCount = Math.min(festivalCount, 1);
+		}
+		if (festivalCount < 1) {
+			return;
+		}
+		for (const price of prices) {
+			const cost = festivalCount * prices.val;
+			resmap[price.name].value -= cost;
+		}
+		game.village.holdFestival(festivalCount);
+	}
 	// Just dispatch all of the different things we do each tick
 	function processAutoKittens() {
 		starClick();
+		throwFestival();
 		autoHunt();
 		autoCraft();
 		autoTrade();
@@ -2275,6 +2313,7 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 			"faith",
 			"kittens",
 			"zebras",
+			"manpower",
 			"temporalFlux",
 			"gflops",
 			"hashrates",
@@ -2332,6 +2371,9 @@ Last built at 16:22 on Saturday, November 19, 2022 UTC
 			iterateObject(
 				{
 					// These are all custom aliases
+					catpower: {
+						get: () => gameDataMap.manpower,
+					},
 					flux: {
 						get: () => gameDataMap.temporalFlux,
 					},

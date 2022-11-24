@@ -77,6 +77,23 @@ $BUILD_STAMP
 		[ "0.5%", 0.005 ],
 	].concat(percentages);
 
+	const counts = [
+		[ "one", 1 ],
+		[ "two", 2 ],
+		[ "three", 3 ],
+		[ "four", 4 ],
+		[ "five", 5 ],
+		[ "six", 6 ],
+		[ "seven", 7 ],
+		[ "eight", 8 ],
+		[ "nine", 9 ],
+		[ "ten", 10 ],
+	];
+
+	const zeroCounts = [
+		[ "zero", 0 ],
+	].concat(counts);
+
 	// Visibility options for the timer strip
 	const TIMERVIS_NEVER = "never";
 	const TIMERVIS_ALWAYS = "always";
@@ -159,6 +176,9 @@ $BUILD_STAMP
 		autoPray: false,
 		autoResetFaith: false,
 		autoTrade: false,
+		autoFestival: false,
+		autoFestivalDays: 0,
+		autoFestivalCount: 1,
 		craftOptions: {
 			craftLimit: 0.99,
 			secondaryCraftLimit: 0.6,
@@ -235,7 +255,6 @@ $BUILD_STAMP
 		},
 		huntOptions: {
 			huntLimit: 0.99,
-			suppressHuntLog: false,
 			huntEarly: true,
 			singleHunts: false, // name is a misnomer since this was updated to a configurable limit
 			huntCount: 1,
@@ -253,7 +272,6 @@ $BUILD_STAMP
 		tradeOptions: {
 			tradeCount: 1,
 			tradeLimit: 0.99,
-			suppressTradeLog: false,
 			tradePartner: "",
 			tradeSpring: false,
 			tradePartnerSpring: "",
@@ -366,10 +384,6 @@ $BUILD_STAMP
 					target[attrname] = {};
 				}
 				copyObject(source[attrname], target[attrname]);
-			}
-			else if (attrname == "supressHuntLog") {
-				// Fixing a typo
-				target.suppressHuntLog = source[attrname];
 			}
 			else {
 				target[attrname] = source[attrname];
@@ -1690,11 +1704,6 @@ $BUILD_STAMP
 		);
 		addCheckbox(
 			huntSettingsContainer,
-			"$SCRIPT_OPTS.huntOptions.suppressHuntLog",
-			"Hide log messages when auto-hunting (includes hunt-triggered crafts)"
-		);
-		addCheckbox(
-			huntSettingsContainer,
 			"$SCRIPT_OPTS.huntOptions.singleHunts",
 			"Limit the number of hunts sent out at once"
 		);
@@ -1713,6 +1722,16 @@ $BUILD_STAMP
 			"Pretend that your leader is perfect at everything",
 			"If only we could do this in the real world..."
 		);
+		addHeading(miscSettingsContainer, "Festivals");
+		addCheckbox(miscSettingsContainer, "$SCRIPT_OPTS.autoFestival", "Automatically hold festivals");
+		addOptionMenu(
+			miscSettingsContainer,
+			"$SCRIPT_OPTS.autoFestivalDays",
+			"Unless the current one has more than",
+			zeroCounts,
+			"day(s) left"
+		);
+		addOptionMenu(miscSettingsContainer, "$SCRIPT_OPTS.autoFestivalCount", "Try to hold up to", counts, "festivals at once");
 		addHeading(miscSettingsContainer, "Pollution");
 		addCheckbox(miscSettingsContainer, "$SCRIPT_OPTS.disablePollution", "Actually disable pollution, for real");
 		addButton(
@@ -1884,10 +1903,6 @@ $BUILD_STAMP
 		if (!$SCRIPT_OPTS.autoHunt) {
 			return;
 		}
-		const msgFunc = game.msg;
-		if ($SCRIPT_OPTS.huntOptions.suppressHuntLog) {
-			game.msg = NOP;
-		}
 		const catpower = game.resPool.get("manpower");
 		const leftBeforeCap = (1 - $SCRIPT_OPTS.huntOptions.huntLimit) * catpower.maxValue;
 		if (
@@ -1922,9 +1937,6 @@ $BUILD_STAMP
 			else {
 				game.village.huntAll();
 			}
-		}
-		if ($SCRIPT_OPTS.huntOptions.suppressHuntLog) {
-			game.msg = msgFunc;
 		}
 	}
 	// Craft things
@@ -2183,15 +2195,8 @@ $BUILD_STAMP
 		) {
 			return;
 		}
-		const msgFunc = game.msg;
-		if ($SCRIPT_OPTS.tradeOptions.suppressTradeLog) {
-			game.msg = NOP;
-		}
 		if ($SCRIPT_OPTS.tradeOptions[`trade${season}`]) {
 			game.diplomacy.tradeMultiple(race, Math.max($SCRIPT_OPTS.tradeOptions.tradeCount, 1));
-		}
-		if ($SCRIPT_OPTS.tradeOptions.suppressTradeLog) {
-			game.msg = msgFunc;
 		}
 	}
 	// Play the crypto market as if it actually works (which, tbf, it does in the game)
@@ -2301,9 +2306,42 @@ $BUILD_STAMP
 			bld.on = 0;
 		}
 	}
+	// Keep a permanent festival running, designed to work before the carnivals metaphysics upgrade (although it'll work fine after too)
+	function throwFestival() {
+		if (!$SCRIPT_OPTS.autoFestival) {
+			return;
+		}
+		if (typeof game.villageTab.festivalBtn == "undefined" || game.villageTab.festivalBtn === null) {
+			return;
+		}
+		if (!game.villageTab.festivalBtn.model.enabled || $SCRIPT_RESMAP.kittens.value < 1) {
+			return;
+		}
+		const remaining = game.calendar.festivalDays;
+		if (remaining > $SCRIPT_OPTS.autoFestivalDays) {
+			return;
+		}
+		let festivalCount = $SCRIPT_OPTS.autoFestivalCount;
+		const prices = game.villageTab.festivalBtn.controller.getPrices(game.villageTab.festivalBtn.model);
+		for (const price of prices) {
+			festivalCount = Math.min(festivalCount, Math.floor($SCRIPT_RESMAP[price.name].value / prices.val));
+		}
+		if (!this.game.prestige.getPerk("carnivals").researched) {
+			festivalCount = Math.min(festivalCount, 1);
+		}
+		if (festivalCount < 1) {
+			return;
+		}
+		for (const price of prices) {
+			const cost = festivalCount * prices.val;
+			$SCRIPT_RESMAP[price.name].value -= cost;
+		}
+		game.village.holdFestival(festivalCount);
+	}
 	// Just dispatch all of the different things we do each tick
 	function processAutoKittens() {
 		starClick();
+		throwFestival();
 		autoHunt();
 		autoCraft();
 		autoTrade();
@@ -2358,6 +2396,7 @@ $BUILD_STAMP
 			"faith",
 			"kittens",
 			"zebras",
+			"manpower",
 			"temporalFlux",
 			"gflops",
 			"hashrates",
@@ -2415,6 +2454,9 @@ $BUILD_STAMP
 			iterateObject(
 				{
 					// These are all custom aliases
+					catpower: {
+						get: () => gameDataMap.manpower,
+					},
 					flux: {
 						get: () => gameDataMap.temporalFlux,
 					},
