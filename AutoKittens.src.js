@@ -168,7 +168,7 @@ $BUILD_STAMP
 	const gigaflopSafeMax = Math.exp(14.5) - 0.1;
 
 	// The default options for a fresh start, tuned to be viable at the beginning of the game
-	const defaultOptions = {
+	const defaultOptions = Object.freeze({
 		warnOnLeave: true,
 		autoStar: true,
 		autoCraft: false,
@@ -179,7 +179,7 @@ $BUILD_STAMP
 		autoFestival: false,
 		autoFestivalDays: 0,
 		autoFestivalCount: 1,
-		craftOptions: {
+		craftOptions: Object.freeze({
 			craftLimit: 0.99,
 			secondaryCraftLimit: 0.6,
 			craftWood: false,
@@ -243,17 +243,17 @@ $BUILD_STAMP
 			blueprintAmount: 1,
 			blueprintInterval: 500,
 			blueprintPriority: false,
-		},
+		}),
 		dialogRight: false,
 		forceShadow: false,
 		forceShadowGlobal: false,
-		furOptions: {
+		furOptions: Object.freeze({
 			parchmentMode: 0,
 			manuscriptMode: 0,
 			compendiumMode: 0,
 			blueprintMode: 0,
-		},
-		huntOptions: {
+		}),
+		huntOptions: Object.freeze({
 			huntLimit: 0.99,
 			huntEarly: true,
 			singleHunts: false, // name is a misnomer since this was updated to a configurable limit
@@ -262,14 +262,14 @@ $BUILD_STAMP
 			craftManuscript: false,
 			craftCompendium: false,
 			craftBlueprint: false,
-		},
+		}),
 		prayLimit: 0.99,
 		widenUI: false,
 		displayOptions: {},
 		displayOrder: "standard",
 		timeDisplay: "standard",
 		perfectLeadership: false,
-		tradeOptions: {
+		tradeOptions: Object.freeze({
 			tradeCount: 1,
 			tradeLimit: 0.99,
 			tradePartner: "",
@@ -283,21 +283,21 @@ $BUILD_STAMP
 			tradePartnerWinter: "",
 			playMarket: true,
 			buyBlackcoinBelow: 900,
-		},
+		}),
 		showTimerDisplays: true,
 		disablePollution: false,
-		lunarOutpostOptions: {
+		lunarOutpostOptions: Object.freeze({
 			automate: false,
 			useMinimumPowerProd: true,
 			activationLimit: 0.9,
 			reservedUranium: 0.1,
 			active: true, // semi-hidden
-		},
-	};
+		}),
+	});
 
 	// Inject the options into the global namespace - "default" is a slight misnomer because they're also changable here,
 	// but the object above only provides the defaults (and the structure) so... it works well enough.
-	window.$SCRIPT_OPTS = defaultOptions;
+	window.$SCRIPT_OPTS = structuredClone(defaultOptions);
 
 	// A convenience function because typing out `Object.prototype.hasOwnProperty.call` everywhere is a PITA
 	function ownProp(target, prop) {
@@ -1583,7 +1583,7 @@ $BUILD_STAMP
 			masterSettingsContainer,
 			"Reset options",
 			() => {
-				$SCRIPT_OPTS = defaultOptions;
+				window.$SCRIPT_OPTS = structuredClone(defaultOptions);
 				saveAutoOptions();
 				updateOptionsUI();
 			},
