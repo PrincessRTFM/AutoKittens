@@ -1733,6 +1733,15 @@ $BUILD_STAMP
 		);
 		addOptionMenu(miscSettingsContainer, "$SCRIPT_OPTS.autoFestivalCount", "Try to hold up to", counts, "festivals at once");
 		addHeading(miscSettingsContainer, "Pollution");
+		addExternCheckbox(
+			miscSettingsContainer,
+			"showDetailedPollution",
+			"Show detailed pollution data",
+			(toggle) => {
+				game.DetailedPollutionInfo = toggle.checked;
+			},
+			game.DetailedPollutionInfo
+		);
 		addCheckbox(miscSettingsContainer, "$SCRIPT_OPTS.disablePollution", "Actually disable pollution, for real");
 		addButton(
 			miscSettingsContainer,

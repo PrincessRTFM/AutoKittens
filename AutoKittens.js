@@ -6,9 +6,9 @@ Original author: Michael Madsen <michael@birdiesoft.dk>
 Current maintainer: Lilith Song "Vixen" <lsong@princessrtfm.com>
 Repository: https://github.com/PrincessRTFM/AutoKittens/
 
-Last built at 09:54 on Saturday, May 06, 2023 UTC
+Last built at 17:00 on Saturday, February 10, 2024 UTC
 
-#AULBS:1683366881#
+#AULBS:1707584400#
 */
 
 // For debugging, set `window.AUTOKITTENS_ENABLE_DEBUG = true` in the console.
@@ -423,7 +423,7 @@ Last built at 09:54 on Saturday, May 06, 2023 UTC
 		if (window.AUTOKITTENS_ENABLE_DEBUG) {
 			console.log("Performing update check...");
 		}
-		const AULBS = "1683366881";
+		const AULBS = "1707584400";
 		const SOURCE = "https://princessrtfm.github.io/AutoKittens/AutoKittens.js";
 		const onError = (xhr, stat, err) => {
 			button.val("Update check failed!");
@@ -1653,6 +1653,15 @@ Last built at 09:54 on Saturday, May 06, 2023 UTC
 		);
 		addOptionMenu(miscSettingsContainer, "AutoKittensOptions.autoFestivalCount", "Try to hold up to", counts, "festivals at once");
 		addHeading(miscSettingsContainer, "Pollution");
+		addExternCheckbox(
+			miscSettingsContainer,
+			"showDetailedPollution",
+			"Show detailed pollution data",
+			(toggle) => {
+				game.DetailedPollutionInfo = toggle.checked;
+			},
+			game.DetailedPollutionInfo
+		);
 		addCheckbox(miscSettingsContainer, "AutoKittensOptions.disablePollution", "Actually disable pollution, for real");
 		addButton(
 			miscSettingsContainer,
